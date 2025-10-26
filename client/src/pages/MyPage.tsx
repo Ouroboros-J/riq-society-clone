@@ -231,7 +231,16 @@ export default function MyPage() {
                       <TableCell>{cert.fileName}</TableCell>
                       <TableCell>{cert.testName || "-"}</TableCell>
                       <TableCell>{cert.score || "-"}</TableCell>
-                      <TableCell>{getStatusBadge(cert.status)}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {getStatusBadge(cert.status)}
+                          {cert.status === "rejected" && cert.rejectionReason && (
+                            <p className="text-xs text-destructive mt-1">
+                              거부 사유: {cert.rejectionReason}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{new Date(cert.createdAt).toLocaleDateString("ko-KR")}</TableCell>
                       <TableCell>
                         <Button

@@ -133,6 +133,17 @@ export async function createCertificate(certificate: InsertCertificate) {
   return result;
 }
 
+export async function getCertificateById(id: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get certificate: database not available");
+    return null;
+  }
+
+  const result = await db.select().from(certificates).where(eq(certificates.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
 export async function updateCertificateStatus(
   id: number,
   status: "pending" | "approved" | "rejected",
