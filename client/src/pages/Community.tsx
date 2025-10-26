@@ -83,11 +83,16 @@ export default function Community() {
                 </TableHeader>
                 <TableBody>
                   {posts.map((post) => (
-                    <TableRow key={post.id} className="cursor-pointer hover:bg-muted/50">
-                      <TableCell>{post.id}</TableCell>
+                    <TableRow key={post.id} className={`cursor-pointer hover:bg-muted/50 ${post.isNotice === 'true' ? 'bg-primary/5' : ''}`}>
+                      <TableCell>{post.isNotice === 'true' ? '공지' : post.id}</TableCell>
                       <TableCell>
                         <Link href={`/community/${post.id}`}>
-                          <span className="hover:underline">{post.title}</span>
+                          <span className="hover:underline flex items-center gap-2">
+                            {post.isNotice === 'true' && (
+                              <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">공지</span>
+                            )}
+                            {post.title}
+                          </span>
                         </Link>
                       </TableCell>
                       <TableCell>회원 {post.userId}</TableCell>

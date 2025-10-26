@@ -48,7 +48,11 @@ export const posts = mysqlTable("posts", {
   userId: int("userId").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   content: text("content").notNull(),
+  isNotice: mysqlEnum("isNotice", ["true", "false"]).default("false").notNull(),
+  likeCount: int("likeCount").default(0).notNull(),
   viewCount: int("viewCount").default(0).notNull(),
+  attachmentUrl: text("attachmentUrl"),
+  attachmentName: varchar("attachmentName", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -67,5 +71,15 @@ export const comments = mysqlTable("comments", {
 
 export type Comment = typeof comments.$inferSelect;
 export type InsertComment = typeof comments.$inferInsert;
+
+export const postLikes = mysqlTable("postLikes", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull(),
+  userId: int("userId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PostLike = typeof postLikes.$inferSelect;
+export type InsertPostLike = typeof postLikes.$inferInsert;
 
 // TODO: Add your tables here

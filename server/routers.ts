@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { createCertificate, createComment, createPost, deleteComment, deletePost, getAllCertificates, getAllPosts, getAllUsers, getCertificateById, getCommentsByPostId, getPostById, getUserByOpenId, getUserCertificates, incrementPostViewCount, updateCertificateStatus, updateComment, updatePost, updateUserApprovalStatus } from "./db";
+import { createCertificate, createComment, createPost, createPostLike, decrementPostLikeCount, deleteComment, deletePost, deletePostLike, getAllCertificates, getAllPosts, getAllUsers, getCertificateById, getCommentsByPostId, getPostById, getPostLike, getUserByOpenId, getUserCertificates, incrementPostLikeCount, incrementPostViewCount, updateCertificateStatus, updateComment, updatePost, updateUserApprovalStatus } from "./db";
 import { z } from "zod";
 import { storagePut } from "./storage";
 import { generateCertificateApprovedEmail, generateCertificateRejectedEmail, sendEmail } from "./_core/email";
@@ -134,13 +134,35 @@ export const appRouter = router({
         z.object({
           title: z.string(),
           content: z.string(),
+          isNotice: z.boolean().optional(),
+          attachmentData: z.string().optional(),
+          attachmentName: z.string().optional(),
+          attachmentType: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
+        let attachmentUrl: string | undefined;
+        
+        // Check if user is admin for notice posts
+        if (input.isNotice && ctx.user.role !== 'admin') {
+          throw new Error("공지사항은 관리자만 작성할 수 있습니다.");
+        }
+        
+        // Upload attachment if provided
+        if (input.attachmentData && input.attachmentName && input.attachmentType) {
+          const buffer = Buffer.from(input.attachmentData, "base64");
+          const fileKey = `posts/${ctx.user.id}/${Date.now()}-${input.attachmentName}`;
+          const { url } = await storagePut(fileKey, buffer, input.attachmentType);
+          attachmentUrl = url;
+        }
+        
         return await createPost({
           userId: ctx.user.id,
           title: input.title,
           content: input.content,
+          isNotice: input.isNotice ? "true" : "false",
+          attachmentUrl,
+          attachmentName: input.attachmentName,
         });
       }),
     update: protectedProcedure
@@ -153,7 +175,7 @@ export const appRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const post = await getPostById(input.id);
-        if (!post || post.userId !== ctx.user.id) {
+        if (!post || (post.userId !== ctx.user.id && ctx.user.role !== 'admin')) {
           throw new Error("권한이 없습니다.");
         }
         return await updatePost(input.id, input.title, input.content);
@@ -166,6 +188,32 @@ export const appRouter = router({
           throw new Error("권한이 없습니다.");
         }
         return await deletePost(input.id);
+      }),
+    like: protectedProcedure
+      .input(z.object({ postId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const existingLike = await getPostLike(input.postId, ctx.user.id);
+        
+        if (existingLike) {
+          // Unlike
+          await deletePostLike(input.postId, ctx.user.id);
+          await decrementPostLikeCount(input.postId);
+          return { liked: false };
+        } else {
+          // Like
+          await createPostLike({
+            postId: input.postId,
+            userId: ctx.user.id,
+          });
+          await incrementPostLikeCount(input.postId);
+          return { liked: true };
+        }
+      }),
+    checkLike: protectedProcedure
+      .input(z.object({ postId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const like = await getPostLike(input.postId, ctx.user.id);
+        return { liked: !!like };
       }),
   }),
 

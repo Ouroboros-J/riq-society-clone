@@ -4,16 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
 export default function CommunityNew() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const [, setLocation] = useLocation();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [isNotice, setIsNotice] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
 
   const createMutation = trpc.post.create.useMutation({
     onSuccess: () => {
@@ -32,7 +35,19 @@ export default function CommunityNew() {
     }
   }, [isAuthenticated, loading, setLocation]);
 
-  const handleSubmit = () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      // 10MB limit
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        toast.error("파일 크기는 10MB 이하여야 합니다.");
+        return;
+      }
+      setFile(selectedFile);
+    }
+  };
+
+  const handleSubmit = async () => {
     if (!title.trim()) {
       toast.error("제목을 입력해주세요.");
       return;
@@ -42,7 +57,33 @@ export default function CommunityNew() {
       return;
     }
 
-    createMutation.mutate({ title, content });
+    let attachmentData: string | undefined;
+    let attachmentName: string | undefined;
+    let attachmentType: string | undefined;
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        if (e.target?.result) {
+          const base64 = (e.target.result as string).split(",")[1];
+          attachmentData = base64;
+          attachmentName = file.name;
+          attachmentType = file.type;
+
+          createMutation.mutate({
+            title,
+            content,
+            isNotice,
+            attachmentData,
+            attachmentName,
+            attachmentType,
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      createMutation.mutate({ title, content, isNotice });
+    }
   };
 
   if (loading) {
@@ -74,6 +115,18 @@ export default function CommunityNew() {
             <CardDescription>제목과 내용을 입력해주세요</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {user?.role === 'admin' && (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="notice"
+                  checked={isNotice}
+                  onCheckedChange={(checked) => setIsNotice(checked as boolean)}
+                />
+                <Label htmlFor="notice" className="cursor-pointer">
+                  공지사항으로 등록
+                </Label>
+              </div>
+            )}
             <div>
               <Label htmlFor="title">제목</Label>
               <Input
@@ -92,6 +145,20 @@ export default function CommunityNew() {
                 onChange={(e) => setContent(e.target.value)}
                 rows={15}
               />
+            </div>
+            <div>
+              <Label htmlFor="file">파일 첨부 (선택사항, 최대 10MB)</Label>
+              <Input
+                id="file"
+                type="file"
+                onChange={handleFileChange}
+                accept="image/*,.pdf,.doc,.docx,.txt"
+              />
+              {file && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  선택된 파일: {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                </p>
+              )}
             </div>
             <div className="flex gap-2">
               <Button onClick={handleSubmit} disabled={createMutation.isPending}>

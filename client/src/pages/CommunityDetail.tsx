@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Trash2, Edit } from "lucide-react";
+import { Trash2, Edit, Heart, Download } from "lucide-react";
 
 export default function CommunityDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,8 +15,9 @@ export default function CommunityDetail() {
   const [, setLocation] = useLocation();
   const [comment, setComment] = useState("");
 
-  const { data: post, isLoading: postLoading } = trpc.post.getById.useQuery({ id: postId });
+  const { data: post, isLoading: postLoading, refetch: refetchPost } = trpc.post.getById.useQuery({ id: postId });
   const { data: comments, isLoading: commentsLoading, refetch: refetchComments } = trpc.comment.list.useQuery({ postId });
+  const { data: likeStatus } = trpc.post.checkLike.useQuery({ postId }, { enabled: isAuthenticated });
 
   const createCommentMutation = trpc.comment.create.useMutation({
     onSuccess: () => {
@@ -49,6 +50,16 @@ export default function CommunityDetail() {
     },
   });
 
+  const likeMutation = trpc.post.like.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.liked ? "좋아요!" : "좋아요 취소");
+      refetchPost();
+    },
+    onError: (error) => {
+      toast.error("좋아요 처리에 실패했습니다: " + error.message);
+    },
+  });
+
   const handleCommentSubmit = () => {
     if (!isAuthenticated) {
       toast.error("로그인이 필요합니다.");
@@ -72,6 +83,14 @@ export default function CommunityDetail() {
     if (confirm("정말 이 댓글을 삭제하시겠습니까?")) {
       deleteCommentMutation.mutate({ id: commentId });
     }
+  };
+
+  const handleLike = () => {
+    if (!isAuthenticated) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+    likeMutation.mutate({ postId });
   };
 
   if (postLoading || commentsLoading) {
@@ -98,7 +117,7 @@ export default function CommunityDetail() {
     );
   }
 
-  const canEditPost = isAuthenticated && user?.id === post.userId;
+  const canEditPost = isAuthenticated && (user?.id === post.userId || user?.role === 'admin');
   const canDeletePost = isAuthenticated && (user?.id === post.userId || user?.role === 'admin');
 
   return (
@@ -108,9 +127,14 @@ export default function CommunityDetail() {
           <CardHeader>
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <CardTitle className="text-2xl mb-2">{post.title}</CardTitle>
+                <div className="flex items-center gap-2 mb-2">
+                  {post.isNotice === 'true' && (
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">공지</span>
+                  )}
+                  <CardTitle className="text-2xl">{post.title}</CardTitle>
+                </div>
                 <CardDescription>
-                  작성자: 회원 {post.userId} | 조회수: {post.viewCount} | 작성일: {new Date(post.createdAt).toLocaleString("ko-KR")}
+                  작성자: 회원 {post.userId} | 조회수: {post.viewCount} | 좋아요: {post.likeCount} | 작성일: {new Date(post.createdAt).toLocaleString("ko-KR")}
                 </CardDescription>
               </div>
               {(canEditPost || canDeletePost) && (
@@ -131,8 +155,36 @@ export default function CommunityDetail() {
               )}
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="whitespace-pre-wrap">{post.content}</div>
+            
+            {post.attachmentUrl && post.attachmentName && (
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  <a
+                    href={post.attachmentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {post.attachmentName}
+                  </a>
+                </div>
+              </div>
+            )}
+
+            <div className="border-t pt-4">
+              <Button
+                variant={likeStatus?.liked ? "default" : "outline"}
+                size="sm"
+                onClick={handleLike}
+                disabled={likeMutation.isPending}
+              >
+                <Heart className={`w-4 h-4 mr-1 ${likeStatus?.liked ? 'fill-current' : ''}`} />
+                좋아요 {post.likeCount}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

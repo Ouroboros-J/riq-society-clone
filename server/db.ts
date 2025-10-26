@@ -1,6 +1,6 @@
-import { desc, eq, like, or } from "drizzle-orm";
+import { and, desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { certificates, comments, InsertCertificate, InsertComment, InsertPost, InsertUser, posts, users } from "../drizzle/schema";
+import { certificates, comments, InsertCertificate, InsertComment, InsertPost, InsertPostLike, InsertUser, postLikes, posts, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -312,6 +312,72 @@ export async function deleteComment(id: number) {
   }
 
   const result = await db.delete(comments).where(eq(comments.id, id));
+  return result;
+}
+
+// Post Like functions
+export async function getPostLike(postId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get post like: database not available");
+    return null;
+  }
+
+  const result = await db.select().from(postLikes).where(
+    and(eq(postLikes.postId, postId), eq(postLikes.userId, userId))
+  ).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function createPostLike(like: InsertPostLike) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create post like: database not available");
+    return null;
+  }
+
+  const result = await db.insert(postLikes).values(like);
+  return result;
+}
+
+export async function deletePostLike(postId: number, userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot delete post like: database not available");
+    return null;
+  }
+
+  const result = await db.delete(postLikes).where(
+    and(eq(postLikes.postId, postId), eq(postLikes.userId, userId))
+  );
+  return result;
+}
+
+export async function incrementPostLikeCount(id: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot increment like count: database not available");
+    return null;
+  }
+
+  const post = await getPostById(id);
+  if (!post) return null;
+
+  const result = await db.update(posts).set({ likeCount: post.likeCount + 1 }).where(eq(posts.id, id));
+  return result;
+}
+
+export async function decrementPostLikeCount(id: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot decrement like count: database not available");
+    return null;
+  }
+
+  const post = await getPostById(id);
+  if (!post) return null;
+
+  const result = await db.update(posts).set({ likeCount: Math.max(0, post.likeCount - 1) }).where(eq(posts.id, id));
   return result;
 }
 
