@@ -125,3 +125,11 @@
 - [x] MyPage 검증 (포인트/뱃지 표시 제거 확인 - 완료)
 - [x] 빌드 에러 검증 (TypeScript 에러 1개 - main.tsx QueryClient 타입 경고, 무시 가능)
 
+
+
+## 포인트/뱃지 테이블 제거
+
+- [x] 스키마에서 pointTransactions, badges, userBadges 테이블 제거
+- [x] 데이터베이스 마이그레이션 실행
+- [x] 관련 타입 정의 제거
+

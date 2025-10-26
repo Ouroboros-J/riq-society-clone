@@ -1,6 +1,6 @@
 import { and, desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { badges, certificates, InsertBadge, InsertCertificate, InsertPointTransaction, InsertUser, InsertUserBadge, pointTransactions, userBadges, users } from "../drizzle/schema";
+import { certificates, InsertCertificate, InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;

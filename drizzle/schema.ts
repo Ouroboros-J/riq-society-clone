@@ -43,43 +43,6 @@ export const certificates = mysqlTable("certificates", {
 export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = typeof certificates.$inferInsert;
 
-// Posts, comments, and likes tables removed - moved to community site
-
-// Points system
-export const pointTransactions = mysqlTable("pointTransactions", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  amount: int("amount").notNull(), // positive for earning, negative for spending
-  reason: varchar("reason", { length: 255 }).notNull(), // 'post_create', 'comment_create', 'post_liked', 'badge_purchase'
-  referenceId: int("referenceId"), // post_id, comment_id, or badge_id
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type PointTransaction = typeof pointTransactions.$inferSelect;
-export type InsertPointTransaction = typeof pointTransactions.$inferInsert;
-
-// Badges
-export const badges = mysqlTable("badges", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  description: text("description").notNull(),
-  icon: varchar("icon", { length: 50 }).notNull(), // emoji or icon name
-  price: int("price").notNull(), // cost in points
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type Badge = typeof badges.$inferSelect;
-export type InsertBadge = typeof badges.$inferInsert;
-
-// User badges (purchased badges)
-export const userBadges = mysqlTable("userBadges", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  badgeId: int("badgeId").notNull(),
-  purchasedAt: timestamp("purchasedAt").defaultNow().notNull(),
-});
-
-export type UserBadge = typeof userBadges.$inferSelect;
-export type InsertUserBadge = typeof userBadges.$inferInsert;
+// Posts, comments, likes, points, badges tables removed - moved to community site with separate database
 
 // TODO: Add your tables here

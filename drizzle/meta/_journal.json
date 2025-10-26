@@ -43,6 +43,13 @@
       "when": 1761517523792,
       "tag": "0005_groovy_thunderbolt_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1761518352311,
+      "tag": "0006_outgoing_eternals",
+      "breakpoints": true
     }
   ]
 }
