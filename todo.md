@@ -112,3 +112,16 @@
 - [x] Header 메뉴 정리 (홈, 마이페이지, 관리자, 커뮤니티 링크만 유지)
 - [x] 데이터베이스 스키마 정리 (posts, comments, postLikes 테이블 제거)
 
+
+
+## 제거 작업 검증
+
+- [x] 데이터베이스 스키마 검증 (posts, comments, postLikes 테이블 제거 확인 - 완료)
+- [x] 서버 라우터 검증 (post, comment, points, badge, ranking 라우터 제거 확인 - 완료)
+- [x] 서버 db.ts 검증 (불필요한 함수 제거 확인 - 완료)
+- [x] 클라이언트 페이지 검증 (Community, BadgeShop, Ranking 페이지 제거 확인 - 완료)
+- [x] 라우트 검증 (App.tsx에서 게시판 관련 라우트 제거 확인 - 완료)
+- [x] Header 메뉴 검증 (불필요한 메뉴 제거 확인 - 완료)
+- [x] MyPage 검증 (포인트/뱃지 표시 제거 확인 - 완료)
+- [x] 빌드 에러 검증 (TypeScript 에러 1개 - main.tsx QueryClient 타입 경고, 무시 가능)
+

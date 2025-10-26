@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { addPoints, createBadge, createCertificate, getAllBadges, getAllCertificates, getAllTimeRanking, getAllUsers, getCertificateById, getMonthlyRanking, getUserBadges, getUserByOpenId, getUserCertificates, getUserPointHistory, getUserPoints, getWeeklyRanking, purchaseBadge, updateCertificateStatus, updateUserApprovalStatus } from "./db";
+import { createCertificate, getAllCertificates, getAllUsers, getCertificateById, getUserByOpenId, getUserCertificates, updateCertificateStatus, updateUserApprovalStatus } from "./db";
 import { z } from "zod";
 import { storagePut } from "./storage";
 import { generateCertificateApprovedEmail, generateCertificateRejectedEmail, sendEmail } from "./_core/email";
