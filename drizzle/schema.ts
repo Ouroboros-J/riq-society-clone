@@ -43,44 +43,7 @@ export const certificates = mysqlTable("certificates", {
 export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = typeof certificates.$inferInsert;
 
-export const posts = mysqlTable("posts", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
-  content: text("content").notNull(),
-  isNotice: mysqlEnum("isNotice", ["true", "false"]).default("false").notNull(),
-  likeCount: int("likeCount").default(0).notNull(),
-  viewCount: int("viewCount").default(0).notNull(),
-  attachmentUrl: text("attachmentUrl"),
-  attachmentName: varchar("attachmentName", { length: 255 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type Post = typeof posts.$inferSelect;
-export type InsertPost = typeof posts.$inferInsert;
-
-export const comments = mysqlTable("comments", {
-  id: int("id").autoincrement().primaryKey(),
-  postId: int("postId").notNull(),
-  userId: int("userId").notNull(),
-  content: text("content").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type Comment = typeof comments.$inferSelect;
-export type InsertComment = typeof comments.$inferInsert;
-
-export const postLikes = mysqlTable("postLikes", {
-  id: int("id").autoincrement().primaryKey(),
-  postId: int("postId").notNull(),
-  userId: int("userId").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type PostLike = typeof postLikes.$inferSelect;
-export type InsertPostLike = typeof postLikes.$inferInsert;
+// Posts, comments, and likes tables removed - moved to community site
 
 // Points system
 export const pointTransactions = mysqlTable("pointTransactions", {

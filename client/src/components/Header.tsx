@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Home, User, Users, LogOut, LogIn, Award, TrendingUp } from "lucide-react";
+import { Menu, Home, User, Users, LogOut, LogIn } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { APP_TITLE } from "@/const";
 
@@ -50,19 +50,7 @@ export default function Header() {
                     </Button>
                   </Link>
 
-                  <Link href="/badge-shop">
-                    <Button variant="ghost" className="w-full justify-start" size="lg">
-                      <Award className="mr-2 h-5 w-5" />
-                      뱃지 상점
-                    </Button>
-                  </Link>
 
-                  <Link href="/ranking">
-                    <Button variant="ghost" className="w-full justify-start" size="lg">
-                      <TrendingUp className="mr-2 h-5 w-5" />
-                      랭킹
-                    </Button>
-                  </Link>
 
                   {user?.role === 'admin' && (
                     <Link href="/admin">
