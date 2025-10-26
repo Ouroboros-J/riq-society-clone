@@ -28,6 +28,10 @@ export default function Admin() {
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
+  const { data: pendingPayments, isLoading: paymentsLoading, refetch: refetchPayments } = trpc.admin.listPendingPayments.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
   const approveCertMutation = trpc.admin.approveCertificate.useMutation({
     onSuccess: () => {
       toast.success("증명서가 승인되었습니다.");
@@ -47,6 +51,17 @@ export default function Admin() {
     },
     onError: (error) => {
       toast.error("거부 실패: " + error.message);
+    },
+  });
+
+  const confirmPaymentMutation = trpc.admin.confirmPayment.useMutation({
+    onSuccess: () => {
+      toast.success("입금이 확인되었습니다.");
+      refetchPayments();
+      refetchUsers();
+    },
+    onError: (error) => {
+      toast.error("입금 확인 실패: " + error.message);
     },
   });
 
@@ -95,6 +110,7 @@ export default function Admin() {
           <TabsList>
             <TabsTrigger value="users">회원 관리</TabsTrigger>
             <TabsTrigger value="certificates">증명서 관리</TabsTrigger>
+            <TabsTrigger value="payments">입금 확인</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -239,6 +255,59 @@ export default function Admin() {
                     ))}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <Card>
+              <CardHeader>
+                <CardTitle>입금 확인 대기 목록</CardTitle>
+                <CardDescription>
+                  입금 확인을 요청한 회원 {pendingPayments?.length || 0}명
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {paymentsLoading ? (
+                  <div className="text-center py-4">로딩 중...</div>
+                ) : pendingPayments && pendingPayments.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>이름</TableHead>
+                        <TableHead>이메일</TableHead>
+                        <TableHead>입금자명</TableHead>
+                        <TableHead>입금일시</TableHead>
+                        <TableHead>작업</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingPayments.map((payment: any) => (
+                        <TableRow key={payment.id}>
+                          <TableCell>{payment.id}</TableCell>
+                          <TableCell>{payment.name || '-'}</TableCell>
+                          <TableCell>{payment.email || '-'}</TableCell>
+                          <TableCell>{payment.depositorName || '-'}</TableCell>
+                          <TableCell>{payment.depositDate || '-'}</TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              onClick={() => confirmPaymentMutation.mutate({ userId: payment.id })}
+                              disabled={confirmPaymentMutation.isPending}
+                            >
+                              입금 확인
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    입금 확인 대기 중인 회원이 없습니다.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

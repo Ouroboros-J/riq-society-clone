@@ -24,7 +24,23 @@ export default function MyPage() {
     enabled: isAuthenticated,
   });
 
-  // Points and badges moved to community site
+  const { data: paymentStatus } = trpc.payment.getStatus.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const [depositorName, setDepositorName] = useState("");
+  const [depositDate, setDepositDate] = useState("");
+
+  const requestDepositMutation = trpc.certificate.requestDeposit.useMutation({
+    onSuccess: () => {
+      toast.success("입금 확인 요청이 제출되었습니다.");
+      setDepositorName("");
+      setDepositDate("");
+    },
+    onError: (error) => {
+      toast.error("입금 확인 요청에 실패했습니다: " + error.message);
+    },
+  });
 
   const uploadMutation = trpc.certificate.upload.useMutation({
     onSuccess: () => {
@@ -89,11 +105,18 @@ export default function MyPage() {
       reader.readAsDataURL(selectedFile);
     } catch (error) {
       setUploading(false);
-      toast.error("파일 업로드 중 오류가 발생했습니다.");
     }
   };
 
-  if (loading || certificatesLoading) {
+  const handleRequestDeposit = () => {
+    if (!depositorName || !depositDate) {
+      toast.error("입금자명과 입금일시를 모두 입력해주세요.");
+      return;
+    }
+    requestDepositMutation.mutate({ depositorName, depositDate });
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -130,152 +153,209 @@ export default function MyPage() {
     }
   };
 
+  const getPaymentStatusBadge = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return <Badge className="bg-green-500">결제 완료</Badge>;
+      case "deposit_requested":
+        return <Badge variant="secondary">입금 확인 대기중</Badge>;
+      default:
+        return <Badge variant="outline">미결제</Badge>;
+    }
+  };
+
   return (
     <>
       <Header />
       <div className="min-h-screen bg-background pt-16">
-      <div className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
-          <p className="text-muted-foreground">회원 정보 및 증명서 관리</p>
-        </div>
+        <div className="container py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
+            <p className="text-muted-foreground">회원 정보 및 증명서 관리</p>
+          </div>
 
-        <div className="grid gap-6 md:grid-cols-2 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>회원 정보</CardTitle>
+          <div className="grid gap-6 md:grid-cols-2 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>회원 정보</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>이름</Label>
+                  <p className="text-lg font-medium">{user?.name || "-"}</p>
+                </div>
+                <div>
+                  <Label>이메일</Label>
+                  <p className="text-lg">{user?.email || "-"}</p>
+                </div>
+                <div>
+                  <Label>회원 상태</Label>
+                  <div className="mt-2">{getApprovalStatusBadge(user?.approvalStatus || "pending")}</div>
+                </div>
+                <div>
+                  <Label>결제 상태</Label>
+                  <div className="mt-2">{getPaymentStatusBadge(paymentStatus?.paymentStatus || "pending")}</div>
+                </div>
+                <div>
+                  <Label>가입일</Label>
+                  <p>{new Date(user?.createdAt || "").toLocaleDateString("ko-KR")}</p>
+                </div>
+              </CardContent>
+            </Card>
 
-          </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>이름</Label>
-                <p className="text-lg font-medium">{user?.name || "-"}</p>
-              </div>
-              <div>
-                <Label>이메일</Label>
-                <p className="text-lg">{user?.email || "-"}</p>
-              </div>
-              <div>
-                <Label>회원 상태</Label>
-                <div className="mt-2">{getApprovalStatusBadge(user?.approvalStatus || "pending")}</div>
-              </div>
-              <div>
-                <Label>가입일</Label>
-                <p>{new Date(user?.createdAt || "").toLocaleDateString("ko-KR")}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>IQ 증명서 제출</CardTitle>
-              <CardDescription>JPG, PNG, PDF 파일 (최대 10MB)</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="file">증명서 파일</Label>
-                <Input
-                  id="file"
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={handleFileChange}
-                  disabled={uploading}
-                />
-                {selectedFile && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    선택된 파일: {selectedFile.name}
-                  </p>
+            <Card>
+              <CardHeader>
+                <CardTitle>입회비 결제</CardTitle>
+                <CardDescription>증명서 승인 후 입회비를 납부해주세요</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {paymentStatus?.paymentStatus === "confirmed" ? (
+                  <div className="text-center py-4">
+                    <Badge className="bg-green-500 text-lg px-4 py-2">결제 완료</Badge>
+                    <p className="mt-4 text-muted-foreground">입회비 납부가 확인되었습니다.</p>
+                  </div>
+                ) : paymentStatus?.paymentStatus === "deposit_requested" ? (
+                  <div className="text-center py-4">
+                    <Badge variant="secondary" className="text-lg px-4 py-2">입금 확인 대기중</Badge>
+                    <p className="mt-4 text-muted-foreground">관리자가 입금을 확인하고 있습니다.</p>
+                    <div className="mt-4 text-sm text-left">
+                      <p><strong>입금자명:</strong> {paymentStatus?.depositorName}</p>
+                      <p><strong>입금일시:</strong> {paymentStatus?.depositDate}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-muted p-4 rounded-lg">
+                      <h4 className="font-semibold mb-2">결제 방법</h4>
+                      <div className="space-y-2 text-sm">
+                        <p><strong>1. 토스 송금:</strong> <a href="https://toss.me/riqsociety" target="_blank" rel="noopener noreferrer" className="text-primary underline">토스로 송금하기</a></p>
+                        <p><strong>2. 카카오페이:</strong> <a href="https://open.kakao.com/o/g7mjmhGg" target="_blank" rel="noopener noreferrer" className="text-primary underline">오픈채팅방 입장</a></p>
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="depositorName">입금자명</Label>
+                      <Input
+                        id="depositorName"
+                        value={depositorName}
+                        onChange={(e) => setDepositorName(e.target.value)}
+                        placeholder="입금하신 이름을 입력하세요"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="depositDate">입금일시</Label>
+                      <Input
+                        id="depositDate"
+                        value={depositDate}
+                        onChange={(e) => setDepositDate(e.target.value)}
+                        placeholder="예: 2024년 1월 15일 14:30"
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleRequestDeposit} 
+                      className="w-full"
+                      disabled={requestDepositMutation.isPending}
+                    >
+                      {requestDepositMutation.isPending ? "제출 중..." : "입금 확인 요청"}
+                    </Button>
+                  </>
                 )}
-              </div>
-              <div>
-                <Label htmlFor="testName">시험 이름 (선택)</Label>
-                <Input
-                  id="testName"
-                  placeholder="예: WAIS-IV"
-                  value={testName}
-                  onChange={(e) => setTestName(e.target.value)}
-                  disabled={uploading}
-                />
-              </div>
-              <div>
-                <Label htmlFor="score">점수 (선택)</Label>
-                <Input
-                  id="score"
-                  placeholder="예: IQ 145"
-                  value={score}
-                  onChange={(e) => setScore(e.target.value)}
-                  disabled={uploading}
-                />
-              </div>
-              <Button onClick={handleUpload} disabled={!selectedFile || uploading} className="w-full">
-                {uploading ? "업로드 중..." : "증명서 제출"}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>제출한 증명서</CardTitle>
-            <CardDescription>총 {certificates?.length || 0}개</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {certificates && certificates.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>파일명</TableHead>
-                    <TableHead>시험 이름</TableHead>
-                    <TableHead>점수</TableHead>
-                    <TableHead>상태</TableHead>
-                    <TableHead>제출일</TableHead>
-                    <TableHead>파일</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {certificates.map((cert) => (
-                    <TableRow key={cert.id}>
-                      <TableCell>{cert.fileName}</TableCell>
-                      <TableCell>{cert.testName || "-"}</TableCell>
-                      <TableCell>{cert.score || "-"}</TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {getStatusBadge(cert.status)}
-                          {cert.status === "rejected" && cert.rejectionReason && (
-                            <p className="text-xs text-destructive mt-1">
-                              거부 사유: {cert.rejectionReason}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{new Date(cert.createdAt).toLocaleDateString("ko-KR")}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          onClick={() => window.open(cert.fileUrl, "_blank")}
-                        >
-                          보기
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                제출한 증명서가 없습니다.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          <div className="grid gap-6 md:grid-cols-2 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>IQ 증명서 제출</CardTitle>
+                <CardDescription>JPG, PNG, PDF 파일 (최대 10MB)</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="file">증명서 파일</Label>
+                  <Input
+                    id="file"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={handleFileChange}
+                    disabled={uploading}
+                  />
+                  {selectedFile && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      선택된 파일: {selectedFile.name}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="testName">시험 이름 (선택)</Label>
+                  <Input
+                    id="testName"
+                    value={testName}
+                    onChange={(e) => setTestName(e.target.value)}
+                    placeholder="예: WAIS-IV"
+                    disabled={uploading}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="score">점수 (선택)</Label>
+                  <Input
+                    id="score"
+                    value={score}
+                    onChange={(e) => setScore(e.target.value)}
+                    placeholder="예: 135"
+                    disabled={uploading}
+                  />
+                </div>
+                <Button onClick={handleUpload} disabled={!selectedFile || uploading} className="w-full">
+                  {uploading ? "업로드 중..." : "증명서 제출"}
+                </Button>
+              </CardContent>
+            </Card>
 
-        <div className="mt-8">
-          <Button variant="outline" onClick={() => setLocation("/")}>
-            홈으로 돌아가기
-          </Button>
+            <Card>
+              <CardHeader>
+                <CardTitle>제출한 증명서 목록</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {certificatesLoading ? (
+                  <div className="text-center py-4">로딩 중...</div>
+                ) : certificates && certificates.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>시험</TableHead>
+                        <TableHead>점수</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead>제출일</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {certificates.map((cert: any) => (
+                        <TableRow key={cert.id}>
+                          <TableCell>{cert.testName || "-"}</TableCell>
+                          <TableCell>{cert.score || "-"}</TableCell>
+                          <TableCell>{getStatusBadge(cert.status)}</TableCell>
+                          <TableCell>
+                            {new Date(cert.createdAt).toLocaleDateString("ko-KR")}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    제출한 증명서가 없습니다.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-8">
+            <Button variant="outline" onClick={() => setLocation("/")}>
+              홈으로 돌아가기
+            </Button>
+          </div>
         </div>
-      </div>
       </div>
     </>
   );

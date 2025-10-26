@@ -178,4 +178,44 @@ export async function updateUserApprovalStatus(
   return result;
 }
 
+export async function requestDepositConfirmation(
+  userId: number,
+  depositorName: string,
+  depositDate: string
+) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot request deposit confirmation: database not available");
+    return null;
+  }
+
+  const result = await db.update(users).set({ 
+    paymentStatus: "deposit_requested",
+    depositorName,
+    depositDate 
+  }).where(eq(users.id, userId));
+  return result;
+}
+
+export async function confirmPayment(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot confirm payment: database not available");
+    return null;
+  }
+
+  const result = await db.update(users).set({ paymentStatus: "confirmed" }).where(eq(users.id, userId));
+  return result;
+}
+
+export async function getPendingPayments() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get pending payments: database not available");
+    return [];
+  }
+
+  return await db.select().from(users).where(eq(users.paymentStatus, "deposit_requested"));
+}
+
 
