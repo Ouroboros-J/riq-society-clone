@@ -18,9 +18,7 @@ export default function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-b border-border">
       <div className="container flex items-center justify-between h-16">
         <Link href="/">
-          <h1 className="text-xl font-bold cursor-pointer hover:text-primary transition-colors">
-            {APP_TITLE}
-          </h1>
+          <img src="/riq-logo-vertical.svg" alt="RIQ Society" className="h-10 cursor-pointer hover:opacity-80 transition-opacity" />
         </Link>
 
         <Sheet>
