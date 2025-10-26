@@ -152,7 +152,7 @@ export default function Home() {
               <ul className="space-y-3 text-sm">
                 <li className="flex items-start">
                   <span className="text-primary mr-2">›</span>
-                  <span>RIQ Admission Test, SD15 135</span>
+                  <span className="font-semibold">RIQ Admission Test, SD15 135</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">›</span>
