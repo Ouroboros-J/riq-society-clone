@@ -75,9 +75,9 @@ export default function Home() {
             {!isAuthenticated ? (
               <>
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="lg"
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px]"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-[200px]"
                   onClick={() => window.location.href = getLoginUrl()}
                 >
                   로그인 / 회원가입
@@ -94,30 +94,30 @@ export default function Home() {
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
-                  <Link href="/mypage">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px]"
-                    >
-                      마이페이지
-                    </Button>
-                  </Link>
+                <Link href="/mypage">
+                  <Button
+                    variant="default"
+                    size="lg"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-[200px]"
+                  >
+                    마이페이지
+                  </Button>
+                </Link>
                   {user?.role === 'admin' && (
                     <Link href="/admin">
                       <Button
-                        variant="outline"
+                        variant="default"
                         size="lg"
-                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px]"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-[200px]"
                       >
                         관리자 페이지
                       </Button>
                     </Link>
                   )}
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="lg"
-                    className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground min-w-[200px]"
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-w-[200px]"
                     onClick={() => logout()}
                   >
                     로그아웃
