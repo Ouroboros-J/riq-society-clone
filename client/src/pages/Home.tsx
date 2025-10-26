@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import ParticleBackground from "@/components/ParticleBackground";
+import Header from "@/components/Header";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
 
@@ -10,8 +11,10 @@ export default function Home() {
   let { user, loading, error, isAuthenticated, logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <ParticleBackground />
+    <>
+      <Header />
+      <div className="min-h-screen bg-background text-foreground">
+        <ParticleBackground />
       
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4">
@@ -78,15 +81,6 @@ export default function Home() {
                 >
                   로그인 / 회원가입
                 </Button>
-                <Link href="/community">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground min-w-[200px]"
-                  >
-                    커뮤니티
-                  </Button>
-                </Link>
               </>
             ) : (
               <>
@@ -305,7 +299,7 @@ export default function Home() {
           <p>© 2024 RIQ Society. All rights reserved.</p>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }
-

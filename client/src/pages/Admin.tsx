@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -81,7 +82,9 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Header />
+      <div className="min-h-screen bg-background pt-16">
       <div className="container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">관리자 페이지</h1>
@@ -285,7 +288,8 @@ export default function Admin() {
           </Button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
