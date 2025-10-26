@@ -133,3 +133,12 @@
 - [x] 데이터베이스 마이그레이션 실행
 - [x] 관련 타입 정의 제거
 
+
+
+## 잔여 파일 및 코드 제거
+
+- [x] seed-badges.ts 파일 제거
+- [x] seed-ranking-badges.ts 파일 제거
+- [x] ComponentShowcase.tsx 파일 제거 (불필요한 UI 쇼케이스)
+- [x] 프로젝트 전체 코드 검토 완료
+
