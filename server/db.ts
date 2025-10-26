@@ -1,4 +1,4 @@
-import { and, desc, eq, like, or } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { certificates, InsertCertificate, InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';

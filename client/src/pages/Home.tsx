@@ -19,6 +19,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4">
         <div className="text-center z-10">
+          <img src="/riq-logo.svg" alt="RIQ Society Logo" className="w-64 md:w-96 mx-auto mb-8" />
           <h1 className="text-sm md:text-base tracking-[0.3em] mb-8 text-muted-foreground font-light">
             PRO IIS QUI ULTRA COGITANT
           </h1>
@@ -57,7 +58,7 @@ export default function Home() {
               RIQ는 1%의 고지능자를 서로 연결하고, 모든 고급 정보들에 대한 접근 권한을 부여하며, 나아가 세계에 진정한 가치를 창출할 것입니다.
             </p>
             <p>
-              우리는 입회 자격이 있는 고지능자들을 면밀히 심사할 것이하며, 이후 통과자들에게 정회원 자격을 부여할 것입니다.
+              우리는 입회 자격이 있는 고지능자들을 면밀히 심사할 것이며, 이후 통과자들에게 정회원 자격을 부여할 것입니다.
             </p>
           </div>
 
@@ -133,7 +134,7 @@ export default function Home() {
         <div className="container max-w-6xl mx-auto z-10">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 flex items-center justify-center">
-              <img src="/r-icon.webp" alt="R Icon" className="w-12 h-12" />
+              <img src="/riq-icon.svg" alt="R Icon" className="w-12 h-12" />
             </div>
             <h2 className="text-3xl md:text-4xl font-bold">Admission</h2>
           </div>

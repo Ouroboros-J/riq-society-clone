@@ -40,7 +40,6 @@ export const appRouter = router({
           const user = users.find(u => u.id === certificate.userId);
           
           if (user && user.email) {
-            // TODO: 토스 링크를 환경변수로 설정하세요
             const tossLink = process.env.TOSS_PAYMENT_LINK || 'https://toss.me/riqsociety';
             const kakaoPayLink = 'https://open.kakao.com/o/g7mjmhGg';
             
@@ -139,13 +138,6 @@ export const appRouter = router({
       };
     }),
   }),
-
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
 });
 
 export type AppRouter = typeof appRouter;
