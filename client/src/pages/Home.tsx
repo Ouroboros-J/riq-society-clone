@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import ParticleBackground from "@/components/ParticleBackground";
+import GalaxyBackground from "@/components/GalaxyBackground";
 import Header from "@/components/Header";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
@@ -14,7 +14,7 @@ export default function Home() {
     <>
       <Header />
       <div className="min-h-screen bg-background text-foreground">
-        <ParticleBackground />
+        <GalaxyBackground />
       
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4">
