@@ -78,6 +78,15 @@ export default function Home() {
                 >
                   로그인 / 회원가입
                 </Button>
+                <Link href="/community">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground min-w-[200px]"
+                  >
+                    커뮤니티
+                  </Button>
+                </Link>
               </>
             ) : (
               <>

@@ -43,4 +43,29 @@ export const certificates = mysqlTable("certificates", {
 export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = typeof certificates.$inferInsert;
 
+export const posts = mysqlTable("posts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  viewCount: int("viewCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Post = typeof posts.$inferSelect;
+export type InsertPost = typeof posts.$inferInsert;
+
+export const comments = mysqlTable("comments", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull(),
+  userId: int("userId").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Comment = typeof comments.$inferSelect;
+export type InsertComment = typeof comments.$inferInsert;
+
 // TODO: Add your tables here

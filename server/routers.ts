@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { createCertificate, getAllCertificates, getAllUsers, getCertificateById, getUserByOpenId, getUserCertificates, updateCertificateStatus, updateUserApprovalStatus } from "./db";
+import { createCertificate, createComment, createPost, deleteComment, deletePost, getAllCertificates, getAllPosts, getAllUsers, getCertificateById, getCommentsByPostId, getPostById, getUserByOpenId, getUserCertificates, incrementPostViewCount, updateCertificateStatus, updateComment, updatePost, updateUserApprovalStatus } from "./db";
 import { z } from "zod";
 import { storagePut } from "./storage";
 import { generateCertificateApprovedEmail, generateCertificateRejectedEmail, sendEmail } from "./_core/email";
@@ -108,6 +108,103 @@ export const appRouter = router({
           testName: input.testName,
           score: input.score,
         });
+      }),
+  }),
+
+  post: router({
+    list: publicProcedure
+      .input(
+        z.object({
+          limit: z.number().optional(),
+          offset: z.number().optional(),
+          search: z.string().optional(),
+        })
+      )
+      .query(async ({ input }) => {
+        return await getAllPosts(input.limit, input.offset, input.search);
+      }),
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        await incrementPostViewCount(input.id);
+        return await getPostById(input.id);
+      }),
+    create: protectedProcedure
+      .input(
+        z.object({
+          title: z.string(),
+          content: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await createPost({
+          userId: ctx.user.id,
+          title: input.title,
+          content: input.content,
+        });
+      }),
+    update: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          title: z.string(),
+          content: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const post = await getPostById(input.id);
+        if (!post || post.userId !== ctx.user.id) {
+          throw new Error("권한이 없습니다.");
+        }
+        return await updatePost(input.id, input.title, input.content);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const post = await getPostById(input.id);
+        if (!post || (post.userId !== ctx.user.id && ctx.user.role !== 'admin')) {
+          throw new Error("권한이 없습니다.");
+        }
+        return await deletePost(input.id);
+      }),
+  }),
+
+  comment: router({
+    list: publicProcedure
+      .input(z.object({ postId: z.number() }))
+      .query(async ({ input }) => {
+        return await getCommentsByPostId(input.postId);
+      }),
+    create: protectedProcedure
+      .input(
+        z.object({
+          postId: z.number(),
+          content: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await createComment({
+          postId: input.postId,
+          userId: ctx.user.id,
+          content: input.content,
+        });
+      }),
+    update: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          content: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        // TODO: Check if user owns the comment
+        return await updateComment(input.id, input.content);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // TODO: Check if user owns the comment or is admin
+        return await deleteComment(input.id);
       }),
   }),
 

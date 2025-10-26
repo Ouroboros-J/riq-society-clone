@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { certificates, InsertCertificate, InsertUser, users } from "../drizzle/schema";
+import { certificates, comments, InsertCertificate, InsertComment, InsertPost, InsertUser, posts, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -175,6 +175,143 @@ export async function updateUserApprovalStatus(
   }
 
   const result = await db.update(users).set({ approvalStatus }).where(eq(users.id, userId));
+  return result;
+}
+
+// Post functions
+export async function getAllPosts(limit?: number, offset?: number, search?: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get posts: database not available");
+    return [];
+  }
+
+  let query = db.select().from(posts).orderBy(desc(posts.createdAt));
+  
+  if (search) {
+    query = query.where(
+      or(
+        like(posts.title, `%${search}%`),
+        like(posts.content, `%${search}%`)
+      )
+    ) as any;
+  }
+  
+  if (limit) {
+    query = query.limit(limit) as any;
+  }
+  
+  if (offset) {
+    query = query.offset(offset) as any;
+  }
+
+  const result = await query;
+  return result;
+}
+
+export async function getPostById(id: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get post: database not available");
+    return null;
+  }
+
+  const result = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function createPost(post: InsertPost) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create post: database not available");
+    return null;
+  }
+
+  const result = await db.insert(posts).values(post);
+  return result;
+}
+
+export async function updatePost(id: number, title: string, content: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update post: database not available");
+    return null;
+  }
+
+  const result = await db.update(posts).set({ title, content }).where(eq(posts.id, id));
+  return result;
+}
+
+export async function deletePost(id: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot delete post: database not available");
+    return null;
+  }
+
+  // Delete comments first
+  await db.delete(comments).where(eq(comments.postId, id));
+  
+  const result = await db.delete(posts).where(eq(posts.id, id));
+  return result;
+}
+
+export async function incrementPostViewCount(id: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot increment view count: database not available");
+    return null;
+  }
+
+  const post = await getPostById(id);
+  if (!post) return null;
+
+  const result = await db.update(posts).set({ viewCount: post.viewCount + 1 }).where(eq(posts.id, id));
+  return result;
+}
+
+// Comment functions
+export async function getCommentsByPostId(postId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get comments: database not available");
+    return [];
+  }
+
+  const result = await db.select().from(comments).where(eq(comments.postId, postId)).orderBy(desc(comments.createdAt));
+  return result;
+}
+
+export async function createComment(comment: InsertComment) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create comment: database not available");
+    return null;
+  }
+
+  const result = await db.insert(comments).values(comment);
+  return result;
+}
+
+export async function updateComment(id: number, content: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update comment: database not available");
+    return null;
+  }
+
+  const result = await db.update(comments).set({ content }).where(eq(comments.id, id));
+  return result;
+}
+
+export async function deleteComment(id: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot delete comment: database not available");
+    return null;
+  }
+
+  const result = await db.delete(comments).where(eq(comments.id, id));
   return result;
 }
 

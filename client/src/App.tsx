@@ -8,6 +8,9 @@ import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import MyPage from "./pages/MyPage";
+import Community from "./pages/Community";
+import CommunityNew from "./pages/CommunityNew";
+import CommunityDetail from "./pages/CommunityDetail";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -17,6 +20,9 @@ function Router() {
       <Route path={"/admin"} component={Admin} />
       <Route path={"/auth"} component={Auth} />
       <Route path={"/mypage"} component={MyPage} />
+      <Route path={"/community"} component={Community} />
+      <Route path={"/community/new"} component={CommunityNew} />
+      <Route path={"/community/:id"} component={CommunityDetail} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
