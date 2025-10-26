@@ -1,7 +1,14 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import ParticleBackground from "@/components/ParticleBackground";
+import { getLoginUrl } from "@/const";
+import { Link } from "wouter";
 
 export default function Home() {
+  // The userAuth hooks provides authentication state
+  // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
+  let { user, loading, error, isAuthenticated, logout } = useAuth();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ParticleBackground />
@@ -61,20 +68,50 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px]"
-            >
-              입회 안내
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground min-w-[200px]"
-            >
-              커뮤니티 (회원 전용)
-            </Button>
+            {!isAuthenticated ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px]"
+                  onClick={() => window.location.href = getLoginUrl()}
+                >
+                  로그인 / 회원가입
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="text-center mb-4">
+                  <p className="text-sm text-muted-foreground">
+                    환영합니다, <span className="font-semibold text-foreground">{user?.name || '회원'}님</span>
+                  </p>
+                  {user?.role === 'admin' && (
+                    <p className="text-xs text-primary mt-1">관리자</p>
+                  )}
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
+                  {user?.role === 'admin' && (
+                    <Link href="/admin">
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px]"
+                      >
+                        관리자 페이지
+                      </Button>
+                    </Link>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground min-w-[200px]"
+                    onClick={() => logout()}
+                  >
+                    로그아웃
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
