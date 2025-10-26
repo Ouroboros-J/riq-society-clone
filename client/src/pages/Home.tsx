@@ -90,6 +90,15 @@ export default function Home() {
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
+                  <Link href="/mypage">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px]"
+                    >
+                      마이페이지
+                    </Button>
+                  </Link>
                   {user?.role === 'admin' && (
                     <Link href="/admin">
                       <Button

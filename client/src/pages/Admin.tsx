@@ -2,15 +2,61 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { toast } from "sonner";
 
 export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, setLocation] = useLocation();
-  const { data: users, isLoading: usersLoading } = trpc.admin.listUsers.useQuery(undefined, {
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [selectedCertId, setSelectedCertId] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+
+  const { data: users, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.listUsers.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  const { data: certificates, isLoading: certificatesLoading, refetch: refetchCertificates } = trpc.admin.listAllCertificates.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  const approveCertMutation = trpc.admin.approveCertificate.useMutation({
+    onSuccess: () => {
+      toast.success("증명서가 승인되었습니다.");
+      refetchCertificates();
+    },
+    onError: (error) => {
+      toast.error("승인 실패: " + error.message);
+    },
+  });
+
+  const rejectCertMutation = trpc.admin.rejectCertificate.useMutation({
+    onSuccess: () => {
+      toast.success("증명서가 거부되었습니다.");
+      setRejectDialogOpen(false);
+      setRejectionReason("");
+      refetchCertificates();
+    },
+    onError: (error) => {
+      toast.error("거부 실패: " + error.message);
+    },
+  });
+
+  const updateUserApprovalMutation = trpc.admin.updateUserApproval.useMutation({
+    onSuccess: () => {
+      toast.success("회원 상태가 업데이트되었습니다.");
+      refetchUsers();
+    },
+    onError: (error) => {
+      toast.error("업데이트 실패: " + error.message);
+    },
   });
 
   useEffect(() => {
@@ -19,7 +65,7 @@ export default function Admin() {
     }
   }, [isAuthenticated, user, loading, setLocation]);
 
-  if (loading || usersLoading) {
+  if (loading || usersLoading || certificatesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -42,44 +88,196 @@ export default function Admin() {
           <p className="text-muted-foreground">RIQ Society 회원 관리</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>회원 목록</CardTitle>
-            <CardDescription>
-              전체 회원 {users?.length || 0}명
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>이름</TableHead>
-                  <TableHead>이메일</TableHead>
-                  <TableHead>역할</TableHead>
-                  <TableHead>가입일</TableHead>
-                  <TableHead>마지막 로그인</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users?.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell>{u.id}</TableCell>
-                    <TableCell>{u.name || '-'}</TableCell>
-                    <TableCell>{u.email || '-'}</TableCell>
-                    <TableCell>
-                      <span className={u.role === 'admin' ? 'text-primary font-semibold' : ''}>
-                        {u.role === 'admin' ? '관리자' : '회원'}
-                      </span>
-                    </TableCell>
-                    <TableCell>{new Date(u.createdAt).toLocaleDateString('ko-KR')}</TableCell>
-                    <TableCell>{new Date(u.lastSignedIn).toLocaleDateString('ko-KR')}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="users" className="w-full">
+          <TabsList>
+            <TabsTrigger value="users">회원 관리</TabsTrigger>
+            <TabsTrigger value="certificates">증명서 관리</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users">
+            <Card>
+              <CardHeader>
+                <CardTitle>회원 목록</CardTitle>
+                <CardDescription>
+                  전체 회원 {users?.length || 0}명
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>이름</TableHead>
+                      <TableHead>이메일</TableHead>
+                      <TableHead>역할</TableHead>
+                      <TableHead>승인 상태</TableHead>
+                      <TableHead>가입일</TableHead>
+                      <TableHead>작업</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users?.map((u) => (
+                      <TableRow key={u.id}>
+                        <TableCell>{u.id}</TableCell>
+                        <TableCell>{u.name || '-'}</TableCell>
+                        <TableCell>{u.email || '-'}</TableCell>
+                        <TableCell>
+                          <span className={u.role === 'admin' ? 'text-primary font-semibold' : ''}>
+                            {u.role === 'admin' ? '관리자' : '회원'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {u.approvalStatus === 'approved' && <Badge className="bg-green-500">승인됨</Badge>}
+                          {u.approvalStatus === 'rejected' && <Badge variant="destructive">거부됨</Badge>}
+                          {u.approvalStatus === 'pending' && <Badge variant="secondary">대기중</Badge>}
+                        </TableCell>
+                        <TableCell>{new Date(u.createdAt).toLocaleDateString('ko-KR')}</TableCell>
+                        <TableCell>
+                          {u.role !== 'admin' && (
+                            <div className="flex gap-2">
+                              {u.approvalStatus !== 'approved' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => updateUserApprovalMutation.mutate({ userId: u.id, status: 'approved' })}
+                                >
+                                  승인
+                                </Button>
+                              )}
+                              {u.approvalStatus !== 'rejected' && (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => updateUserApprovalMutation.mutate({ userId: u.id, status: 'rejected' })}
+                                >
+                                  거부
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="certificates">
+            <Card>
+              <CardHeader>
+                <CardTitle>증명서 목록</CardTitle>
+                <CardDescription>
+                  전체 증명서 {certificates?.length || 0}개
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>회원 ID</TableHead>
+                      <TableHead>파일명</TableHead>
+                      <TableHead>시험 이름</TableHead>
+                      <TableHead>점수</TableHead>
+                      <TableHead>상태</TableHead>
+                      <TableHead>제출일</TableHead>
+                      <TableHead>작업</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {certificates?.map((cert) => (
+                      <TableRow key={cert.id}>
+                        <TableCell>{cert.id}</TableCell>
+                        <TableCell>{cert.userId}</TableCell>
+                        <TableCell>{cert.fileName}</TableCell>
+                        <TableCell>{cert.testName || '-'}</TableCell>
+                        <TableCell>{cert.score || '-'}</TableCell>
+                        <TableCell>
+                          {cert.status === 'approved' && <Badge className="bg-green-500">승인됨</Badge>}
+                          {cert.status === 'rejected' && <Badge variant="destructive">거부됨</Badge>}
+                          {cert.status === 'pending' && <Badge variant="secondary">대기중</Badge>}
+                        </TableCell>
+                        <TableCell>{new Date(cert.createdAt).toLocaleDateString('ko-KR')}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="link"
+                              onClick={() => window.open(cert.fileUrl, '_blank')}
+                            >
+                              보기
+                            </Button>
+                            {cert.status === 'pending' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => approveCertMutation.mutate({ id: cert.id })}
+                                >
+                                  승인
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    setSelectedCertId(cert.id);
+                                    setRejectDialogOpen(true);
+                                  }}
+                                >
+                                  거부
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>증명서 거부</DialogTitle>
+              <DialogDescription>
+                거부 사유를 입력해주세요.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="reason">거부 사유</Label>
+                <Textarea
+                  id="reason"
+                  placeholder="거부 사유를 입력하세요"
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+                취소
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (selectedCertId && rejectionReason) {
+                    rejectCertMutation.mutate({ id: selectedCertId, reason: rejectionReason });
+                  }
+                }}
+                disabled={!rejectionReason}
+              >
+                거부
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="mt-8">
           <Button variant="outline" onClick={() => setLocation("/")}>

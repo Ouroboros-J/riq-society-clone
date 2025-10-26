@@ -17,6 +17,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  approvalStatus: mysqlEnum("approvalStatus", ["pending", "approved", "rejected"]).default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -24,5 +25,22 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+export const certificates = mysqlTable("certificates", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  fileType: varchar("fileType", { length: 50 }).notNull(),
+  testName: varchar("testName", { length: 255 }),
+  score: varchar("score", { length: 100 }),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  rejectionReason: text("rejectionReason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Certificate = typeof certificates.$inferSelect;
+export type InsertCertificate = typeof certificates.$inferInsert;
 
 // TODO: Add your tables here
