@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { createCertificate, createComment, createPost, createPostLike, decrementPostLikeCount, deleteComment, deletePost, deletePostLike, getAllCertificates, getAllPosts, getAllUsers, getCertificateById, getCommentsByPostId, getPostById, getPostLike, getUserByOpenId, getUserCertificates, incrementPostLikeCount, incrementPostViewCount, updateCertificateStatus, updateComment, updatePost, updateUserApprovalStatus } from "./db";
+import { addPoints, createBadge, createCertificate, createComment, createPost, createPostLike, decrementPostLikeCount, deleteComment, deletePost, deletePostLike, getAllBadges, getAllCertificates, getAllPosts, getAllUsers, getCertificateById, getCommentsByPostId, getPostById, getPostLike, getUserBadges, getUserByOpenId, getUserCertificates, getUserPointHistory, getUserPoints, incrementPostLikeCount, incrementPostViewCount, purchaseBadge, updateCertificateStatus, updateComment, updatePost, updateUserApprovalStatus } from "./db";
 import { z } from "zod";
 import { storagePut } from "./storage";
 import { generateCertificateApprovedEmail, generateCertificateRejectedEmail, sendEmail } from "./_core/email";
@@ -156,7 +156,7 @@ export const appRouter = router({
           attachmentUrl = url;
         }
         
-        return await createPost({
+        const result = await createPost({
           userId: ctx.user.id,
           title: input.title,
           content: input.content,
@@ -164,6 +164,13 @@ export const appRouter = router({
           attachmentUrl,
           attachmentName: input.attachmentName,
         });
+        
+        // Award points for creating a post (10 points)
+        if (result && ctx.user?.id) {
+          await addPoints(ctx.user.id, 10, 'post_create');
+        }
+        
+        return result;
       }),
     update: protectedProcedure
       .input(
@@ -194,18 +201,22 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const existingLike = await getPostLike(input.postId, ctx.user.id);
         
-        if (existingLike) {
+                if (existingLike) {
           // Unlike
           await deletePostLike(input.postId, ctx.user.id);
           await decrementPostLikeCount(input.postId);
           return { liked: false };
         } else {
           // Like
-          await createPostLike({
-            postId: input.postId,
-            userId: ctx.user.id,
-          });
+          await createPostLike({ postId: input.postId, userId: ctx.user.id });
           await incrementPostLikeCount(input.postId);
+          
+          // Award points to the post author (2 points)
+          const post = await getPostById(input.postId);
+          if (post && post.userId !== ctx.user.id) {
+            await addPoints(post.userId, 2, 'post_liked', input.postId);
+          }
+          
           return { liked: true };
         }
       }),
@@ -231,11 +242,18 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        return await createComment({
+        const result = await createComment({
           postId: input.postId,
           userId: ctx.user.id,
           content: input.content,
         });
+        
+        // Award points for creating a comment (5 points)
+        if (result && ctx.user?.id) {
+          await addPoints(ctx.user.id, 5, 'comment_create', input.postId);
+        }
+        
+        return result;
       }),
     update: protectedProcedure
       .input(
@@ -254,6 +272,41 @@ export const appRouter = router({
         // TODO: Check if user owns the comment or is admin
         return await deleteComment(input.id);
       }),
+  }),
+
+  points: router({
+    getMyPoints: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserPoints(ctx.user.id);
+    }),
+    getMyHistory: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserPointHistory(ctx.user.id);
+    }),
+  }),
+
+  badge: router({
+    list: publicProcedure.query(async () => {
+      return await getAllBadges();
+    }),
+    create: adminProcedure
+      .input(
+        z.object({
+          name: z.string(),
+          description: z.string(),
+          icon: z.string(),
+          price: z.number(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await createBadge(input);
+      }),
+    purchase: protectedProcedure
+      .input(z.object({ badgeId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await purchaseBadge(ctx.user.id, input.badgeId);
+      }),
+    getMyBadges: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserBadges(ctx.user.id);
+    }),
   }),
 
   // TODO: add feature routers here, e.g.

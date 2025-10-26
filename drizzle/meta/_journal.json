@@ -29,6 +29,13 @@
       "when": 1761515127642,
       "tag": "0003_dizzy_ares",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1761515947446,
+      "tag": "0004_bizarre_energizer",
+      "breakpoints": true
     }
   ]
 }

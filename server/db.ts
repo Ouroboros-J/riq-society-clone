@@ -1,6 +1,6 @@
 import { and, desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { certificates, comments, InsertCertificate, InsertComment, InsertPost, InsertPostLike, InsertUser, postLikes, posts, users } from "../drizzle/schema";
+import { badges, certificates, comments, InsertBadge, InsertCertificate, InsertComment, InsertPointTransaction, InsertPost, InsertPostLike, InsertUser, InsertUserBadge, pointTransactions, postLikes, posts, userBadges, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -378,6 +378,108 @@ export async function decrementPostLikeCount(id: number) {
   if (!post) return null;
 
   const result = await db.update(posts).set({ likeCount: Math.max(0, post.likeCount - 1) }).where(eq(posts.id, id));
+  return result;
+}
+
+// Points system
+export async function addPoints(userId: number, amount: number, reason: string, referenceId?: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  const transaction: InsertPointTransaction = {
+    userId,
+    amount,
+    reason,
+    referenceId,
+  };
+
+  await db.insert(pointTransactions).values(transaction);
+}
+
+export async function getUserPoints(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const transactions = await db.select().from(pointTransactions).where(eq(pointTransactions.userId, userId));
+  return transactions.reduce((sum, t) => sum + t.amount, 0);
+}
+
+export async function getUserPointHistory(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(pointTransactions).where(eq(pointTransactions.userId, userId)).orderBy(desc(pointTransactions.createdAt));
+}
+
+// Badges
+export async function createBadge(badge: InsertBadge) {
+  const db = await getDb();
+  if (!db) return null;
+
+  await db.insert(badges).values(badge);
+  return badge;
+}
+
+export async function getAllBadges() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(badges);
+}
+
+export async function purchaseBadge(userId: number, badgeId: number): Promise<{ success: boolean; message: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, message: "Database not available" };
+
+  // Check if user already owns the badge
+  const existing = await db.select().from(userBadges).where(and(eq(userBadges.userId, userId), eq(userBadges.badgeId, badgeId)));
+  if (existing.length > 0) {
+    return { success: false, message: "You already own this badge" };
+  }
+
+  // Get badge info
+  const badgeInfo = await db.select().from(badges).where(eq(badges.id, badgeId));
+  if (badgeInfo.length === 0) {
+    return { success: false, message: "Badge not found" };
+  }
+
+  const badge = badgeInfo[0];
+  const userPoints = await getUserPoints(userId);
+
+  if (userPoints < badge.price) {
+    return { success: false, message: "Insufficient points" };
+  }
+
+  // Deduct points
+  await addPoints(userId, -badge.price, "badge_purchase", badgeId);
+
+  // Add badge to user
+  const userBadge: InsertUserBadge = {
+    userId,
+    badgeId,
+  };
+  await db.insert(userBadges).values(userBadge);
+
+  return { success: true, message: "Badge purchased successfully" };
+}
+
+export async function getUserBadges(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select({
+      id: userBadges.id,
+      badgeId: userBadges.badgeId,
+      purchasedAt: userBadges.purchasedAt,
+      name: badges.name,
+      description: badges.description,
+      icon: badges.icon,
+    })
+    .from(userBadges)
+    .leftJoin(badges, eq(userBadges.badgeId, badges.id))
+    .where(eq(userBadges.userId, userId));
+
   return result;
 }
 

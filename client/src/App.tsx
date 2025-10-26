@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import MyPage from "./pages/MyPage";
+import BadgeShop from "./pages/BadgeShop";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -17,6 +18,7 @@ function Router() {
       <Route path={"/admin"} component={Admin} />
       <Route path={"/auth"} component={Auth} />
       <Route path={"/mypage"} component={MyPage} />
+      <Route path={"/badge-shop"} component={BadgeShop} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

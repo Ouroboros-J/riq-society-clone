@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
+import { Coins, ShoppingBag } from "lucide-react";
+import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -19,7 +21,15 @@ export default function MyPage() {
   const [score, setScore] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  const { data: certificates, isLoading: certificatesLoading, refetch } = trpc.certificate.list.useQuery(undefined, {
+  const { data: certificates, isLoading: certificatesLoading, refetch: refetchCertificates } = trpc.certificate.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const { data: myPoints } = trpc.points.getMyPoints.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const { data: myBadges } = trpc.badge.getMyBadges.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
@@ -29,7 +39,7 @@ export default function MyPage() {
       setSelectedFile(null);
       setTestName("");
       setScore("");
-      refetch();
+      refetchCertificates();
     },
     onError: (error) => {
       toast.error("증명서 제출에 실패했습니다: " + error.message);
@@ -135,13 +145,39 @@ export default function MyPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
           <p className="text-muted-foreground">회원 정보 및 증명서 관리</p>
+          <div className="flex items-center gap-4 mt-4">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <Coins className="w-5 h-5 text-yellow-500" />
+              <span>보유 포인트: {myPoints || 0}P</span>
+            </div>
+            <Link href="/badge-shop">
+              <Button variant="outline" size="sm">
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                뱃지 상점
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>회원 정보</CardTitle>
-            </CardHeader>
+        <Card>
+          <CardHeader>
+            <CardTitle>회원 정보</CardTitle>
+            {myBadges && myBadges.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {myBadges.map((badge) => (
+                  <span
+                    key={badge.id}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm"
+                    title={badge.description || ''}
+                  >
+                    <span>{badge.icon}</span>
+                    <span>{badge.name}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label>이름</Label>
