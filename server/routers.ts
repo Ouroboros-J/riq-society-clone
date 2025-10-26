@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { addPoints, createBadge, createCertificate, createComment, createPost, createPostLike, decrementPostLikeCount, deleteComment, deletePost, deletePostLike, getAllBadges, getAllCertificates, getAllPosts, getAllUsers, getCertificateById, getCommentsByPostId, getPostById, getPostLike, getUserBadges, getUserByOpenId, getUserCertificates, getUserPointHistory, getUserPoints, incrementPostLikeCount, incrementPostViewCount, purchaseBadge, updateCertificateStatus, updateComment, updatePost, updateUserApprovalStatus } from "./db";
+import { addPoints, createBadge, createCertificate, createComment, createPost, createPostLike, decrementPostLikeCount, deleteComment, deletePost, deletePostLike, getAllBadges, getAllCertificates, getAllPosts, getAllTimeRanking, getAllUsers, getCertificateById, getCommentsByPostId, getMonthlyRanking, getPostById, getPostLike, getUserBadges, getUserByOpenId, getUserCertificates, getUserPointHistory, getUserPoints, getWeeklyRanking, incrementPostLikeCount, incrementPostViewCount, purchaseBadge, updateCertificateStatus, updateComment, updatePost, updateUserApprovalStatus } from "./db";
 import { z } from "zod";
 import { storagePut } from "./storage";
 import { generateCertificateApprovedEmail, generateCertificateRejectedEmail, sendEmail } from "./_core/email";
@@ -307,6 +307,24 @@ export const appRouter = router({
     getMyBadges: protectedProcedure.query(async ({ ctx }) => {
       return await getUserBadges(ctx.user.id);
     }),
+  }),
+
+  ranking: router({
+    allTime: publicProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ input }) => {
+        return await getAllTimeRanking(input.limit || 10);
+      }),
+    weekly: publicProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ input }) => {
+        return await getWeeklyRanking(input.limit || 10);
+      }),
+    monthly: publicProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ input }) => {
+        return await getMonthlyRanking(input.limit || 10);
+      }),
   }),
 
   // TODO: add feature routers here, e.g.

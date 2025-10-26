@@ -483,4 +483,103 @@ export async function getUserBadges(userId: number) {
   return result;
 }
 
+// Ranking system
+export async function getAllTimeRanking(limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get all users with their total points
+  const allUsers = await db.select().from(users);
+  const userPoints = await Promise.all(
+    allUsers.map(async (user) => ({
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      points: await getUserPoints(user.id),
+    }))
+  );
+
+  return userPoints
+    .sort((a, b) => b.points - a.points)
+    .slice(0, limit);
+}
+
+export async function getWeeklyRanking(limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  // Get all users
+  const allUsers = await db.select().from(users);
+  
+  // Get points for each user in the last week
+  const userPoints = await Promise.all(
+    allUsers.map(async (user) => {
+      const transactions = await db
+        .select()
+        .from(pointTransactions)
+        .where(
+          and(
+            eq(pointTransactions.userId, user.id),
+            // Note: MySQL timestamp comparison
+            // We'll filter in memory for simplicity
+          )
+        );
+      
+      const weeklyPoints = transactions
+        .filter(t => new Date(t.createdAt) >= weekAgo)
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      return {
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        points: weeklyPoints,
+      };
+    })
+  );
+
+  return userPoints
+    .sort((a, b) => b.points - a.points)
+    .slice(0, limit);
+}
+
+export async function getMonthlyRanking(limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const monthAgo = new Date();
+  monthAgo.setDate(monthAgo.getDate() - 30);
+
+  // Get all users
+  const allUsers = await db.select().from(users);
+  
+  // Get points for each user in the last month
+  const userPoints = await Promise.all(
+    allUsers.map(async (user) => {
+      const transactions = await db
+        .select()
+        .from(pointTransactions)
+        .where(eq(pointTransactions.userId, user.id));
+      
+      const monthlyPoints = transactions
+        .filter(t => new Date(t.createdAt) >= monthAgo)
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      return {
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        points: monthlyPoints,
+      };
+    })
+  );
+
+  return userPoints
+    .sort((a, b) => b.points - a.points)
+    .slice(0, limit);
+}
+
 // TODO: add feature queries here as your schema grows.
