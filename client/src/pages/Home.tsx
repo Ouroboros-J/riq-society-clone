@@ -89,7 +89,7 @@ export default function Home() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px] transition-all duration-300 hover:scale-105"
+                  className="border-white text-white hover:bg-white hover:text-black min-w-[200px] transition-all duration-300 hover:scale-105"
                   onClick={() => window.location.href = getLoginUrl()}
                   aria-label="로그인 또는 회원가입"
                 >
@@ -111,7 +111,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px] transition-all duration-300 hover:scale-105"
+                      className="border-white text-white hover:bg-white hover:text-black min-w-[200px] transition-all duration-300 hover:scale-105"
                       aria-label="입회 신청"
                     >
                       입회 신청
@@ -121,7 +121,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px] transition-all duration-300 hover:scale-105"
+                      className="border-white text-white hover:bg-white hover:text-black min-w-[200px] transition-all duration-300 hover:scale-105"
                       aria-label="마이페이지"
                     >
                       마이페이지
@@ -132,7 +132,7 @@ export default function Home() {
                       <Button
                         variant="outline"
                         size="lg"
-                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px] transition-all duration-300 hover:scale-105"
+                        className="border-white text-white hover:bg-white hover:text-black min-w-[200px] transition-all duration-300 hover:scale-105"
                       >
                         관리자 페이지
                       </Button>
@@ -141,7 +141,7 @@ export default function Home() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground min-w-[200px]"
+                    className="border-white text-white hover:bg-white hover:text-black min-w-[200px] transition-all duration-300 hover:scale-105"
                     onClick={() => logout()}
                   >
                     로그아웃
@@ -321,7 +321,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="relative py-8 px-4 bg-black border-t border-border">
         <div className="container text-center text-sm text-muted-foreground">
-          <p>© 2024 RIQ Society. All rights reserved.</p>
+          <p>© 2025 RIQ Society. All rights reserved.</p>
         </div>
       </footer>
       </main>
