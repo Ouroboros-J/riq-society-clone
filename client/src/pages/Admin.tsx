@@ -15,6 +15,8 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -22,6 +24,18 @@ export default function Admin() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectApplicationId, setRejectApplicationId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  
+  // 필리터링 및 검색
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // 일괄 처리
+  const [selectedApplications, setSelectedApplications] = useState<number[]>([]);
+  
+  // 상세 보기 모달
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
   
   // 통계 날짜 범위
   const [startDate, setStartDate] = useState(() => {
@@ -48,6 +62,24 @@ export default function Admin() {
     { startDate, endDate },
     { enabled: isAuthenticated && user?.role === 'admin' }
   );
+  
+  // 필터링된 신청 목록
+  const filteredApplications = (applications || []).filter((app: any) => {
+    // 상태 필터
+    if (statusFilter !== 'all' && app.status !== statusFilter) return false;
+    // 결제 상태 필터
+    if (paymentFilter !== 'all' && app.paymentStatus !== paymentFilter) return false;
+    // 검색
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        app.fullName?.toLowerCase().includes(query) ||
+        app.email?.toLowerCase().includes(query) ||
+        app.testType?.toLowerCase().includes(query)
+      );
+    }
+    return true;
+  });
 
   const confirmPaymentMutation = trpc.admin.confirmPayment.useMutation({
     onSuccess: () => {
@@ -370,16 +402,114 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle>입회 신청 목록</CardTitle>
                 <CardDescription>
-                  전체 신청 {applications?.length || 0}건
+                  전체 {applications?.length || 0}건 / 필터링 {filteredApplications.length}건
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* 필터링 및 검색 */}
+                <div className="mb-4 flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="search">검색</Label>
+                    <Input
+                      id="search"
+                      placeholder="이름, 이메일, 시험 종류로 검색..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className="w-full md:w-48">
+                    <Label htmlFor="statusFilter">신청 상태</Label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger id="statusFilter">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체</SelectItem>
+                        <SelectItem value="pending">대기중</SelectItem>
+                        <SelectItem value="approved">승인됨</SelectItem>
+                        <SelectItem value="rejected">거부됨</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full md:w-48">
+                    <Label htmlFor="paymentFilter">결제 상태</Label>
+                    <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                      <SelectTrigger id="paymentFilter">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체</SelectItem>
+                        <SelectItem value="pending">미결제</SelectItem>
+                        <SelectItem value="deposit_requested">입금 요청</SelectItem>
+                        <SelectItem value="confirmed">확인 완료</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* 일괄 처리 버튼 */}
+                {selectedApplications.length > 0 && (
+                  <div className="mb-4 flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        selectedApplications.forEach(id => {
+                          updateApplicationStatusMutation.mutate({
+                            applicationId: id,
+                            status: 'approved'
+                          });
+                        });
+                        setSelectedApplications([]);
+                      }}
+                    >
+                      선택항목 일괄 승인 ({selectedApplications.length})
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => {
+                        if (confirm(`${selectedApplications.length}건의 신청을 거부하시겠습니까?`)) {
+                          selectedApplications.forEach(id => {
+                            updateApplicationStatusMutation.mutate({
+                              applicationId: id,
+                              status: 'rejected',
+                              adminNotes: '일괄 거부 처리'
+                            });
+                          });
+                          setSelectedApplications([]);
+                        }
+                      }}
+                    >
+                      선택항목 일괄 거부 ({selectedApplications.length})
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedApplications([])}
+                    >
+                      선택 해제
+                    </Button>
+                  </div>
+                )}
+
                 {applicationsLoading ? (
                   <p>로딩 중...</p>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={selectedApplications.length === filteredApplications.length && filteredApplications.length > 0}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedApplications(filteredApplications.map((a: any) => a.id));
+                              } else {
+                                setSelectedApplications([]);
+                              }
+                            }}
+                          />
+                        </TableHead>
                         <TableHead>ID</TableHead>
                         <TableHead>이름</TableHead>
                         <TableHead>이메일</TableHead>
@@ -392,8 +522,20 @@ export default function Admin() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {applications?.map((app: any) => (
+                      {filteredApplications.map((app: any) => (
                         <TableRow key={app.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedApplications.includes(app.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedApplications([...selectedApplications, app.id]);
+                                } else {
+                                  setSelectedApplications(selectedApplications.filter(id => id !== app.id));
+                                }
+                              }}
+                            />
+                          </TableCell>
                           <TableCell>{app.id}</TableCell>
                           <TableCell>{app.fullName}</TableCell>
                           <TableCell>{app.email}</TableCell>
@@ -426,6 +568,16 @@ export default function Admin() {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedApplication(app);
+                                  setDetailDialogOpen(true);
+                                }}
+                              >
+                                상세
+                              </Button>
                               {app.status === 'pending' && (
                                 <>
                                   <Button
@@ -595,6 +747,125 @@ export default function Admin() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* 상세 보기 모달 */}
+        <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>입회 신청 상세 정보</DialogTitle>
+            </DialogHeader>
+            {selectedApplication && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">이름</Label>
+                    <p className="font-medium">{selectedApplication.fullName}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">이메일</Label>
+                    <p className="font-medium">{selectedApplication.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">생년월일</Label>
+                    <p className="font-medium">{selectedApplication.dateOfBirth}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">연락처</Label>
+                    <p className="font-medium">{selectedApplication.phone || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">시험 종류</Label>
+                    <p className="font-medium">{selectedApplication.testType}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">점수</Label>
+                    <p className="font-medium">{selectedApplication.testScore}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">시험 날짜</Label>
+                    <p className="font-medium">{selectedApplication.testDate || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">신청일</Label>
+                    <p className="font-medium">{new Date(selectedApplication.createdAt).toLocaleString('ko-KR')}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">신청 상태</Label>
+                    <Badge variant={
+                      selectedApplication.status === 'approved' ? 'default' :
+                      selectedApplication.status === 'rejected' ? 'destructive' :
+                      'secondary'
+                    }>
+                      {selectedApplication.status === 'approved' ? '승인됨' :
+                       selectedApplication.status === 'rejected' ? '거부됨' :
+                       '대기중'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">결제 상태</Label>
+                    <Badge variant={
+                      selectedApplication.paymentStatus === 'confirmed' ? 'default' :
+                      selectedApplication.paymentStatus === 'deposit_requested' ? 'secondary' :
+                      'outline'
+                    }>
+                      {selectedApplication.paymentStatus === 'confirmed' ? '확인됨' :
+                       selectedApplication.paymentStatus === 'deposit_requested' ? '입금 요청' :
+                       '대기중'}
+                    </Badge>
+                  </div>
+                </div>
+                
+                {selectedApplication.depositorName && (
+                  <div>
+                    <Label className="text-muted-foreground">입금자명</Label>
+                    <p className="font-medium">{selectedApplication.depositorName}</p>
+                  </div>
+                )}
+                
+                {selectedApplication.depositDate && (
+                  <div>
+                    <Label className="text-muted-foreground">입금일시</Label>
+                    <p className="font-medium">{selectedApplication.depositDate}</p>
+                  </div>
+                )}
+                
+                {selectedApplication.adminNotes && (
+                  <div>
+                    <Label className="text-muted-foreground">관리자 메모</Label>
+                    <p className="text-destructive font-medium">{selectedApplication.adminNotes}</p>
+                  </div>
+                )}
+                
+                <div>
+                  <Label className="text-muted-foreground">증빙 서류</Label>
+                  {selectedApplication.documentUrls ? (
+                    <div className="mt-2 space-y-2">
+                      {selectedApplication.documentUrls.split(',').map((url: string, index: number) => (
+                        <div key={index}>
+                          <a 
+                            href={url.trim()} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            서류 {index + 1} 보기
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">업로드된 서류가 없습니다.</p>
+                  )}
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
+                닫기
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* 거부 사유 입력 모달 */}
         <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
