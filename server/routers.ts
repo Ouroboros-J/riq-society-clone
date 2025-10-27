@@ -21,6 +21,7 @@ import { eq, desc, sql, gte, and } from "drizzle-orm";
 import { z } from "zod";
 import { storagePut } from "./storage";
 import { sendEmail } from "./_core/email";
+import { sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendReviewApprovedEmail, sendReviewRejectedEmail, sendPaymentConfirmedEmail } from "./email";
 
 export const appRouter = router({
   system: systemRouter,
@@ -71,13 +72,38 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database connection failed");
+        
+        // 신청 정보 조회
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, input.applicationId));
+        
+        if (!application) {
+          throw new Error("신청을 찾을 수 없습니다");
+        }
+        
         await db.update(applications)
           .set({ 
             status: input.status,
             adminNotes: input.adminNotes,
+            reviewedAt: new Date(),
             updatedAt: new Date()
           })
           .where(eq(applications.id, input.applicationId));
+        
+        // 이메일 발송
+        try {
+          if (input.status === "approved") {
+            await sendApplicationApprovedEmail(application.email, application.fullName);
+          } else if (input.status === "rejected" && input.adminNotes) {
+            await sendApplicationRejectedEmail(application.email, application.fullName, input.adminNotes);
+          }
+        } catch (error) {
+          console.error('Failed to send email:', error);
+          // 이메일 발송 실패해도 상태 업데이트는 성공
+        }
+        
         return { success: true };
       }),
 
@@ -86,6 +112,17 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database connection failed");
+        
+        // 신청 정보 조회
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, input.applicationId));
+        
+        if (!application) {
+          throw new Error("신청을 찾을 수 없습니다");
+        }
+        
         await db.update(applications)
           .set({ 
             paymentStatus: "confirmed",
@@ -93,6 +130,14 @@ export const appRouter = router({
             updatedAt: new Date()
           })
           .where(eq(applications.id, input.applicationId));
+        
+        // 이메일 발송
+        try {
+          await sendPaymentConfirmedEmail(application.email, application.fullName);
+        } catch (error) {
+          console.error('Failed to send email:', error);
+        }
+        
         return { success: true };
       }),
 
@@ -690,12 +735,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        await updateApplicationReviewStatus(
-          input.reviewId,
-          input.status,
-          ctx.user.id,
-          input.adminNotes
-        );
+        await updateApplicationReviewStatus(input.reviewId, input.status, ctx.user!.id);
         
         // 재검토 승인 시 원래 신청도 승인 처리
         if (input.status === "approved") {
@@ -709,11 +749,49 @@ export const appRouter = router({
           
           if (review) {
             await updateApplicationStatus(review.applicationId, "approved");
+            
+            // 신청 정보 조회
+            const [application] = await db
+              .select()
+              .from(applications)
+              .where(eq(applications.id, review.applicationId));
+            
+            // 이메일 발송
+            if (application) {
+              try {
+                await sendReviewApprovedEmail(application.email, application.fullName);
+              } catch (error) {
+                console.error('Failed to send email:', error);
+              }
+            }
+          }
+        } else if (input.status === "rejected") {
+          // 재검토 거부 시 이메일 발송
+          const db = await getDb();
+          if (!db) throw new Error("Database connection failed");
+          
+          const [review] = await db
+            .select()
+            .from(applicationReviews)
+            .where(eq(applicationReviews.id, input.reviewId));
+          
+          if (review) {
+            const [application] = await db
+              .select()
+              .from(applications)
+              .where(eq(applications.id, review.applicationId));
+            
+            if (application) {
+              try {
+                await sendReviewRejectedEmail(application.email, application.fullName);
+              } catch (error) {
+                console.error('Failed to send email:', error);
+              }
+            }
           }
         }
         
-        return { success: true };
-      }),
+        return { success: true };   }),
   }),
 });
 

@@ -575,3 +575,18 @@
 - [x] 시험 정보 카드 디자인 (녹색 테마, 3칸럼 그리드)
 - [x] 기타 시험의 경우 "기타 시험: [시험명]" 형식으로 표시
 
+
+
+
+## Phase 11: Resend 이메일 발송 연동
+
+- [x] Resend 라이브러리 설치
+- [x] Resend API 키 환경변수 설정
+- [x] 이메일 발송 헬퍼 함수 생성 (email.ts)
+- [x] 입회 신청 승인 시 이메일 발송 (sendApplicationApprovedEmail)
+- [x] 입회 신청 거부 시 이메일 발송 (sendApplicationRejectedEmail)
+- [x] 재검토 요청 결과 이메일 발송 (sendReviewApprovedEmail, sendReviewRejectedEmail)
+- [x] 결제 확인 이메일 발송 (sendPaymentConfirmedEmail)
+- [x] 이메일 템플릿 적용 (HTML 템플릿)
+- [ ] 이메일 발송 테스트 (실제 이메일 수신 확인)
+
