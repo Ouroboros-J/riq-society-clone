@@ -13,6 +13,7 @@ import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -129,6 +130,64 @@ export default function Admin() {
           </TabsList>
 
           <TabsContent value="applications">
+            {/* 통계 차트 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>상태별 신청 현황</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: '대기중', value: applications?.filter((a: any) => a.status === 'pending').length || 0 },
+                          { name: '승인됨', value: applications?.filter((a: any) => a.status === 'approved').length || 0 },
+                          { name: '거부됨', value: applications?.filter((a: any) => a.status === 'rejected').length || 0 },
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={(entry) => `${entry.name}: ${entry.value}`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        <Cell fill="#fbbf24" />
+                        <Cell fill="#10b981" />
+                        <Cell fill="#ef4444" />
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>결제 상태 현황</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={[
+                        { name: '미결제', value: applications?.filter((a: any) => a.paymentStatus === 'pending').length || 0 },
+                        { name: '입금 요청', value: applications?.filter((a: any) => a.paymentStatus === 'deposit_requested').length || 0 },
+                        { name: '확인 완료', value: applications?.filter((a: any) => a.paymentStatus === 'confirmed').length || 0 },
+                      ]}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="value" fill="#3b82f6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
             <Card>
               <CardHeader>
                 <CardTitle>입회 신청 목록</CardTitle>
