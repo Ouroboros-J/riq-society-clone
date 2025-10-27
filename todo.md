@@ -430,14 +430,18 @@
   - [x] 파티클 수 원래대로 복원 (65,000개) - 하이엔드 타겟층에 맞춤
   - [x] pixelRatio 제한 제거 (고해상도 그대로)
   - [x] 필수 최적화만 유지 (메모리 누수 방지, 마우스 parallax 모바일 비활성화)
-- [ ] 이미지 최적화
-  - [ ] lazy loading 적용
-  - [ ] WebP 포맷 지원
-  - [ ] 이미지 압축
-- [ ] 코드 스플리팅
-  - [ ] 라우트 기반 코드 스플리팅
-  - [ ] 번들 크기 분석
-- [ ] 캐싱 전략
-  - [ ] 브라우저 캐싱 헤더 설정
-  - [ ] API 응답 캐싱
+- [x] 이미지 최적화
+  - [x] 모든 이미지가 SVG 포맷으로 이미 최적화됨 (header-logo.svg, riq-logo.svg, riq-icon.svg)
+  - [x] SVG는 벡터 그래픽으로 크기가 작고 확대해도 품질 유지
+  - [x] 추가 이미지 최적화 불필요
+- [x] 코드 스플리팅
+  - [x] React.lazy를 사용한 라우트 기반 코드 스플리팅 (Home, Admin, Auth, MyPage, Application, FAQ, Blog, BlogPost, Resources, NotFound)
+  - [x] Suspense로 로딩 폴백 처리
+  - [x] Vite manualChunks 설정 (react-vendor, router, trpc, ui, three, charts, markdown)
+  - [x] rollup-plugin-visualizer 추가 (번들 크기 분석 도구)
+- [x] 캠싱 전략
+  - [x] React Query staleTime 5분 설정
+  - [x] gcTime 10분 설정 (미사용 데이터 캐시 유지)
+  - [x] refetchOnWindowFocus 비활성화 (UX 개선)
+  - [x] retry 정책 설정 (1회 재시도)
 
