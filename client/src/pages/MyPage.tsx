@@ -132,6 +132,47 @@ export default function MyPage() {
             <p className="text-muted-foreground">회원 정보 및 증명서 관리</p>
           </div>
 
+          {/* 인증된 시험 정보 카드 (승인된 회원만) */}
+          {application && application.status === 'approved' && (
+            <Card className="mb-8 border-2 border-green-500/20 bg-green-50/50 dark:bg-green-950/20">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-green-700 dark:text-green-400">인증된 시험 정보</CardTitle>
+                  <Badge className="bg-green-500">인증 완료</Badge>
+                </div>
+                <CardDescription>
+                  관리자가 승인한 고지능 자격 증명 정보입니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">시험 종류</Label>
+                    <p className="text-lg font-semibold">
+                      {application.isOtherTest && application.otherTestName
+                        ? `기타 시험: ${application.otherTestName}`
+                        : application.testType}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">점수</Label>
+                    <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                      {application.testScore}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">승인일</Label>
+                    <p className="text-lg font-semibold">
+                      {application.reviewedAt
+                        ? new Date(application.reviewedAt).toLocaleDateString('ko-KR')
+                        : new Date(application.updatedAt).toLocaleDateString('ko-KR')}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Application Status Card */}
           {application && (
             <Card className="mb-8">
