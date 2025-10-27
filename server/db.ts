@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { certificates, InsertCertificate, InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -100,7 +100,69 @@ export async function getAllUsers() {
   return result;
 }
 
+export async function getUserCertificates(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get certificates: database not available");
+    return [];
+  }
 
+  const result = await db.select().from(certificates).where(eq(certificates.userId, userId));
+  return result;
+}
+
+export async function getAllCertificates() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get certificates: database not available");
+    return [];
+  }
+
+  const result = await db.select().from(certificates);
+  return result;
+}
+
+export async function createCertificate(certificate: InsertCertificate) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create certificate: database not available");
+    return null;
+  }
+
+  const result = await db.insert(certificates).values(certificate);
+  return result;
+}
+
+export async function getCertificateById(id: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get certificate: database not available");
+    return null;
+  }
+
+  const result = await db.select().from(certificates).where(eq(certificates.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateCertificateStatus(
+  id: number,
+  status: "pending" | "approved" | "rejected",
+  rejectionReason?: string
+) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update certificate: database not available");
+    return null;
+  }
+
+  const updateData: any = { status };
+  if (rejectionReason) {
+    updateData.rejectionReason = rejectionReason;
+  }
+
+  const result = await db.update(certificates).set(updateData).where(eq(certificates.id, id));
+  return result;
+}
 
 export async function updateUserApprovalStatus(
   userId: number,
@@ -116,7 +178,24 @@ export async function updateUserApprovalStatus(
   return result;
 }
 
+export async function requestDepositConfirmation(
+  userId: number,
+  depositorName: string,
+  depositDate: string
+) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot request deposit confirmation: database not available");
+    return null;
+  }
 
+  const result = await db.update(users).set({ 
+    paymentStatus: "deposit_requested",
+    depositorName,
+    depositDate 
+  }).where(eq(users.id, userId));
+  return result;
+}
 
 export async function confirmPayment(userId: number) {
   const db = await getDb();

@@ -5,10 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
@@ -18,11 +17,14 @@ export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [rejectApplicationId, setRejectApplicationId] = useState<number | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
-
+  const [selectedCertId, setSelectedCertId] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const { data: users, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.listUsers.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  const { data: certificates, isLoading: certificatesLoading, refetch: refetchCertificates } = trpc.admin.listAllCertificates.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
@@ -30,8 +32,26 @@ export default function Admin() {
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
-  const { data: applications, isLoading: applicationsLoading, refetch: refetchApplications } = trpc.admin.listApplications.useQuery(undefined, {
-    enabled: isAuthenticated && user?.role === 'admin',
+  const approveCertMutation = trpc.admin.approveCertificate.useMutation({
+    onSuccess: () => {
+      toast.success("증명서가 승인되었습니다.");
+      refetchCertificates();
+    },
+    onError: (error) => {
+      toast.error("승인 실패: " + error.message);
+    },
+  });
+
+  const rejectCertMutation = trpc.admin.rejectCertificate.useMutation({
+    onSuccess: () => {
+      toast.success("증명서가 거부되었습니다.");
+      setRejectDialogOpen(false);
+      setRejectionReason("");
+      refetchCertificates();
+    },
+    onError: (error) => {
+      toast.error("거부 실패: " + error.message);
+    },
   });
 
   const confirmPaymentMutation = trpc.admin.confirmPayment.useMutation({
@@ -55,48 +75,13 @@ export default function Admin() {
     },
   });
 
-  const updateApplicationStatusMutation = trpc.admin.updateApplicationStatus.useMutation({
-    onSuccess: () => {
-      toast.success("신청 상태가 업데이트되었습니다.");
-      refetchApplications();
-      setRejectDialogOpen(false);
-      setRejectApplicationId(null);
-      setRejectReason("");
-    },
-    onError: (error) => {
-      toast.error("업데이트 실패: " + error.message);
-    },
-  });
-
-  const handleReject = () => {
-    if (rejectApplicationId && rejectReason.trim()) {
-      updateApplicationStatusMutation.mutate({
-        applicationId: rejectApplicationId,
-        status: 'rejected',
-        adminNotes: rejectReason
-      });
-    } else {
-      toast.error("거부 사유를 입력해주세요.");
-    }
-  };
-
-  const confirmApplicationPaymentMutation = trpc.admin.confirmApplicationPayment.useMutation({
-    onSuccess: () => {
-      toast.success("입금이 확인되었습니다.");
-      refetchApplications();
-    },
-    onError: (error) => {
-      toast.error("입금 확인 실패: " + error.message);
-    },
-  });
-
   useEffect(() => {
     if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
       setLocation("/");
     }
   }, [isAuthenticated, user, loading, setLocation]);
 
-  if (loading || usersLoading || paymentsLoading) {
+  if (loading || usersLoading || certificatesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -121,117 +106,12 @@ export default function Admin() {
           <p className="text-muted-foreground">RIQ Society 회원 관리</p>
         </div>
 
-        <Tabs defaultValue="applications" className="w-full">
+        <Tabs defaultValue="users" className="w-full">
           <TabsList>
-            <TabsTrigger value="applications">입회 신청 관리</TabsTrigger>
             <TabsTrigger value="users">회원 관리</TabsTrigger>
+            <TabsTrigger value="certificates">증명서 관리</TabsTrigger>
             <TabsTrigger value="payments">입금 확인</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="applications">
-            <Card>
-              <CardHeader>
-                <CardTitle>입회 신청 목록</CardTitle>
-                <CardDescription>
-                  전체 신청 {applications?.length || 0}건
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {applicationsLoading ? (
-                  <p>로딩 중...</p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>이름</TableHead>
-                        <TableHead>이메일</TableHead>
-                        <TableHead>시험 종류</TableHead>
-                        <TableHead>점수</TableHead>
-                        <TableHead>신청 상태</TableHead>
-                        <TableHead>결제 상태</TableHead>
-                        <TableHead>신청일</TableHead>
-                        <TableHead>관리</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {applications?.map((app: any) => (
-                        <TableRow key={app.id}>
-                          <TableCell>{app.id}</TableCell>
-                          <TableCell>{app.fullName}</TableCell>
-                          <TableCell>{app.email}</TableCell>
-                          <TableCell>{app.testType}</TableCell>
-                          <TableCell>{app.testScore}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              app.status === 'approved' ? 'default' :
-                              app.status === 'rejected' ? 'destructive' :
-                              'secondary'
-                            }>
-                              {app.status === 'approved' ? '승인됨' :
-                               app.status === 'rejected' ? '거부됨' :
-                               '대기중'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              app.paymentStatus === 'confirmed' ? 'default' :
-                              app.paymentStatus === 'deposit_requested' ? 'secondary' :
-                              'outline'
-                            }>
-                              {app.paymentStatus === 'confirmed' ? '확인됨' :
-                               app.paymentStatus === 'deposit_requested' ? '입금 요청' :
-                               '대기중'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(app.createdAt).toLocaleDateString('ko-KR')}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              {app.status === 'pending' && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => updateApplicationStatusMutation.mutate({
-                                      applicationId: app.id,
-                                      status: 'approved'
-                                    })}
-                                  >
-                                    승인
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => {
-                                      setRejectApplicationId(app.id);
-                                      setRejectDialogOpen(true);
-                                    }}
-                                  >
-                                    거부
-                                  </Button>
-                                </>
-                              )}
-                              {app.status === 'approved' && app.paymentStatus === 'deposit_requested' && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => confirmApplicationPaymentMutation.mutate({
-                                    applicationId: app.id
-                                  })}
-                                >
-                                  입금 확인
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="users">
             <Card>
@@ -303,7 +183,81 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-
+          <TabsContent value="certificates">
+            <Card>
+              <CardHeader>
+                <CardTitle>증명서 목록</CardTitle>
+                <CardDescription>
+                  전체 증명서 {certificates?.length || 0}개
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>회원 ID</TableHead>
+                      <TableHead>파일명</TableHead>
+                      <TableHead>시험 이름</TableHead>
+                      <TableHead>점수</TableHead>
+                      <TableHead>상태</TableHead>
+                      <TableHead>제출일</TableHead>
+                      <TableHead>작업</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {certificates?.map((cert) => (
+                      <TableRow key={cert.id}>
+                        <TableCell>{cert.id}</TableCell>
+                        <TableCell>{cert.userId}</TableCell>
+                        <TableCell>{cert.fileName}</TableCell>
+                        <TableCell>{cert.testName || '-'}</TableCell>
+                        <TableCell>{cert.score || '-'}</TableCell>
+                        <TableCell>
+                          {cert.status === 'approved' && <Badge className="bg-green-500">승인됨</Badge>}
+                          {cert.status === 'rejected' && <Badge variant="destructive">거부됨</Badge>}
+                          {cert.status === 'pending' && <Badge variant="secondary">대기중</Badge>}
+                        </TableCell>
+                        <TableCell>{new Date(cert.createdAt).toLocaleDateString('ko-KR')}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="link"
+                              onClick={() => window.open(cert.fileUrl, '_blank')}
+                            >
+                              보기
+                            </Button>
+                            {cert.status === 'pending' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => approveCertMutation.mutate({ id: cert.id })}
+                                >
+                                  승인
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    setSelectedCertId(cert.id);
+                                    setRejectDialogOpen(true);
+                                  }}
+                                >
+                                  거부
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="payments">
             <Card>
@@ -359,24 +313,22 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
 
-        {/* 거부 사유 입력 모달 */}
         <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>입회 신청 거부</DialogTitle>
+              <DialogTitle>증명서 거부</DialogTitle>
               <DialogDescription>
-                거부 사유를 입력해주세요. 신청자가 마이페이지에서 확인할 수 있습니다.
+                거부 사유를 입력해주세요.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="rejectReason">거부 사유</Label>
+                <Label htmlFor="reason">거부 사유</Label>
                 <Textarea
-                  id="rejectReason"
-                  placeholder="예: 제출하신 시험 점수가 입회 기준에 미달합니다."
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  rows={4}
+                  id="reason"
+                  placeholder="거부 사유를 입력하세요"
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
                 />
               </div>
             </div>
@@ -384,8 +336,16 @@ export default function Admin() {
               <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
                 취소
               </Button>
-              <Button variant="destructive" onClick={handleReject}>
-                거부 확정
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (selectedCertId && rejectionReason) {
+                    rejectCertMutation.mutate({ id: selectedCertId, reason: rejectionReason });
+                  }
+                }}
+                disabled={!rejectionReason}
+              >
+                거부
               </Button>
             </DialogFooter>
           </DialogContent>
