@@ -16,7 +16,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "member", "admin"]).default("user").notNull(),
   approvalStatus: mysqlEnum("approvalStatus", ["pending", "approved", "rejected"]).default("pending").notNull(),
   paymentStatus: mysqlEnum("paymentStatus", ["pending", "deposit_requested", "confirmed"]).default("pending").notNull(),
   depositorName: varchar("depositorName", { length: 100 }),

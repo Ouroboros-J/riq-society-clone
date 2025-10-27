@@ -1,12 +1,14 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useRole } from "@/_core/hooks/useRole";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Home, User, Users, LogOut, LogIn, HelpCircle } from "lucide-react";
+import { Menu, Home, User, Users, LogOut, LogIn, HelpCircle, Shield, Crown } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { APP_TITLE } from "@/const";
 
 export default function Header() {
   const { isAuthenticated, user, logout } = useAuth();
+  const { isMember, isAdmin, canAccessResources } = useRole();
   const [, setLocation] = useLocation();
 
   const getLoginUrl = () => {
@@ -63,7 +65,7 @@ export default function Header() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                       리소스
-                      {user?.approvalStatus !== 'approved' || user?.paymentStatus !== 'confirmed' ? (
+                      {!canAccessResources() ? (
                         <span className="ml-auto text-xs bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded">정회원 전용</span>
                       ) : null}
                     </Button>
@@ -77,10 +79,10 @@ export default function Header() {
 
 
 
-                  {user?.role === 'admin' && (
+                  {isAdmin() && (
                     <Link href="/admin">
                       <Button variant="ghost" className="w-full justify-start" size="lg">
-                        <Users className="mr-2 h-5 w-5" />
+                        <Shield className="mr-2 h-5 w-5" />
                         관리자 페이지
                       </Button>
                     </Link>
@@ -124,9 +126,23 @@ export default function Header() {
                   <p className="text-sm text-muted-foreground">
                     {user.name || '회원'}님
                   </p>
-                  {user.role === 'admin' && (
-                    <p className="text-xs text-primary mt-1">관리자</p>
-                  )}
+                  <div className="flex items-center gap-2 mt-1">
+                    {isAdmin() && (
+                      <span className="inline-flex items-center text-xs bg-red-500/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded">
+                        <Shield className="w-3 h-3 mr-1" />
+                        관리자
+                      </span>
+                    )}
+                    {isMember() && !isAdmin() && (
+                      <span className="inline-flex items-center text-xs bg-blue-500/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
+                        <Crown className="w-3 h-3 mr-1" />
+                        정회원
+                      </span>
+                    )}
+                    {!isMember() && !isAdmin() && (
+                      <span className="text-xs text-muted-foreground">일반 회원</span>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

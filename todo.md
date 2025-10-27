@@ -445,3 +445,35 @@
   - [x] refetchOnWindowFocus 비활성화 (UX 개선)
   - [x] retry 정책 설정 (1회 재시도)
 
+
+
+
+## Phase 7: 인증 및 권한 관리 강화
+
+### Google OAuth 추가
+- [x] Google Cloud Console에서 OAuth 2.0 클라이언트 ID 발급
+- [x] 환경변수 추가 (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI)
+- [x] Google OAuth 헬퍼 함수 생성 (googleOAuth.ts)
+- [x] Google OAuth 콜백 라우트 구현 (/api/oauth/google, /api/oauth/google/callback)
+- [x] Google 사용자 정보 가져오기 API 연동
+- [x] users 테이블의 loginMethod 필드 활용 ('manus' | 'google')
+- [x] 로그인 페이지에 "Google로 로그인" 버튼 추가 (Google 로고 포함)
+- [ ] Google OAuth 플로우 테스트
+
+### RBAC (역할 기반 접근 제어) 강화
+- [x] 역할 정의 명확화
+  - user: 로그인 사용자 (입회 신청 가능)
+  - member: 정회원 (approvalStatus = 'approved' + paymentStatus = 'confirmed')
+  - admin: 관리자
+- [x] users 테이블에 role 필드 확장 ('user' | 'admin' → 'user' | 'member' | 'admin')
+- [x] 데이터베이스 스키마 변경 적용 (pnpm db:push)
+- [x] useRole 훅 생성 (역할 기반 권한 체크: hasRole, isMember, isAdmin, canAccessResources)
+- [x] Header 컴포넌트에 역할 표시 개선 (관리자/정회원/일반 회원 배지)
+- [x] 기존 미들웨어 확인 (protectedProcedure, memberProcedure, adminProcedure 이미 구현됨)
+- [ ] 각 페이지별 접근 권한 강화 (Resources, Admin 등)
+
+### 테스트
+- [ ] Google 로그인 플로우 테스트
+- [ ] 역할별 페이지 접근 권한 테스트
+- [ ] Manus OAuth와 Google OAuth 병행 사용 테스트
+
