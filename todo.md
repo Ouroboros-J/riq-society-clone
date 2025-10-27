@@ -237,11 +237,11 @@
 - [x] Step 2: 시험 점수 입력
 - [x] Step 3: 증빙 서류 업로드 (S3)
 - [x] 진행 상태 표시 바
-- [ ] 임시 저장 기능 (LocalStorage + DB)
+- [x] 임시 저장 기능 (LocalStorage 자동 저장/복원)
 - [x] 폼 유효성 검사 (Zod + React Hook Form)
 - [x] tRPC 라우터 추가 (application.submit, application.uploadDocument)
 - [x] 파일 업로드 API (S3)
-- [ ] 신청 완료 페이지
+- [x] 신청 완료 후 마이페이지에서 상태 확인
 
 ## Phase 3: 관리자 대시보드 확장
 

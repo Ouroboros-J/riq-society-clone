@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -41,16 +41,55 @@ export default function Application() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<Step1Data & Step2Data>>({});
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isLoadingDraft, setIsLoadingDraft] = useState(true);
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
   const submitMutation = trpc.application.submit.useMutation();
   const uploadMutation = trpc.application.uploadDocument.useMutation();
 
+  // Load draft from LocalStorage on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('application-draft');
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        setFormData(parsed.formData || {});
+        setCurrentStep(parsed.currentStep || 1);
+        toast.info("임시 저장된 데이터를 불러왔습니다");
+      } catch (error) {
+        console.error("Failed to load draft:", error);
+      }
+    }
+    setIsLoadingDraft(false);
+  }, []);
+
+  // Auto-save to LocalStorage whenever formData changes
+  useEffect(() => {
+    if (!isLoadingDraft && Object.keys(formData).length > 0) {
+      localStorage.setItem('application-draft', JSON.stringify({
+        formData,
+        currentStep,
+        savedAt: new Date().toISOString(),
+      }));
+    }
+  }, [formData, currentStep, isLoadingDraft]);
+
   // Redirect if not authenticated
   if (!isAuthenticated) {
     setLocation("/auth");
     return null;
+  }
+
+  if (isLoadingDraft) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      </>
+    );
   }
 
   const totalSteps = 3;
@@ -127,6 +166,9 @@ export default function Application() {
         documentUrls: JSON.stringify(documentUrls),
       });
 
+      // Clear draft from LocalStorage
+      localStorage.removeItem('application-draft');
+      
       toast.success("입회 신청이 완료되었습니다!");
       setLocation("/mypage");
     } catch (error) {

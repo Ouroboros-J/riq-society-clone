@@ -28,6 +28,10 @@ export default function MyPage() {
     enabled: isAuthenticated,
   });
 
+  const { data: application, isLoading: applicationLoading } = trpc.application.getMyApplication.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
   const [depositorName, setDepositorName] = useState("");
   const [depositDate, setDepositDate] = useState("");
 
@@ -173,6 +177,46 @@ export default function MyPage() {
             <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
             <p className="text-muted-foreground">회원 정보 및 증명서 관리</p>
           </div>
+
+          {/* Application Status Card */}
+          {application && (
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>입회 신청 상태</CardTitle>
+                <CardDescription>신청일: {new Date(application.createdAt).toLocaleDateString('ko-KR')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>이름</Label>
+                    <p className="text-sm">{application.fullName}</p>
+                  </div>
+                  <div>
+                    <Label>생년월일</Label>
+                    <p className="text-sm">{application.dateOfBirth}</p>
+                  </div>
+                  <div>
+                    <Label>시험 종류</Label>
+                    <p className="text-sm">{application.testType}</p>
+                  </div>
+                  <div>
+                    <Label>점수</Label>
+                    <p className="text-sm">{application.testScore}</p>
+                  </div>
+                </div>
+                <div>
+                  <Label>상태</Label>
+                  <div className="mt-2">{getStatusBadge(application.status)}</div>
+                </div>
+                {application.adminNotes && (
+                  <div>
+                    <Label>관리자 메모</Label>
+                    <p className="text-sm text-muted-foreground">{application.adminNotes}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid gap-6 md:grid-cols-2 mb-8">
             <Card>
