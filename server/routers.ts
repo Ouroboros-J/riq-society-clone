@@ -10,6 +10,9 @@ import { getAllResources, getAllResourcesAdmin, getResourceById, createResource,
 import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
 import { getAllRecognizedTests, getRecognizedTestById, createRecognizedTest, updateRecognizedTest, deleteRecognizedTest } from "./db-recognized-tests";
 import { getAllAiSettings, getAiSettingByPlatform, upsertAiSetting, getEnabledAiSettings, countEnabledAiSettings } from "./db-ai-settings";
+import { isAutopilotEnabled, getSystemSetting, setSystemSetting } from "./db-system-settings";
+import { saveMultipleAiVerifications } from "./db-ai-verifications";
+import { verifyApplicationWithAI } from "./ai-verification";
 import { getDb } from "./db";
 import { applications, users } from "../drizzle/schema";
 import { eq, desc, sql, gte, and } from "drizzle-orm";
@@ -293,6 +296,28 @@ export const appRouter = router({
       }),
   }),
 
+  systemSettings: router({
+    get: adminProcedure
+      .input(z.object({ key: z.string() }))
+      .query(async ({ input }) => {
+        return await getSystemSetting(input.key);
+      }),
+
+    set: adminProcedure
+      .input(z.object({
+        key: z.string(),
+        value: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        await setSystemSetting(input.key, input.value);
+        return { success: true };
+      }),
+
+    isAutopilotEnabled: adminProcedure.query(async () => {
+      return await isAutopilotEnabled();
+    }),
+  }),
+
   aiSettings: router({
     list: adminProcedure.query(async () => {
       return await getAllAiSettings();
@@ -444,23 +469,77 @@ export const appRouter = router({
           testScore: z.string(),
           testDate: z.string().optional(),
           documentUrls: z.string(),
+          isOtherTest: z.number().optional(),
+          otherTestName: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const existing = await getUserApplication(ctx.user.id);
         
+        let application;
         if (existing) {
-          return await updateApplication(existing.id, {
+          application = await updateApplication(existing.id, {
+            ...input,
+            isDraft: 0,
+          });
+        } else {
+          application = await createApplication({
+            userId: ctx.user.id,
             ...input,
             isDraft: 0,
           });
         }
         
-        return await createApplication({
-          userId: ctx.user.id,
-          ...input,
-          isDraft: 0,
-        });
+        // AI 자동 검증 (오토 파일럿 모드 활성화 시)
+        const autopilotEnabled = await isAutopilotEnabled();
+        const isOtherTest = input.isOtherTest === 1;
+        
+        // "기타 시험"은 AI 검증 건너뛰기
+        if (autopilotEnabled && !isOtherTest) {
+          try {
+            // 첫 번째 서류 URL에서 Base64 추출 (간단하게 처리)
+            const urls = input.documentUrls.split(',');
+            if (urls.length > 0 && urls[0]) {
+              // 서류 다운로드 및 Base64 변환 (실제로는 S3에서 가져와야 함)
+              // 여기서는 간단히 URL을 그대로 사용 (실제 구현시 수정 필요)
+              const documentBase64 = ''; // TODO: S3에서 다운로드 후 Base64로 변환
+              
+              if (documentBase64) {
+                const verificationResult = await verifyApplicationWithAI(
+                  input.testType,
+                  input.testScore,
+                  documentBase64
+                );
+                
+                // 검증 결과 저장
+                const verificationsToSave = verificationResult.verifications.map((v) => ({
+                  applicationId: application.id,
+                  platform: v.platform,
+                  model: v.model,
+                  result: (v.result.approved ? 'approved' : 'rejected') as 'approved' | 'rejected' | 'uncertain',
+                  confidence: v.result.confidence,
+                  reasoning: v.result.reason,
+                  rawResponse: v.rawResponse,
+                }));
+                
+                await saveMultipleAiVerifications(verificationsToSave);
+                
+                // 모든 AI가 승인하면 자동 승인
+                if (verificationResult.approved) {
+                  await updateApplicationStatus(application.id, 'approved', 'AI 자동 검증 통과');
+                } else {
+                  // 거절 시 거절 사유 저장
+                  await updateApplicationStatus(application.id, 'rejected', verificationResult.reason);
+                }
+              }
+            }
+          } catch (error: any) {
+            console.error('AI verification failed:', error);
+            // AI 검증 실패 시 관리자 수동 검토로 남겨둔
+          }
+        }
+        
+        return application;
       }),
 
     uploadDocument: protectedProcedure

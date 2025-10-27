@@ -85,9 +85,12 @@ export default function Admin() {
   const [googleModel, setGoogleModel] = useState<string>('');
   const [googleEnabled, setGoogleEnabled] = useState<boolean>(false);
   
-  const [perplexityApiKey, setPerplexityApiKey] = useState<string>('');
-  const [perplexityModel, setPerplexityModel] = useState<string>('');
-  const [perplexityEnabled, setPerplexityEnabled] = useState<boolean>(false);
+   const [perplexityApiKey, setPerplexityApiKey] = useState('');
+  const [perplexityModel, setPerplexityModel] = useState('');
+  const [perplexityEnabled, setPerplexityEnabled] = useState(false);
+
+  // 오토 파일럿 모드 상태
+  const [autopilotEnabled, setAutopilotEnabled] = useState(false);
   
   // 통계 날짜 범위
   const [startDate, setStartDate] = useState(() => {
@@ -199,7 +202,16 @@ export default function Admin() {
       toast.success('AI 설정이 저장되었습니다.');
     },
     onError: (error) => {
-      toast.error(`저장 실패: ${error.message}`);
+      toast.error('AI 설정 저장 실패: ' + error.message);
+    },
+  });
+
+  const setSystemSettingMutation = trpc.systemSettings.set.useMutation({
+    onSuccess: () => {
+      toast.success('설정이 저장되었습니다.');
+    },
+    onError: (error) => {
+      toast.error('설정 저장 실패: ' + error.message);
     },
   });
   
@@ -1750,7 +1762,19 @@ export default function Admin() {
                         활성화된 모든 AI가 일치하는 결과를 내면 자동으로 승인/거부합니다.
                       </p>
                     </div>
-                    <Checkbox id="autopilot-enabled" />
+                    <Checkbox
+                      id="autopilot-enabled"
+                      checked={autopilotEnabled}
+                      onCheckedChange={(checked) => {
+                        const enabled = !!checked;
+                        setAutopilotEnabled(enabled);
+                        // 즉시 저장
+                        setSystemSettingMutation.mutateAsync({
+                          key: 'autopilot_enabled',
+                          value: enabled ? '1' : '0',
+                        });
+                      }}
+                    />
                   </div>
                 </div>
               </CardContent>
