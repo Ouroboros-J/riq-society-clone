@@ -14,8 +14,9 @@ import { isAutopilotEnabled, getSystemSetting, setSystemSetting } from "./db-sys
 import { saveMultipleAiVerifications, getAiVerificationsByApplicationId } from "./db-ai-verifications";
 import { verifyApplicationWithAI } from "./ai-verification";
 import { getFirstDocumentAsBase64 } from "./s3-helper";
+import { createApplicationReview, getApplicationReviewsByApplicationId, getAllPendingReviews, updateApplicationReviewStatus, incrementReviewRequestCount } from "./db-application-reviews";
 import { getDb } from "./db";
-import { applications, users } from "../drizzle/schema";
+import { applications, users, applicationReviews } from "../drizzle/schema";
 import { eq, desc, sql, gte, and } from "drizzle-orm";
 import { z } from "zod";
 import { storagePut } from "./storage";
@@ -603,6 +604,113 @@ export const appRouter = router({
           depositorName: input.depositorName,
           depositDate: input.depositDate,
         }).where(eq(applications.id, application.id));
+        
+        return { success: true };
+      }),
+  }),
+
+  applicationReview: router({
+    requestReview: protectedProcedure
+      .input(
+        z.object({
+          applicationId: z.number(),
+          requestReason: z.string(),
+          additionalDocuments: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        // 신청 확인
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, input.applicationId));
+        
+        if (!application) {
+          throw new Error("신청 내역을 찾을 수 없습니다");
+        }
+        
+        if (application.userId !== ctx.user.id) {
+          throw new Error("권한이 없습니다");
+        }
+        
+        if (application.status !== "rejected") {
+          throw new Error("거부된 신청만 재검토를 요청할 수 있습니다");
+        }
+        
+        // 재검토 요청 횟수 확인 (최대 1회)
+        if ((application.reviewRequestCount || 0) >= 1) {
+          throw new Error("재검토는 최대 1회만 요청할 수 있습니다");
+        }
+        
+        // 재검토 요청 생성
+        await createApplicationReview({
+          applicationId: input.applicationId,
+          requestReason: input.requestReason,
+          additionalDocuments: input.additionalDocuments,
+        });
+        
+        // 재검토 요청 횟수 증가
+        await incrementReviewRequestCount(input.applicationId);
+        
+        return { success: true };
+      }),
+
+    getMyReviews: protectedProcedure
+      .input(z.object({ applicationId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        // 신청 확인
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, input.applicationId));
+        
+        if (!application || application.userId !== ctx.user.id) {
+          throw new Error("권한이 없습니다");
+        }
+        
+        return await getApplicationReviewsByApplicationId(input.applicationId);
+      }),
+
+    listPending: adminProcedure.query(async () => {
+      return await getAllPendingReviews();
+    }),
+
+    updateStatus: adminProcedure
+      .input(
+        z.object({
+          reviewId: z.number(),
+          status: z.enum(["approved", "rejected"]),
+          adminNotes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        await updateApplicationReviewStatus(
+          input.reviewId,
+          input.status,
+          ctx.user.id,
+          input.adminNotes
+        );
+        
+        // 재검토 승인 시 원래 신청도 승인 처리
+        if (input.status === "approved") {
+          const db = await getDb();
+          if (!db) throw new Error("Database connection failed");
+          
+          const [review] = await db
+            .select()
+            .from(applicationReviews)
+            .where(eq(applicationReviews.id, input.reviewId));
+          
+          if (review) {
+            await updateApplicationStatus(review.applicationId, "approved");
+          }
+        }
         
         return { success: true };
       }),

@@ -84,10 +84,29 @@ export const applications = mysqlTable("applications", {
   
   // Draft support
   isDraft: int("isDraft").default(1).notNull(), // 1 = draft, 0 = submitted
+  
+  // Review request
+  reviewRequestCount: int("reviewRequestCount").default(0).notNull(),
 });
 
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
+
+export const applicationReviews = mysqlTable("applicationReviews", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  requestReason: text("requestReason").notNull(),
+  additionalDocuments: text("additionalDocuments"), // JSON array of S3 URLs
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  reviewedBy: int("reviewedBy"), // admin user id
+  reviewedAt: timestamp("reviewedAt"),
+  adminNotes: text("adminNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ApplicationReview = typeof applicationReviews.$inferSelect;
+export type InsertApplicationReview = typeof applicationReviews.$inferInsert;
 
 // TODO: Add your tables here
 

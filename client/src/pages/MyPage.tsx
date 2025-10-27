@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 
 import { useEffect, useState } from "react";
@@ -23,6 +25,8 @@ export default function MyPage() {
 
   const [depositorName, setDepositorName] = useState("");
   const [depositDate, setDepositDate] = useState("");
+  const [reviewRequestReason, setReviewRequestReason] = useState("");
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
 
   const requestPaymentMutation = trpc.application.requestPayment.useMutation({
     onSuccess: () => {
@@ -34,6 +38,18 @@ export default function MyPage() {
     },
     onError: (error) => {
       toast.error("입금 확인 요청에 실패했습니다: " + error.message);
+    },
+  });
+
+  const requestReviewMutation = trpc.applicationReview.requestReview.useMutation({
+    onSuccess: () => {
+      toast.success("재검토 요청이 제출되었습니다.");
+      setReviewRequestReason("");
+      setShowReviewDialog(false);
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast.error("재검토 요청에 실패했습니다: " + error.message);
     },
   });
 
@@ -147,9 +163,32 @@ export default function MyPage() {
                   <div className="mt-2">{getStatusBadge(application.status)}</div>
                 </div>
                 {application.status === 'rejected' && application.adminNotes && (
-                  <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
-                    <Label className="text-destructive">거부 사유</Label>
-                    <p className="text-sm mt-2">{application.adminNotes}</p>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                      <Label className="text-destructive">거부 사유</Label>
+                      <p className="text-sm mt-2">{application.adminNotes}</p>
+                    </div>
+                    {(application.reviewRequestCount || 0) < 1 && (
+                      <div className="space-y-2">
+                        <Label>재검토 요청</Label>
+                        <p className="text-sm text-muted-foreground">
+AI 검증 결과에 오류가 있다고 생각하신다면 재검토를 요청할 수 있습니다. (최대 1회)
+                        </p>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowReviewDialog(true)}
+                        >
+                          재검토 요청
+                        </Button>
+                      </div>
+                    )}
+                    {(application.reviewRequestCount || 0) >= 1 && (
+                      <div className="p-4 bg-muted rounded-md">
+                        <p className="text-sm text-muted-foreground">
+                          재검토 요청이 제출되었습니다. 관리자가 검토 중입니다.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
                 {application.status === 'approved' && application.adminNotes && (
@@ -250,6 +289,50 @@ export default function MyPage() {
           </div>
         </div>
       </div>
+
+      {/* 재검토 요청 Dialog */}
+      <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>재검토 요청</DialogTitle>
+            <DialogDescription>
+              AI 검증 결과에 오류가 있다고 생각하시는 이유를 설명해주세요. 관리자가 수동으로 검토합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="reviewReason">재검토 요청 사유</Label>
+              <Textarea
+                id="reviewReason"
+                placeholder="예: 제출한 서류는 공식 인증 시험 결과이며, 점수가 명확히 표시되어 있습니다."
+                value={reviewRequestReason}
+                onChange={(e) => setReviewRequestReason(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReviewDialog(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={() => {
+                if (!reviewRequestReason.trim()) {
+                  toast.error("재검토 요청 사유를 입력해주세요.");
+                  return;
+                }
+                requestReviewMutation.mutate({
+                  applicationId: application!.id,
+                  requestReason: reviewRequestReason,
+                });
+              }}
+              disabled={requestReviewMutation.isPending}
+            >
+              제출
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

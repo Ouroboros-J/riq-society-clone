@@ -545,3 +545,20 @@
 - [ ] 검증 이력 조회 기능
 
 
+
+
+
+### Phase 9-6: AI 검증 재검토 요청 시스템
+- [x] applicationReviews 테이블 생성 (applicationId, requestReason, additionalDocuments, status, reviewedBy, reviewedAt)
+- [x] applications 테이블에 reviewRequestCount 필드 추가 (재검토 요청 횟수)
+- [x] applicationReview tRPC 라우터 구현 (requestReview, getMyReviews, listPending, updateStatus)
+- [x] 마이페이지에 재검토 요청 버튼 추가 (AI 거절된 신청에만 표시)
+- [x] 재검토 요청 폼 (추가 설명 Dialog)
+- [x] 재검토 요청 횟수 제한 (최대 1회)
+- [x] 재검토 요청 시 AI 검증 우회 (관리자 수동 검토)
+- [x] 관리자 페이지에 재검토 요청 목록 탭 추가
+- [x] 관리자 재검토 승인/거부 UI
+- [x] 재검토 승인 시 원래 신청 자동 승인 처리
+- [ ] 재검토 결과 이메일 알림 (선택 사항)
+- [ ] AI 오탐률 통계 대시보드 (선택 사항)
+

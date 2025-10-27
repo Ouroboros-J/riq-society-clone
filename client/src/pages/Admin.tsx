@@ -128,6 +128,10 @@ export default function Admin() {
     enabled: isAuthenticated && user?.role === 'admin',
   });
   
+  const { data: pendingReviews, isLoading: reviewsLoading, refetch: refetchReviews } = trpc.applicationReview.listPending.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+  
   const createFaqMutation = trpc.faq.create.useMutation({
     onSuccess: () => {
       refetchFaqs();
@@ -146,6 +150,17 @@ export default function Admin() {
       setFaqDialogOpen(false);
       setEditingFaq(null);
       toast.success('FAQ가 수정되었습니다.');
+    },
+  });
+  
+  const updateReviewStatusMutation = trpc.applicationReview.updateStatus.useMutation({
+    onSuccess: () => {
+      refetchReviews();
+      refetchApplications();
+      toast.success('재검토 처리가 완료되었습니다.');
+    },
+    onError: (error) => {
+      toast.error('재검토 처리에 실패했습니다: ' + error.message);
     },
   });
   
@@ -375,6 +390,7 @@ export default function Admin() {
             <TabsTrigger value="blog">블로그 관리</TabsTrigger>
             <TabsTrigger value="resources">리소스 관리</TabsTrigger>
             <TabsTrigger value="ai-settings">AI 설정</TabsTrigger>
+            <TabsTrigger value="review-requests">재검토 요청</TabsTrigger>
           </TabsList>
 
           <TabsContent value="statistics">
@@ -1027,7 +1043,6 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
 
         {/* 상세 보기 모달 */}
         <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
@@ -1799,6 +1814,95 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* 재검토 요청 */}
+          <TabsContent value="review-requests">
+            <Card>
+              <CardHeader>
+                <CardTitle>재검토 요청 목록</CardTitle>
+                <CardDescription>
+AI 검증에서 거부된 신청자가 재검토를 요청한 목록입니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>신청자</TableHead>
+                      <TableHead>시험 종류</TableHead>
+                      <TableHead>점수</TableHead>
+                      <TableHead>재검토 사유</TableHead>
+                      <TableHead>요청일</TableHead>
+                      <TableHead>상태</TableHead>
+                      <TableHead>작업</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingReviews && pendingReviews.length > 0 ? (
+                      pendingReviews.map((item: any) => (
+                        <TableRow key={item.review.id}>
+                          <TableCell>{item.review.id}</TableCell>
+                          <TableCell>{item.application?.fullName || '-'}</TableCell>
+                          <TableCell>{item.application?.testType || '-'}</TableCell>
+                          <TableCell>{item.application?.testScore || '-'}</TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {item.review.requestReason}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(item.review.createdAt).toLocaleDateString('ko-KR')}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">대기중</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => {
+                                  if (confirm('재검토 승인하시겠습니까? 원래 신청도 승인 처리됩니다.')) {
+                                    updateReviewStatusMutation.mutate({
+                                      reviewId: item.review.id,
+                                      status: 'approved',
+                                    });
+                                  }
+                                }}
+                              >
+                                승인
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  if (confirm('재검토 거부하시겠습니까?')) {
+                                    updateReviewStatusMutation.mutate({
+                                      reviewId: item.review.id,
+                                      status: 'rejected',
+                                    });
+                                  }
+                                }}
+                              >
+                                거부
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">
+                          재검토 요청이 없습니다.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+        </Tabs>
 
         {/* 리소스 편집 모달 */}
         <Dialog open={resourceDialogOpen} onOpenChange={setResourceDialogOpen}>
