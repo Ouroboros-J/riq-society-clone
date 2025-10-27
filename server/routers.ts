@@ -6,7 +6,7 @@ import { confirmPayment, getAllUsers, getPendingPayments, getUserByOpenId, updat
 import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
 import { getDb } from "./db";
 import { applications } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import { storagePut } from "./storage";
 import { sendEmail } from "./_core/email";
@@ -42,6 +42,47 @@ export const appRouter = router({
       .input(z.object({ userId: z.number() }))
       .mutation(async ({ input }) => {
         return await confirmPayment(input.userId);
+      }),
+
+    // Application 관리
+    listApplications: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error("Database connection failed");
+      return await db.select().from(applications).orderBy(desc(applications.createdAt));
+    }),
+
+    updateApplicationStatus: adminProcedure
+      .input(z.object({ 
+        applicationId: z.number(), 
+        status: z.enum(["pending", "approved", "rejected"]),
+        adminNotes: z.string().optional()
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        await db.update(applications)
+          .set({ 
+            status: input.status,
+            adminNotes: input.adminNotes,
+            updatedAt: new Date()
+          })
+          .where(eq(applications.id, input.applicationId));
+        return { success: true };
+      }),
+
+    confirmApplicationPayment: adminProcedure
+      .input(z.object({ applicationId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        await db.update(applications)
+          .set({ 
+            paymentStatus: "confirmed",
+            paymentConfirmedAt: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(applications.id, input.applicationId));
+        return { success: true };
       }),
   }),
 

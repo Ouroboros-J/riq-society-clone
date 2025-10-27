@@ -140,7 +140,13 @@ export default function MyPage() {
                   <Label>상태</Label>
                   <div className="mt-2">{getStatusBadge(application.status)}</div>
                 </div>
-                {application.adminNotes && (
+                {application.status === 'rejected' && application.adminNotes && (
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <Label className="text-destructive">거부 사유</Label>
+                    <p className="text-sm mt-2">{application.adminNotes}</p>
+                  </div>
+                )}
+                {application.status === 'approved' && application.adminNotes && (
                   <div>
                     <Label>관리자 메모</Label>
                     <p className="text-sm text-muted-foreground">{application.adminNotes}</p>

@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
@@ -15,6 +17,9 @@ import { toast } from "sonner";
 export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectApplicationId, setRejectApplicationId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
 
   const { data: users, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.listUsers.useQuery(undefined, {
@@ -22,6 +27,10 @@ export default function Admin() {
   });
 
   const { data: pendingPayments, isLoading: paymentsLoading, refetch: refetchPayments } = trpc.admin.listPendingPayments.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  const { data: applications, isLoading: applicationsLoading, refetch: refetchApplications } = trpc.admin.listApplications.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
@@ -43,6 +52,41 @@ export default function Admin() {
     },
     onError: (error) => {
       toast.error("업데이트 실패: " + error.message);
+    },
+  });
+
+  const updateApplicationStatusMutation = trpc.admin.updateApplicationStatus.useMutation({
+    onSuccess: () => {
+      toast.success("신청 상태가 업데이트되었습니다.");
+      refetchApplications();
+      setRejectDialogOpen(false);
+      setRejectApplicationId(null);
+      setRejectReason("");
+    },
+    onError: (error) => {
+      toast.error("업데이트 실패: " + error.message);
+    },
+  });
+
+  const handleReject = () => {
+    if (rejectApplicationId && rejectReason.trim()) {
+      updateApplicationStatusMutation.mutate({
+        applicationId: rejectApplicationId,
+        status: 'rejected',
+        adminNotes: rejectReason
+      });
+    } else {
+      toast.error("거부 사유를 입력해주세요.");
+    }
+  };
+
+  const confirmApplicationPaymentMutation = trpc.admin.confirmApplicationPayment.useMutation({
+    onSuccess: () => {
+      toast.success("입금이 확인되었습니다.");
+      refetchApplications();
+    },
+    onError: (error) => {
+      toast.error("입금 확인 실패: " + error.message);
     },
   });
 
@@ -77,11 +121,117 @@ export default function Admin() {
           <p className="text-muted-foreground">RIQ Society 회원 관리</p>
         </div>
 
-        <Tabs defaultValue="users" className="w-full">
+        <Tabs defaultValue="applications" className="w-full">
           <TabsList>
+            <TabsTrigger value="applications">입회 신청 관리</TabsTrigger>
             <TabsTrigger value="users">회원 관리</TabsTrigger>
             <TabsTrigger value="payments">입금 확인</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="applications">
+            <Card>
+              <CardHeader>
+                <CardTitle>입회 신청 목록</CardTitle>
+                <CardDescription>
+                  전체 신청 {applications?.length || 0}건
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {applicationsLoading ? (
+                  <p>로딩 중...</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>이름</TableHead>
+                        <TableHead>이메일</TableHead>
+                        <TableHead>시험 종류</TableHead>
+                        <TableHead>점수</TableHead>
+                        <TableHead>신청 상태</TableHead>
+                        <TableHead>결제 상태</TableHead>
+                        <TableHead>신청일</TableHead>
+                        <TableHead>관리</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {applications?.map((app: any) => (
+                        <TableRow key={app.id}>
+                          <TableCell>{app.id}</TableCell>
+                          <TableCell>{app.fullName}</TableCell>
+                          <TableCell>{app.email}</TableCell>
+                          <TableCell>{app.testType}</TableCell>
+                          <TableCell>{app.testScore}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              app.status === 'approved' ? 'default' :
+                              app.status === 'rejected' ? 'destructive' :
+                              'secondary'
+                            }>
+                              {app.status === 'approved' ? '승인됨' :
+                               app.status === 'rejected' ? '거부됨' :
+                               '대기중'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              app.paymentStatus === 'confirmed' ? 'default' :
+                              app.paymentStatus === 'deposit_requested' ? 'secondary' :
+                              'outline'
+                            }>
+                              {app.paymentStatus === 'confirmed' ? '확인됨' :
+                               app.paymentStatus === 'deposit_requested' ? '입금 요청' :
+                               '대기중'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(app.createdAt).toLocaleDateString('ko-KR')}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              {app.status === 'pending' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => updateApplicationStatusMutation.mutate({
+                                      applicationId: app.id,
+                                      status: 'approved'
+                                    })}
+                                  >
+                                    승인
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => {
+                                      setRejectApplicationId(app.id);
+                                      setRejectDialogOpen(true);
+                                    }}
+                                  >
+                                    거부
+                                  </Button>
+                                </>
+                              )}
+                              {app.status === 'approved' && app.paymentStatus === 'deposit_requested' && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => confirmApplicationPaymentMutation.mutate({
+                                    applicationId: app.id
+                                  })}
+                                >
+                                  입금 확인
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="users">
             <Card>
@@ -209,7 +359,37 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
 
-
+        {/* 거부 사유 입력 모달 */}
+        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>입회 신청 거부</DialogTitle>
+              <DialogDescription>
+                거부 사유를 입력해주세요. 신청자가 마이페이지에서 확인할 수 있습니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="rejectReason">거부 사유</Label>
+                <Textarea
+                  id="rejectReason"
+                  placeholder="예: 제출하신 시험 점수가 입회 기준에 미달합니다."
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={4}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+                취소
+              </Button>
+              <Button variant="destructive" onClick={handleReject}>
+                거부 확정
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="mt-8">
           <Button variant="outline" onClick={() => setLocation("/")}>
