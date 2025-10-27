@@ -254,7 +254,7 @@
 - [x] 필터링 기능 (상태, 결제 상태)
 - [x] 검색 기능 강화 (이름, 이메일, 시험 종류)
 - [x] 일괄 처리 기능 (승인/거부)
-- [x] 이메일 알림 템플릿 관리 페이지 (UI 완료, TypeScript 캐시 문제 해결 필요)
+- [x] 이메일 알림 템플릿 관리 페이지
 - [x] 신청자 상세 보기 모달
 
 ## Phase 4: 콘텐츠 관리
@@ -371,6 +371,6 @@
 
 ## 기술 부채 / 버그
 
-- [ ] TypeScript 모듈 캐시 문제 해결 (getAllEmailTemplates, getEmailTemplate, updateEmailTemplate, createEmailTemplate export 인식 안됨)
-- [ ] 이메일 템플릿 초기 데이터 삽입 (application_approved, application_rejected 등)
+- [x] TypeScript 모듈 캐시 문제 해결 (db-email-templates.ts로 분리)
+- [x] 이메일 템플릿 초기 데이터 삽입 (application_approved, application_rejected, payment_confirmed)
 

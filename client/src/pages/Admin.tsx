@@ -982,7 +982,7 @@ export default function Admin() {
                   className="font-mono text-sm"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  변수: {{name}}, {{email}}, {{status}} 등을 사용할 수 있습니다.
+                  변수: {'{'}{'{'} name {'}'}{'}'},  {'{'}{'{'} email {'}'}{'}'},  {'{'}{'{'} status {'}'}{'}'}  등을 사용할 수 있습니다.
                 </p>
               </div>
             </div>
