@@ -88,3 +88,17 @@ export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
 
 // TODO: Add your tables here
+
+export const emailTemplates = mysqlTable("emailTemplates", {
+  id: int("id").autoincrement().primaryKey(),
+  templateKey: varchar("templateKey", { length: 100 }).notNull().unique(), // e.g., "application_approved", "application_rejected"
+  subject: varchar("subject", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  description: text("description"), // 템플릿 설명
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type InsertEmailTemplate = typeof emailTemplates.$inferInsert;
+

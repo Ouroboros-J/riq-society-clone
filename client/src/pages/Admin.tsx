@@ -37,6 +37,12 @@ export default function Admin() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
   
+  // 이메일 템플릿 편집
+  const [editingTemplate, setEditingTemplate] = useState<any>(null);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateSubject, setTemplateSubject] = useState('');
+  const [templateBody, setTemplateBody] = useState('');
+  
   // 통계 날짜 범위
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
@@ -63,6 +69,10 @@ export default function Admin() {
     { enabled: isAuthenticated && user?.role === 'admin' }
   );
   
+  const { data: emailTemplates, isLoading: templatesLoading, refetch: refetchTemplates } = trpc.admin.listEmailTemplates.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+  
   // 필터링된 신청 목록
   const filteredApplications = (applications || []).filter((app: any) => {
     // 상태 필터
@@ -79,6 +89,17 @@ export default function Admin() {
       );
     }
     return true;
+  });
+
+  const updateEmailTemplateMutation = trpc.admin.updateEmailTemplate.useMutation({
+    onSuccess: () => {
+      toast.success("이메일 템플릿이 업데이트되었습니다.");
+      refetchTemplates();
+      setTemplateDialogOpen(false);
+    },
+    onError: () => {
+      toast.error("업데이트에 실패했습니다.");
+    },
   });
 
   const confirmPaymentMutation = trpc.admin.confirmPayment.useMutation({
@@ -174,6 +195,7 @@ export default function Admin() {
             <TabsTrigger value="applications">입회 신청 관리</TabsTrigger>
             <TabsTrigger value="users">회원 관리</TabsTrigger>
             <TabsTrigger value="payments">입금 확인</TabsTrigger>
+            <TabsTrigger value="email-templates">이메일 템플릿</TabsTrigger>
           </TabsList>
 
           <TabsContent value="statistics">
@@ -746,6 +768,69 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="email-templates">
+            <Card>
+              <CardHeader>
+                <CardTitle>이메일 템플릿 관리</CardTitle>
+                <CardDescription>
+                  자동 발송되는 이메일의 제목과 내용을 수정할 수 있습니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {templatesLoading ? (
+                  <p>로딩 중...</p>
+                ) : emailTemplates && emailTemplates.length > 0 ? (
+                  <div className="space-y-4">
+                    {emailTemplates.map((template: any) => (
+                      <Card key={template.id}>
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <CardTitle className="text-lg">{template.templateKey}</CardTitle>
+                              {template.description && (
+                                <CardDescription>{template.description}</CardDescription>
+                              )}
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingTemplate(template);
+                                setTemplateSubject(template.subject);
+                                setTemplateBody(template.body);
+                                setTemplateDialogOpen(true);
+                              }}
+                            >
+                              편집
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            <div>
+                              <Label className="text-muted-foreground">제목</Label>
+                              <p className="font-medium">{template.subject}</p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground">내용 미리보기</Label>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3">
+                                {template.body}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    등록된 템플릿이 없습니다.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         {/* 상세 보기 모달 */}
@@ -862,6 +947,62 @@ export default function Admin() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
                 닫기
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 이메일 템플릿 편집 모달 */}
+        <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>이메일 템플릿 편집</DialogTitle>
+              <DialogDescription>
+                {editingTemplate?.templateKey}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="templateSubject">제목</Label>
+                <Input
+                  id="templateSubject"
+                  value={templateSubject}
+                  onChange={(e) => setTemplateSubject(e.target.value)}
+                  placeholder="이메일 제목"
+                />
+              </div>
+              <div>
+                <Label htmlFor="templateBody">내용</Label>
+                <Textarea
+                  id="templateBody"
+                  value={templateBody}
+                  onChange={(e) => setTemplateBody(e.target.value)}
+                  placeholder="이메일 내용"
+                  rows={10}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  변수: {{name}}, {{email}}, {{status}} 등을 사용할 수 있습니다.
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setTemplateDialogOpen(false)}>
+                취소
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (editingTemplate) {
+                    updateEmailTemplateMutation.mutate({
+                      templateKey: editingTemplate.templateKey,
+                      subject: templateSubject,
+                      body: templateBody
+                    });
+                  }
+                }}
+                disabled={updateEmailTemplateMutation.isPending}
+              >
+                저장
               </Button>
             </DialogFooter>
           </DialogContent>

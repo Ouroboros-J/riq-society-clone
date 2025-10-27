@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { confirmPayment, getAllUsers, getPendingPayments, getUserByOpenId, updateUserApprovalStatus } from "./db";
+import { confirmPayment, getAllUsers, getPendingPayments, getUserByOpenId, updateUserApprovalStatus, getAllEmailTemplates, getEmailTemplate, updateEmailTemplate, createEmailTemplate } from "./db";
 import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
 import { getDb } from "./db";
 import { applications, users } from "../drizzle/schema";
@@ -147,6 +147,38 @@ export const appRouter = router({
           statusStats,
           paymentStats
         };
+      }),
+
+    // 이메일 템플릿 관리
+    listEmailTemplates: adminProcedure.query(async () => {
+      return await getAllEmailTemplates();
+    }),
+
+    getEmailTemplate: adminProcedure
+      .input(z.object({ templateKey: z.string() }))
+      .query(async ({ input }) => {
+        return await getEmailTemplate(input.templateKey);
+      }),
+
+    updateEmailTemplate: adminProcedure
+      .input(z.object({ 
+        templateKey: z.string(),
+        subject: z.string(),
+        body: z.string()
+      }))
+      .mutation(async ({ input }) => {
+        return await updateEmailTemplate(input.templateKey, input.subject, input.body);
+      }),
+
+    createEmailTemplate: adminProcedure
+      .input(z.object({ 
+        templateKey: z.string(),
+        subject: z.string(),
+        body: z.string(),
+        description: z.string().optional()
+      }))
+      .mutation(async ({ input }) => {
+        return await createEmailTemplate(input.templateKey, input.subject, input.body, input.description);
       }),
   }),
 
