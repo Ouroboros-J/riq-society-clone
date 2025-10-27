@@ -10,6 +10,8 @@ import Auth from "./pages/Auth";
 import MyPage from "./pages/MyPage";
 import Application from "./pages/Application";
 import FAQ from "./pages/FAQ";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 
 function Router() {
@@ -21,7 +23,9 @@ function Router() {
       <Route path={"/auth"} component={Auth} />
       <Route path={"/mypage"} component={MyPage} />
       <Route path={"/application"} component={Application} />
-      <Route path={"/faq"} component={FAQ} />
+        <Route path="/faq" component={FAQ} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/blog/:slug" component={BlogPost} />
 
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

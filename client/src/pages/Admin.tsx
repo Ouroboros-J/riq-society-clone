@@ -51,6 +51,16 @@ export default function Admin() {
   const [faqCategory, setFaqCategory] = useState('');
   const [faqDisplayOrder, setFaqDisplayOrder] = useState(0);
   
+  // 블로그 관리
+  const [blogDialogOpen, setBlogDialogOpen] = useState(false);
+  const [editingBlog, setEditingBlog] = useState<any>(null);
+  const [blogTitle, setBlogTitle] = useState('');
+  const [blogSlug, setBlogSlug] = useState('');
+  const [blogContent, setBlogContent] = useState('');
+  const [blogExcerpt, setBlogExcerpt] = useState('');
+  const [blogThumbnailUrl, setBlogThumbnailUrl] = useState('');
+  const [blogCategory, setBlogCategory] = useState('');
+  
   // 통계 날짜 범위
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
@@ -110,6 +120,40 @@ export default function Admin() {
     onSuccess: () => {
       refetchFaqs();
       toast.success('FAQ가 삭제되었습니다.');
+    },
+  });
+  
+  const { data: blogs, isLoading: blogsLoading, refetch: refetchBlogs } = trpc.blog.listAdmin.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+  
+  const createBlogMutation = trpc.blog.create.useMutation({
+    onSuccess: () => {
+      refetchBlogs();
+      setBlogDialogOpen(false);
+      setBlogTitle('');
+      setBlogSlug('');
+      setBlogContent('');
+      setBlogExcerpt('');
+      setBlogThumbnailUrl('');
+      setBlogCategory('');
+      toast.success('블로그가 생성되었습니다.');
+    },
+  });
+  
+  const updateBlogMutation = trpc.blog.update.useMutation({
+    onSuccess: () => {
+      refetchBlogs();
+      setBlogDialogOpen(false);
+      setEditingBlog(null);
+      toast.success('블로그가 수정되었습니다.');
+    },
+  });
+  
+  const deleteBlogMutation = trpc.blog.delete.useMutation({
+    onSuccess: () => {
+      refetchBlogs();
+      toast.success('블로그가 삭제되었습니다.');
     },
   });
   
@@ -237,6 +281,7 @@ export default function Admin() {
             <TabsTrigger value="payments">입금 확인</TabsTrigger>
             <TabsTrigger value="email-templates">이메일 템플릿</TabsTrigger>
             <TabsTrigger value="faq">FAQ 관리</TabsTrigger>
+            <TabsTrigger value="blog">블로그 관리</TabsTrigger>
           </TabsList>
 
           <TabsContent value="statistics">
@@ -1154,6 +1199,237 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* 블로그 관리 탭 */}
+          <TabsContent value="blog">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>블로그 관리</CardTitle>
+                    <CardDescription>블로그 글을 관리합니다</CardDescription>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      setEditingBlog(null);
+                      setBlogTitle('');
+                      setBlogSlug('');
+                      setBlogContent('');
+                      setBlogExcerpt('');
+                      setBlogThumbnailUrl('');
+                      setBlogCategory('');
+                      setBlogDialogOpen(true);
+                    }}
+                  >
+                    블로그 추가
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {blogsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>제목</TableHead>
+                        <TableHead>카테고리</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead>발행일</TableHead>
+                        <TableHead className="text-right">관리</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {blogs && blogs.length > 0 ? (
+                        blogs.map((blog: any) => (
+                          <TableRow key={blog.id}>
+                            <TableCell className="max-w-md truncate">{blog.title}</TableCell>
+                            <TableCell>{blog.category || '-'}</TableCell>
+                            <TableCell>
+                              <Badge variant={blog.isPublished ? 'default' : 'secondary'}>
+                                {blog.isPublished ? '공개' : '비공개'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {blog.publishedAt 
+                                ? new Date(blog.publishedAt).toLocaleDateString('ko-KR')
+                                : '-'
+                              }
+                            </TableCell>
+                            <TableCell className="text-right space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setEditingBlog(blog);
+                                  setBlogTitle(blog.title);
+                                  setBlogSlug(blog.slug);
+                                  setBlogContent(blog.content);
+                                  setBlogExcerpt(blog.excerpt || '');
+                                  setBlogThumbnailUrl(blog.thumbnailUrl || '');
+                                  setBlogCategory(blog.category || '');
+                                  setBlogDialogOpen(true);
+                                }}
+                              >
+                                수정
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm('블로그를 삭제하시겠습니까?')) {
+                                    deleteBlogMutation.mutate({ id: blog.id });
+                                  }
+                                }}
+                              >
+                                삭제
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  updateBlogMutation.mutate({
+                                    id: blog.id,
+                                    isPublished: blog.isPublished ? 0 : 1,
+                                    publishedAt: blog.isPublished ? undefined : new Date()
+                                  });
+                                }}
+                              >
+                                {blog.isPublished ? '비공개' : '공개'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            등록된 블로그가 없습니다.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+        {/* 블로그 편집 모달 */}
+        <Dialog open={blogDialogOpen} onOpenChange={setBlogDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingBlog ? '블로그 수정' : '블로그 추가'}</DialogTitle>
+              <DialogDescription>
+                블로그 글을 작성해주세요. 마크다운 문법을 사용할 수 있습니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="blogTitle">제목</Label>
+                <Input
+                  id="blogTitle"
+                  placeholder="블로그 제목"
+                  value={blogTitle}
+                  onChange={(e) => {
+                    setBlogTitle(e.target.value);
+                    // 제목에서 자동으로 slug 생성 (수정 시에는 제외)
+                    if (!editingBlog) {
+                      const slug = e.target.value
+                        .toLowerCase()
+                        .replace(/[^a-z0-9가-힣\s-]/g, '')
+                        .replace(/\s+/g, '-');
+                      setBlogSlug(slug);
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="blogSlug">Slug (URL)</Label>
+                <Input
+                  id="blogSlug"
+                  placeholder="blog-url-slug"
+                  value={blogSlug}
+                  onChange={(e) => setBlogSlug(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="blogCategory">카테고리</Label>
+                  <Input
+                    id="blogCategory"
+                    placeholder="예: 소식"
+                    value={blogCategory}
+                    onChange={(e) => setBlogCategory(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="blogThumbnailUrl">썸네일 URL</Label>
+                  <Input
+                    id="blogThumbnailUrl"
+                    placeholder="https://..."
+                    value={blogThumbnailUrl}
+                    onChange={(e) => setBlogThumbnailUrl(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="blogExcerpt">요약</Label>
+                <Textarea
+                  id="blogExcerpt"
+                  placeholder="블로그 글의 간략한 요약"
+                  value={blogExcerpt}
+                  onChange={(e) => setBlogExcerpt(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              <div>
+                <Label htmlFor="blogContent">내용 (마크다운)</Label>
+                <Textarea
+                  id="blogContent"
+                  placeholder="# 제목\n\n내용을 입력해주세요..."
+                  value={blogContent}
+                  onChange={(e) => setBlogContent(e.target.value)}
+                  rows={15}
+                  className="font-mono text-sm"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBlogDialogOpen(false)}>
+                취소
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (editingBlog) {
+                    updateBlogMutation.mutate({
+                      id: editingBlog.id,
+                      title: blogTitle,
+                      slug: blogSlug,
+                      content: blogContent,
+                      excerpt: blogExcerpt || undefined,
+                      thumbnailUrl: blogThumbnailUrl || undefined,
+                      category: blogCategory || undefined,
+                    });
+                  } else {
+                    createBlogMutation.mutate({
+                      title: blogTitle,
+                      slug: blogSlug,
+                      content: blogContent,
+                      excerpt: blogExcerpt || undefined,
+                      thumbnailUrl: blogThumbnailUrl || undefined,
+                      category: blogCategory || undefined,
+                    });
+                  }
+                }}
+                disabled={!blogTitle || !blogSlug || !blogContent}
+              >
+                {editingBlog ? '수정' : '추가'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* FAQ 편집 모달 */}
         <Dialog open={faqDialogOpen} onOpenChange={setFaqDialogOpen}>

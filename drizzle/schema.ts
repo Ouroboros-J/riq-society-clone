@@ -119,3 +119,24 @@ export const faqs = mysqlTable("faqs", {
 export type Faq = typeof faqs.$inferSelect;
 export type InsertFaq = typeof faqs.$inferInsert;
 
+
+
+
+export const blogs = mysqlTable("blogs", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt"),
+  thumbnailUrl: text("thumbnailUrl"),
+  category: varchar("category", { length: 100 }),
+  authorId: int("authorId").notNull(),
+  isPublished: int("isPublished").default(0).notNull(),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Blog = typeof blogs.$inferSelect;
+export type InsertBlog = typeof blogs.$inferInsert;
+
