@@ -1,5 +1,6 @@
 import { trpc } from '../lib/trpc';
 import Header from '../components/Header';
+import SEO from '../components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Link } from 'wouter';
@@ -20,6 +21,11 @@ export default function Blog() {
 
   return (
     <>
+      <SEO 
+        title="블로그"
+        description="RIQ Society의 최신 소식, 행사, 연구 결과, 회원 이야기를 확인하세요."
+        keywords="RIQ Society 블로그, 고지능 연구, 멘사 소식, 회원 활동"
+      />
       <Header />
       <div className="min-h-screen bg-background pt-16">
         <div className="container py-16">

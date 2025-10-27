@@ -1,6 +1,7 @@
 import { useRoute } from 'wouter';
 import { trpc } from '../lib/trpc';
 import Header from '../components/Header';
+import SEO from '../components/SEO';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -21,6 +22,7 @@ export default function BlogPost() {
   if (isLoading) {
     return (
       <>
+        <SEO title="로딩 중..." />
         <Header />
         <div className="min-h-screen bg-background pt-16">
           <div className="container py-16">
@@ -59,6 +61,16 @@ export default function BlogPost() {
 
   return (
     <>
+      <SEO 
+        title={blog?.title || '블로그 글'}
+        description={blog?.content?.substring(0, 160) || 'RIQ Society 블로그 글'}
+        keywords={`RIQ Society, 블로그, ${blog?.category || ''}`}
+        image={blog?.thumbnailUrl || undefined}
+        type="article"
+        author="RIQ Society"
+        publishedTime={blog?.createdAt?.toISOString()}
+        modifiedTime={blog?.updatedAt?.toISOString()}
+      />
       <Header />
       <div className="min-h-screen bg-background pt-16">
         <div className="container py-16">

@@ -414,5 +414,5 @@
 - [ ] Schema.org 구조화 데이터 추가
 - [x] sitemap.xml 자동 생성
 - [x] robots.txt 설정
-- [ ] 다른 페이지들에 SEO 컴포넌트 추가 (About, Application, FAQ, Blog 등)
+- [x] 다른 페이지들에 SEO 컴포넌트 추가 (Application, FAQ, Blog, BlogPost, Resources, MyPage)
 

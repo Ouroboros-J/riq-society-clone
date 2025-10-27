@@ -3,6 +3,7 @@ import { trpc } from '../lib/trpc';
 import { useAuth } from '../_core/hooks/useAuth';
 import { useLocation } from 'wouter';
 import Header from '../components/Header';
+import SEO from '../components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -30,9 +31,15 @@ export default function Resources() {
   if (authLoading) {
     return (
       <>
+        <SEO title="리소스 라이브러리 - 로딩 중" />
         <Header />
-        <div className="min-h-screen bg-background pt-16 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="min-h-screen bg-background pt-16">
+          <div className="container py-16">
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">로딩 중...</p>
+            </div>
+          </div>
         </div>
       </>
     );
@@ -45,6 +52,11 @@ export default function Resources() {
   if (!isMember) {
     return (
       <>
+        <SEO 
+          title="리소스 라이브러리 - 정회원 전용"
+          description="RIQ Society 정회원 전용 리소스 라이브러리. 연구 자료, 문서, 미디어 파일을 다운로드하세요."
+          keywords="RIQ Society 리소스, 정회원 혜택, 자료 다운로드"
+        />
         <Header />
         <div className="min-h-screen bg-background pt-16">
           <div className="container mx-auto px-4 py-16">
@@ -116,6 +128,11 @@ export default function Resources() {
 
   return (
     <>
+      <SEO 
+        title="리소스 라이브러리"
+        description="RIQ Society 정회원 전용 리소스 라이브러리. 연구 자료, 문서, 미디어 파일을 다운로드하세요."
+        keywords="RIQ Society 리소스, 정회원 혜택, 자료 다운로드"
+      />
       <Header />
       <div className="min-h-screen bg-background pt-16">
         <div className="container py-16">

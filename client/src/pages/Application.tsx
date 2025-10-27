@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import Header from "@/components/Header";
+import SEO from "@/components/SEO";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -179,6 +180,11 @@ export default function Application() {
 
   return (
     <>
+      <SEO 
+        title="입회 신청"
+        description="RIQ Society 입회 신청 페이지. 표준점수 145 이상의 지능검사 결과를 제출하여 입회를 신청하세요."
+        keywords="RIQ Society 입회, 지능검사, 멘사 입회, 고지능자 모임 신청"
+      />
       <Header />
       <div className="min-h-screen bg-background text-foreground py-20">
         <div className="container max-w-3xl mx-auto px-4">

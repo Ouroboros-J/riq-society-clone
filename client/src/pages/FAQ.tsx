@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import Header from '../components/Header';
+import SEO from '../components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -24,6 +25,11 @@ export default function FAQ() {
 
   return (
     <>
+      <SEO 
+        title="자주 묻는 질문 (FAQ)"
+        description="RIQ Society에 대해 자주 묻는 질문과 답변. 입회 자격, 신청 절차, 회비, 혜택 등에 대한 정보를 확인하세요."
+        keywords="RIQ Society FAQ, 자주 묻는 질문, 입회 자격, 신청 방법, 회비"
+      />
       <Header />
       <div className="min-h-screen bg-background pt-16">
         <div className="container py-16">

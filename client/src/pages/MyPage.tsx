@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import Header from "@/components/Header";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -102,6 +103,11 @@ export default function MyPage() {
 
   return (
     <>
+      <SEO 
+        title="마이페이지"
+        description="RIQ Society 회원 마이페이지. 입회 신청 현황, 결제 상태, 회원 정보를 확인하세요."
+        keywords="RIQ Society 마이페이지, 회원 정보, 신청 현황"
+      />
       <Header />
       <div className="min-h-screen bg-background pt-16">
         <div className="container py-8">
