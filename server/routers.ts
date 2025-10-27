@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { adminProcedure, memberProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { confirmPayment, getAllUsers, getPendingPayments, getUserByOpenId, updateUserApprovalStatus } from "./db";
 import { getAllEmailTemplates, getEmailTemplate, updateEmailTemplate, createEmailTemplate } from "./db-email-templates";
 import { getAllFaqs, getAllFaqsAdmin, getFaqById, createFaq, updateFaq, deleteFaq } from "./db-faqs";
@@ -292,7 +292,7 @@ export const appRouter = router({
   }),
 
   resource: router({
-    list: protectedProcedure.query(async () => {
+    list: memberProcedure.query(async () => {
       return await getAllResources();
     }),
 
@@ -300,7 +300,7 @@ export const appRouter = router({
       return await getAllResourcesAdmin();
     }),
 
-    getById: protectedProcedure
+    getById: memberProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return await getResourceById(input.id);

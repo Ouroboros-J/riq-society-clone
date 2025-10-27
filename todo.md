@@ -383,3 +383,15 @@
 - [x] 리소스 API를 protectedProcedure로 변경
 - [x] Header의 리소스 링크를 로그인한 사용자에게만 표시
 
+
+
+
+## 버그 수정 (긴급)
+
+- [x] 리소스 접근 권한을 정회원으로 제한 (현재 단순 로그인 사용자만 체크)
+  - [x] approvalStatus === 'approved' 체크
+  - [x] paymentStatus === 'confirmed' 체크
+  - [x] 리소스 API에 회원 자격 검증 추가 (memberProcedure)
+  - [x] Resources.tsx에서 회원 자격 체크 및 안내 메시지
+  - [x] Header에서 정회원만 리소스 링크 표시
+

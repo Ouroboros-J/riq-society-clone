@@ -10,11 +10,14 @@ import { Download, FileText, File, Image, Video, Music } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Resources() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  const isMember = user?.approvalStatus === 'approved' && user?.paymentStatus === 'confirmed';
+  
   const { data: resources, isLoading } = trpc.resource.list.useQuery(undefined, {
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && isMember,
   });
   
   useEffect(() => {
@@ -37,6 +40,38 @@ export default function Resources() {
   
   if (!isAuthenticated) {
     return null;
+  }
+  
+  if (!isMember) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-background pt-16">
+          <div className="container mx-auto px-4 py-16">
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="mb-8">
+                <svg className="mx-auto h-24 w-24 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold mb-4">정회원 전용 컨텐츠</h1>
+              <p className="text-lg text-muted-foreground mb-8">
+                리소스는 정회원만 이용할 수 있습니다.<br />
+                입회 신청 승인 및 연회비 결제가 필요합니다.
+              </p>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  현재 상태: <strong>{user?.approvalStatus === 'approved' ? '승인 완료' : '승인 대기'}</strong> / <strong>{user?.paymentStatus === 'confirmed' ? '결제 완료' : '결제 대기'}</strong>
+                </p>
+                <Button onClick={() => setLocation('/application')}>
+                  입회 신청하기
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
   }
   const incrementDownloadMutation = trpc.resource.incrementDownload.useMutation();
 
