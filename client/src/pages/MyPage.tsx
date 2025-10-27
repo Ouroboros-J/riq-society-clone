@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 
@@ -15,18 +15,6 @@ import { toast } from "sonner";
 export default function MyPage() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, setLocation] = useLocation();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [testName, setTestName] = useState("");
-  const [score, setScore] = useState("");
-  const [uploading, setUploading] = useState(false);
-
-  const { data: certificates, isLoading: certificatesLoading, refetch: refetchCertificates } = trpc.certificate.list.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  const { data: paymentStatus } = trpc.payment.getStatus.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
 
   const { data: application, isLoading: applicationLoading } = trpc.application.getMyApplication.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -35,20 +23,9 @@ export default function MyPage() {
   const [depositorName, setDepositorName] = useState("");
   const [depositDate, setDepositDate] = useState("");
 
-  const requestDepositMutation = trpc.certificate.requestDeposit.useMutation({
-    onSuccess: () => {
-      toast.success("입금 확인 요청이 제출되었습니다.");
-      setDepositorName("");
-      setDepositDate("");
-    },
-    onError: (error) => {
-      toast.error("입금 확인 요청에 실패했습니다: " + error.message);
-    },
-  });
-
   const requestPaymentMutation = trpc.application.requestPayment.useMutation({
     onSuccess: () => {
-      toast.success("입금 확인 요청이 제출되었습니다.");
+      toast.success("입금 확인 요청이 제출되엁습니다.");
       setDepositorName("");
       setDepositDate("");
       // Refetch application data
@@ -59,79 +36,13 @@ export default function MyPage() {
     },
   });
 
-  const uploadMutation = trpc.certificate.upload.useMutation({
-    onSuccess: () => {
-      toast.success("증명서가 성공적으로 제출되었습니다.");
-      setSelectedFile(null);
-      setTestName("");
-      setScore("");
-      refetchCertificates();
-    },
-    onError: (error) => {
-      toast.error("증명서 제출에 실패했습니다: " + error.message);
-    },
-  });
-
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       setLocation("/");
     }
   }, [isAuthenticated, loading, setLocation]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const validTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
-      
-      if (!validTypes.includes(file.type)) {
-        toast.error("JPG, PNG, PDF 파일만 업로드 가능합니다.");
-        return;
-      }
 
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("파일 크기는 10MB 이하여야 합니다.");
-        return;
-      }
-
-      setSelectedFile(file);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      toast.error("파일을 선택해주세요.");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64Data = e.target?.result as string;
-        const base64String = base64Data.split(",")[1];
-
-        await uploadMutation.mutateAsync({
-          fileName: selectedFile.name,
-          fileType: selectedFile.type,
-          fileData: base64String,
-          testName: testName || undefined,
-          score: score || undefined,
-        });
-        setUploading(false);
-      };
-      reader.readAsDataURL(selectedFile);
-    } catch (error) {
-      setUploading(false);
-    }
-  };
-
-  const handleRequestDeposit = () => {
-    if (!depositorName || !depositDate) {
-      toast.error("입금자명과 입금일시를 모두 입력해주세요.");
-      return;
-    }
-    requestDepositMutation.mutate({ depositorName, depositDate });
-  };
 
   const handleRequestPayment = () => {
     if (!depositorName || !depositDate) {
@@ -307,7 +218,7 @@ export default function MyPage() {
                 </div>
                 <div>
                   <Label>결제 상태</Label>
-                  <div className="mt-2">{getPaymentStatusBadge(paymentStatus?.paymentStatus || "pending")}</div>
+                  <div className="mt-2">{getPaymentStatusBadge(application?.paymentStatus || "pending")}</div>
                 </div>
                 <div>
                   <Label>가입일</Label>
@@ -316,152 +227,9 @@ export default function MyPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>입회비 결제</CardTitle>
-                <CardDescription>증명서 승인 후 입회비를 납부해주세요</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {paymentStatus?.paymentStatus === "confirmed" ? (
-                  <div className="text-center py-4">
-                    <Badge className="bg-green-500 text-lg px-4 py-2">결제 완료</Badge>
-                    <p className="mt-4 text-muted-foreground">입회비 납부가 확인되었습니다.</p>
-                  </div>
-                ) : paymentStatus?.paymentStatus === "deposit_requested" ? (
-                  <div className="text-center py-4">
-                    <Badge variant="secondary" className="text-lg px-4 py-2">입금 확인 대기중</Badge>
-                    <p className="mt-4 text-muted-foreground">관리자가 입금을 확인하고 있습니다.</p>
-                    <div className="mt-4 text-sm text-left">
-                      <p><strong>입금자명:</strong> {paymentStatus?.depositorName}</p>
-                      <p><strong>입금일시:</strong> {paymentStatus?.depositDate}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <h4 className="font-semibold mb-2">결제 방법</h4>
-                      <div className="space-y-2 text-sm">
-                        <p><strong>1. 토스 송금:</strong> <a href="https://toss.me/riqsociety" target="_blank" rel="noopener noreferrer" className="text-primary underline">토스로 송금하기</a></p>
-                        <p><strong>2. 카카오페이:</strong> <a href="https://open.kakao.com/o/g7mjmhGg" target="_blank" rel="noopener noreferrer" className="text-primary underline">오픈채팅방 입장</a></p>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="depositorName">입금자명</Label>
-                      <Input
-                        id="depositorName"
-                        value={depositorName}
-                        onChange={(e) => setDepositorName(e.target.value)}
-                        placeholder="입금하신 이름을 입력하세요"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="depositDate">입금일시</Label>
-                      <Input
-                        id="depositDate"
-                        value={depositDate}
-                        onChange={(e) => setDepositDate(e.target.value)}
-                        placeholder="예: 2024년 1월 15일 14:30"
-                      />
-                    </div>
-                    <Button 
-                      onClick={handleRequestDeposit} 
-                      className="w-full"
-                      disabled={requestDepositMutation.isPending}
-                    >
-                      {requestDepositMutation.isPending ? "제출 중..." : "입금 확인 요청"}
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>IQ 증명서 제출</CardTitle>
-                <CardDescription>JPG, PNG, PDF 파일 (최대 10MB)</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="file">증명서 파일</Label>
-                  <Input
-                    id="file"
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    onChange={handleFileChange}
-                    disabled={uploading}
-                  />
-                  {selectedFile && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      선택된 파일: {selectedFile.name}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="testName">시험 이름 (선택)</Label>
-                  <Input
-                    id="testName"
-                    value={testName}
-                    onChange={(e) => setTestName(e.target.value)}
-                    placeholder="예: WAIS-IV"
-                    disabled={uploading}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="score">점수 (선택)</Label>
-                  <Input
-                    id="score"
-                    value={score}
-                    onChange={(e) => setScore(e.target.value)}
-                    placeholder="예: 135"
-                    disabled={uploading}
-                  />
-                </div>
-                <Button onClick={handleUpload} disabled={!selectedFile || uploading} className="w-full">
-                  {uploading ? "업로드 중..." : "증명서 제출"}
-                </Button>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>제출한 증명서 목록</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {certificatesLoading ? (
-                  <div className="text-center py-4">로딩 중...</div>
-                ) : certificates && certificates.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>시험</TableHead>
-                        <TableHead>점수</TableHead>
-                        <TableHead>상태</TableHead>
-                        <TableHead>제출일</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {certificates.map((cert: any) => (
-                        <TableRow key={cert.id}>
-                          <TableCell>{cert.testName || "-"}</TableCell>
-                          <TableCell>{cert.score || "-"}</TableCell>
-                          <TableCell>{getStatusBadge(cert.status)}</TableCell>
-                          <TableCell>
-                            {new Date(cert.createdAt).toLocaleDateString("ko-KR")}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    제출한 증명서가 없습니다.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
 
           <div className="mt-8">
             <Button variant="outline" onClick={() => setLocation("/")}>

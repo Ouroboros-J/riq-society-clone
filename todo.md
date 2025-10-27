@@ -314,9 +314,14 @@
 - [x] 결제 상태 배지 표시
 
 ### Certificate 시스템 제거
-- [ ] 마이페이지에서 Certificate 업로드 폼 제거
-- [ ] 마이페이지에서 Certificate 목록 테이블 제거
-- [ ] tRPC에서 certificate 라우터 제거 (또는 deprecated)
+- [x] 마이페이지에서 Certificate 업로드 폼 제거
+- [x] 마이페이지에서 Certificate 목록 테이블 제거
+- [x] Certificate 관련 state, mutation, 함수 제거
+- [x] 입회비 결제 카드 제거 (Application 카드로 통합)
+- [x] tRPC에서 certificate 라우터 제거
+- [x] Admin에서 Certificate 관리 탭 제거
+- [x] server/db.ts에서 certificate 함수 모두 제거
+- [x] server/routers.ts에서 certificate import 제거
 
 ### 관리자 페이지 업데이트
 - [ ] Certificate 목록 → Application 목록으로 변경
