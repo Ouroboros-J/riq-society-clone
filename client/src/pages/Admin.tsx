@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import Header from "@/components/Header";
+import Header from "../components/Header";
+import { AIVerificationResults } from "../components/AIVerificationResults";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -36,6 +37,7 @@ export default function Admin() {
   // 상세 보기 모달
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const [aiVerificationDialogOpen, setAiVerificationDialogOpen] = useState(false);
   
   // 이메일 템플릿 편집
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
@@ -715,6 +717,7 @@ export default function Admin() {
                         <TableHead>시험 종류</TableHead>
                         <TableHead>점수</TableHead>
                         <TableHead>신청 상태</TableHead>
+                        <TableHead>AI 검증</TableHead>
                         <TableHead>결제 상태</TableHead>
                         <TableHead>신청일</TableHead>
                         <TableHead>관리</TableHead>
@@ -750,6 +753,22 @@ export default function Admin() {
                                app.status === 'rejected' ? '거부됨' :
                                '대기중'}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {app.isOtherTest === 1 ? (
+                              <Badge variant="outline">수동 검토</Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setSelectedApplication(app);
+                                  setAiVerificationDialogOpen(true);
+                                }}
+                              >
+                                결과 보기
+                              </Button>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Badge variant={
@@ -2092,6 +2111,19 @@ export default function Admin() {
                 {editingFaq ? '수정' : '추가'}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* AI 검증 결과 모달 */}
+        <Dialog open={aiVerificationDialogOpen} onOpenChange={setAiVerificationDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>AI 검증 결과</DialogTitle>
+              <DialogDescription>
+                {selectedApplication?.fullName}님의 입회 신청에 대한 AI 검증 결과입니다.
+              </DialogDescription>
+            </DialogHeader>
+            <AIVerificationResults applicationId={selectedApplication?.id} />
           </DialogContent>
         </Dialog>
 

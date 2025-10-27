@@ -11,8 +11,9 @@ import { createApplication, updateApplication, getUserApplication, getAllApplica
 import { getAllRecognizedTests, getRecognizedTestById, createRecognizedTest, updateRecognizedTest, deleteRecognizedTest } from "./db-recognized-tests";
 import { getAllAiSettings, getAiSettingByPlatform, upsertAiSetting, getEnabledAiSettings, countEnabledAiSettings } from "./db-ai-settings";
 import { isAutopilotEnabled, getSystemSetting, setSystemSetting } from "./db-system-settings";
-import { saveMultipleAiVerifications } from "./db-ai-verifications";
+import { saveMultipleAiVerifications, getAiVerificationsByApplicationId } from "./db-ai-verifications";
 import { verifyApplicationWithAI } from "./ai-verification";
+import { getFirstDocumentAsBase64 } from "./s3-helper";
 import { getDb } from "./db";
 import { applications, users } from "../drizzle/schema";
 import { eq, desc, sql, gte, and } from "drizzle-orm";
@@ -453,6 +454,14 @@ export const appRouter = router({
       }),
   }),
 
+  aiVerification: router({
+    getByApplicationId: adminProcedure
+      .input(z.object({ applicationId: z.number() }))
+      .query(async ({ input }) => {
+        return await getAiVerificationsByApplicationId(input.applicationId);
+      }),
+  }),
+
   application: router({
     getMyApplication: protectedProcedure.query(async ({ ctx }) => {
       return await getUserApplication(ctx.user.id);
@@ -497,40 +506,35 @@ export const appRouter = router({
         // "기타 시험"은 AI 검증 건너뛰기
         if (autopilotEnabled && !isOtherTest) {
           try {
-            // 첫 번째 서류 URL에서 Base64 추출 (간단하게 처리)
-            const urls = input.documentUrls.split(',');
-            if (urls.length > 0 && urls[0]) {
-              // 서류 다운로드 및 Base64 변환 (실제로는 S3에서 가져와야 함)
-              // 여기서는 간단히 URL을 그대로 사용 (실제 구현시 수정 필요)
-              const documentBase64 = ''; // TODO: S3에서 다운로드 후 Base64로 변환
+            // S3에서 서류 다운로드 후 Base64 변환
+            const documentBase64 = await getFirstDocumentAsBase64(input.documentUrls);
+            
+            if (documentBase64) {
+              const verificationResult = await verifyApplicationWithAI(
+                input.testType,
+                input.testScore,
+                documentBase64
+              );
               
-              if (documentBase64) {
-                const verificationResult = await verifyApplicationWithAI(
-                  input.testType,
-                  input.testScore,
-                  documentBase64
-                );
-                
-                // 검증 결과 저장
-                const verificationsToSave = verificationResult.verifications.map((v) => ({
-                  applicationId: application.id,
-                  platform: v.platform,
-                  model: v.model,
-                  result: (v.result.approved ? 'approved' : 'rejected') as 'approved' | 'rejected' | 'uncertain',
-                  confidence: v.result.confidence,
-                  reasoning: v.result.reason,
-                  rawResponse: v.rawResponse,
-                }));
-                
-                await saveMultipleAiVerifications(verificationsToSave);
-                
-                // 모든 AI가 승인하면 자동 승인
-                if (verificationResult.approved) {
-                  await updateApplicationStatus(application.id, 'approved', 'AI 자동 검증 통과');
-                } else {
-                  // 거절 시 거절 사유 저장
-                  await updateApplicationStatus(application.id, 'rejected', verificationResult.reason);
-                }
+              // 검증 결과 저장
+              const verificationsToSave = verificationResult.verifications.map((v) => ({
+                applicationId: application.id,
+                platform: v.platform,
+                model: v.model,
+                result: (v.result.approved ? 'approved' : 'rejected') as 'approved' | 'rejected' | 'uncertain',
+                confidence: v.result.confidence,
+                reasoning: v.result.reason,
+                rawResponse: v.rawResponse,
+              }));
+              
+              await saveMultipleAiVerifications(verificationsToSave);
+              
+              // 모든 AI가 승인하면 자동 승인
+              if (verificationResult.approved) {
+                await updateApplicationStatus(application.id, 'approved', 'AI 자동 검증 통과');
+              } else {
+                // 거절 시 거절 사유 저장
+                await updateApplicationStatus(application.id, 'rejected', verificationResult.reason);
               }
             }
           } catch (error: any) {
