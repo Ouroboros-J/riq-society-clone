@@ -404,3 +404,15 @@
   - 비회원에게는 '정회원 전용' 배지 표시
   - 클릭 시 안내 페이지로 이동하여 입회 유도
 
+
+
+
+## Phase 5: SEO 최적화 (진행 중)
+
+- [x] 메타 태그 시스템 구현 (페이지별 title, description, keywords)
+- [x] Open Graph 태그 추가 (소셜 미디어 공유 최적화)
+- [ ] Schema.org 구조화 데이터 추가
+- [x] sitemap.xml 자동 생성
+- [x] robots.txt 설정
+- [ ] 다른 페이지들에 SEO 컴포넌트 추가 (About, Application, FAQ, Blog 등)
+

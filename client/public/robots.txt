@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /mypage
+Disallow: /resources
+
+Sitemap: https://riq-society-clone.manus.space/sitemap.xml
+

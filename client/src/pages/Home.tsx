@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import GalaxyBackground from "@/components/GalaxyBackground";
 import Header from "@/components/Header";
+import SEO from "@/components/SEO";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
 
@@ -12,6 +13,11 @@ export default function Home() {
 
   return (
     <>
+      <SEO 
+        title="RIQ Society - 고 이상을 실현하는 이들을 위한"
+        description="The RIQ Society는 표준화된 지능검사에서 표준점수 145 기준 이상, 즉 지능 상위 1% 이내의 모든 거주자에게 열린 것을 원칙으로 합니다."
+        keywords="RIQ Society, 고지능, 멘사, 지능검사, 1% 이내, 고지능자 모임, 입회 신청"
+      />
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"
