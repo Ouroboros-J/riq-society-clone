@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { confirmPayment, getAllUsers, getPendingPayments, getUserByOpenId, updateUserApprovalStatus } from "./db";
 import { getAllEmailTemplates, getEmailTemplate, updateEmailTemplate, createEmailTemplate } from "./db-email-templates";
+import { getAllFaqs, getAllFaqsAdmin, getFaqById, createFaq, updateFaq, deleteFaq } from "./db-faqs";
 import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
 import { getDb } from "./db";
 import { applications, users } from "../drizzle/schema";
@@ -183,7 +184,52 @@ export const appRouter = router({
       }),
   }),
 
+  faq: router({
+    list: publicProcedure.query(async () => {
+      return await getAllFaqs();
+    }),
 
+    listAdmin: adminProcedure.query(async () => {
+      return await getAllFaqsAdmin();
+    }),
+
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await getFaqById(input.id);
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        question: z.string(),
+        answer: z.string(),
+        category: z.string().optional(),
+        displayOrder: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await createFaq(input);
+      }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        question: z.string().optional(),
+        answer: z.string().optional(),
+        category: z.string().optional(),
+        displayOrder: z.number().optional(),
+        isPublished: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await updateFaq(id, data);
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await deleteFaq(input.id);
+      }),
+  }),
 
   application: router({
     getMyApplication: protectedProcedure.query(async ({ ctx }) => {

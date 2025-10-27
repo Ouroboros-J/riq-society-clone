@@ -102,3 +102,20 @@ export const emailTemplates = mysqlTable("emailTemplates", {
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type InsertEmailTemplate = typeof emailTemplates.$inferInsert;
 
+
+
+
+export const faqs = mysqlTable("faqs", {
+  id: int("id").autoincrement().primaryKey(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  category: varchar("category", { length: 100 }),
+  displayOrder: int("displayOrder").default(0).notNull(),
+  isPublished: int("isPublished").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Faq = typeof faqs.$inferSelect;
+export type InsertFaq = typeof faqs.$inferInsert;
+

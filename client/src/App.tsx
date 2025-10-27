@@ -9,6 +9,7 @@ import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import MyPage from "./pages/MyPage";
 import Application from "./pages/Application";
+import FAQ from "./pages/FAQ";
 
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
       <Route path={"/auth"} component={Auth} />
       <Route path={"/mypage"} component={MyPage} />
       <Route path={"/application"} component={Application} />
+      <Route path={"/faq"} component={FAQ} />
 
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

@@ -43,6 +43,14 @@ export default function Admin() {
   const [templateSubject, setTemplateSubject] = useState('');
   const [templateBody, setTemplateBody] = useState('');
   
+  // FAQ 관리
+  const [faqDialogOpen, setFaqDialogOpen] = useState(false);
+  const [editingFaq, setEditingFaq] = useState<any>(null);
+  const [faqQuestion, setFaqQuestion] = useState('');
+  const [faqAnswer, setFaqAnswer] = useState('');
+  const [faqCategory, setFaqCategory] = useState('');
+  const [faqDisplayOrder, setFaqDisplayOrder] = useState(0);
+  
   // 통계 날짜 범위
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
@@ -71,6 +79,38 @@ export default function Admin() {
   
   const { data: emailTemplates, isLoading: templatesLoading, refetch: refetchTemplates } = trpc.admin.listEmailTemplates.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === 'admin',
+  });
+  
+  const { data: faqs, isLoading: faqsLoading, refetch: refetchFaqs } = trpc.faq.listAdmin.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+  
+  const createFaqMutation = trpc.faq.create.useMutation({
+    onSuccess: () => {
+      refetchFaqs();
+      setFaqDialogOpen(false);
+      setFaqQuestion('');
+      setFaqAnswer('');
+      setFaqCategory('');
+      setFaqDisplayOrder(0);
+      toast.success('FAQ가 생성되었습니다.');
+    },
+  });
+  
+  const updateFaqMutation = trpc.faq.update.useMutation({
+    onSuccess: () => {
+      refetchFaqs();
+      setFaqDialogOpen(false);
+      setEditingFaq(null);
+      toast.success('FAQ가 수정되었습니다.');
+    },
+  });
+  
+  const deleteFaqMutation = trpc.faq.delete.useMutation({
+    onSuccess: () => {
+      refetchFaqs();
+      toast.success('FAQ가 삭제되었습니다.');
+    },
   });
   
   // 필터링된 신청 목록
@@ -196,6 +236,7 @@ export default function Admin() {
             <TabsTrigger value="users">회원 관리</TabsTrigger>
             <TabsTrigger value="payments">입금 확인</TabsTrigger>
             <TabsTrigger value="email-templates">이메일 템플릿</TabsTrigger>
+            <TabsTrigger value="faq">FAQ 관리</TabsTrigger>
           </TabsList>
 
           <TabsContent value="statistics">
@@ -1003,6 +1044,194 @@ export default function Admin() {
                 disabled={updateEmailTemplateMutation.isPending}
               >
                 저장
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+          {/* FAQ 관리 탭 */}
+          <TabsContent value="faq">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>FAQ 관리</CardTitle>
+                    <CardDescription>자주 묻는 질문을 관리합니다</CardDescription>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      setEditingFaq(null);
+                      setFaqQuestion('');
+                      setFaqAnswer('');
+                      setFaqCategory('');
+                      setFaqDisplayOrder(0);
+                      setFaqDialogOpen(true);
+                    }}
+                  >
+                    FAQ 추가
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {faqsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>순서</TableHead>
+                        <TableHead>카테고리</TableHead>
+                        <TableHead>질문</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead className="text-right">관리</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {faqs && faqs.length > 0 ? (
+                        faqs.map((faq: any) => (
+                          <TableRow key={faq.id}>
+                            <TableCell>{faq.displayOrder}</TableCell>
+                            <TableCell>{faq.category || '-'}</TableCell>
+                            <TableCell className="max-w-md truncate">{faq.question}</TableCell>
+                            <TableCell>
+                              <Badge variant={faq.isPublished ? 'default' : 'secondary'}>
+                                {faq.isPublished ? '공개' : '비공개'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setEditingFaq(faq);
+                                  setFaqQuestion(faq.question);
+                                  setFaqAnswer(faq.answer);
+                                  setFaqCategory(faq.category || '');
+                                  setFaqDisplayOrder(faq.displayOrder);
+                                  setFaqDialogOpen(true);
+                                }}
+                              >
+                                수정
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm('FAQ를 삭제하시겠습니까?')) {
+                                    deleteFaqMutation.mutate({ id: faq.id });
+                                  }
+                                }}
+                              >
+                                삭제
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  updateFaqMutation.mutate({
+                                    id: faq.id,
+                                    isPublished: faq.isPublished ? 0 : 1
+                                  });
+                                }}
+                              >
+                                {faq.isPublished ? '비공개' : '공개'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            등록된 FAQ가 없습니다.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+        {/* FAQ 편집 모달 */}
+        <Dialog open={faqDialogOpen} onOpenChange={setFaqDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{editingFaq ? 'FAQ 수정' : 'FAQ 추가'}</DialogTitle>
+              <DialogDescription>
+                자주 묻는 질문과 답변을 작성해주세요.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="faqQuestion">질문</Label>
+                <Input
+                  id="faqQuestion"
+                  placeholder="예: RIQ Society에 가입하려면 어떻게 해야 하나요?"
+                  value={faqQuestion}
+                  onChange={(e) => setFaqQuestion(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="faqAnswer">답변</Label>
+                <Textarea
+                  id="faqAnswer"
+                  placeholder="답변 내용을 입력해주세요."
+                  value={faqAnswer}
+                  onChange={(e) => setFaqAnswer(e.target.value)}
+                  rows={6}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="faqCategory">카테고리</Label>
+                  <Input
+                    id="faqCategory"
+                    placeholder="예: 가입 및 신청"
+                    value={faqCategory}
+                    onChange={(e) => setFaqCategory(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="faqDisplayOrder">표시 순서</Label>
+                  <Input
+                    id="faqDisplayOrder"
+                    type="number"
+                    placeholder="0"
+                    value={faqDisplayOrder}
+                    onChange={(e) => setFaqDisplayOrder(parseInt(e.target.value) || 0)}
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setFaqDialogOpen(false)}>
+                취소
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (editingFaq) {
+                    updateFaqMutation.mutate({
+                      id: editingFaq.id,
+                      question: faqQuestion,
+                      answer: faqAnswer,
+                      category: faqCategory || undefined,
+                      displayOrder: faqDisplayOrder,
+                    });
+                  } else {
+                    createFaqMutation.mutate({
+                      question: faqQuestion,
+                      answer: faqAnswer,
+                      category: faqCategory || undefined,
+                      displayOrder: faqDisplayOrder,
+                    });
+                  }
+                }}
+                disabled={!faqQuestion || !faqAnswer}
+              >
+                {editingFaq ? '수정' : '추가'}
               </Button>
             </DialogFooter>
           </DialogContent>
