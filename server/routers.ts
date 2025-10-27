@@ -5,8 +5,8 @@ import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_
 import { confirmPayment, getAllUsers, getPendingPayments, getUserByOpenId, updateUserApprovalStatus } from "./db";
 import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
 import { getDb } from "./db";
-import { applications } from "../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { applications, users } from "../drizzle/schema";
+import { eq, desc, sql, gte, and } from "drizzle-orm";
 import { z } from "zod";
 import { storagePut } from "./storage";
 import { sendEmail } from "./_core/email";
@@ -83,6 +83,70 @@ export const appRouter = router({
           })
           .where(eq(applications.id, input.applicationId));
         return { success: true };
+      }),
+
+    // 통계 데이터
+    getStatistics: adminProcedure
+      .input(z.object({ 
+        startDate: z.string().optional(),
+        endDate: z.string().optional()
+      }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        const startDate = input.startDate ? new Date(input.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const endDate = input.endDate ? new Date(input.endDate) : new Date();
+        
+        // 회원 가입 추이
+        const userRegistrations = await db.select({
+          date: sql<string>`DATE(${users.createdAt})`,
+          count: sql<number>`COUNT(*)`
+        })
+        .from(users)
+        .where(and(
+          gte(users.createdAt, startDate),
+          sql`${users.createdAt} <= ${endDate}`
+        ))
+        .groupBy(sql`DATE(${users.createdAt})`)
+        .orderBy(sql`DATE(${users.createdAt})`);
+        
+        // 입회 신청 추이
+        const applicationSubmissions = await db.select({
+          date: sql<string>`DATE(${applications.createdAt})`,
+          count: sql<number>`COUNT(*)`
+        })
+        .from(applications)
+        .where(and(
+          gte(applications.createdAt, startDate),
+          sql`${applications.createdAt} <= ${endDate}`
+        ))
+        .groupBy(sql`DATE(${applications.createdAt})`)
+        .orderBy(sql`DATE(${applications.createdAt})`);
+        
+        // 상태별 통계
+        const statusStats = await db.select({
+          status: applications.status,
+          count: sql<number>`COUNT(*)`
+        })
+        .from(applications)
+        .groupBy(applications.status);
+        
+        // 결제 상태별 통계
+        const paymentStats = await db.select({
+          paymentStatus: applications.paymentStatus,
+          count: sql<number>`COUNT(*)`
+        })
+        .from(applications)
+        .where(eq(applications.status, "approved"))
+        .groupBy(applications.paymentStatus);
+        
+        return {
+          userRegistrations,
+          applicationSubmissions,
+          statusStats,
+          paymentStats
+        };
       }),
   }),
 

@@ -13,7 +13,8 @@ import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { Input } from "@/components/ui/input";
 
 export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -21,6 +22,14 @@ export default function Admin() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectApplicationId, setRejectApplicationId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  
+  // 통계 날짜 범위
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
 
 
   const { data: users, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.listUsers.useQuery(undefined, {
@@ -34,6 +43,11 @@ export default function Admin() {
   const { data: applications, isLoading: applicationsLoading, refetch: refetchApplications } = trpc.admin.listApplications.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === 'admin',
   });
+  
+  const { data: statistics, isLoading: statisticsLoading } = trpc.admin.getStatistics.useQuery(
+    { startDate, endDate },
+    { enabled: isAuthenticated && user?.role === 'admin' }
+  );
 
   const confirmPaymentMutation = trpc.admin.confirmPayment.useMutation({
     onSuccess: () => {
@@ -124,10 +138,174 @@ export default function Admin() {
 
         <Tabs defaultValue="applications" className="w-full">
           <TabsList>
+            <TabsTrigger value="statistics">통계</TabsTrigger>
             <TabsTrigger value="applications">입회 신청 관리</TabsTrigger>
             <TabsTrigger value="users">회원 관리</TabsTrigger>
             <TabsTrigger value="payments">입금 확인</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="statistics">
+            {/* 날짜 범위 선택 */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>기간 선택</CardTitle>
+                <CardDescription>통계 데이터를 볼 기간을 선택하세요</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4 items-end">
+                  <div className="flex-1">
+                    <Label htmlFor="startDate">시작일</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label htmlFor="endDate">종료일</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {statisticsLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-muted-foreground">로딩 중...</p>
+              </div>
+            ) : (
+              <>
+                {/* 회원 가입 추이 */}
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle>회원 가입 추이</CardTitle>
+                    <CardDescription>일별 회원 가입 현황</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={statistics?.userRegistrations || []}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="date" 
+                          tickFormatter={(value) => new Date(value).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                        />
+                        <YAxis />
+                        <Tooltip 
+                          labelFormatter={(value) => new Date(value).toLocaleDateString('ko-KR')}
+                        />
+                        <Legend />
+                        <Area 
+                          type="monotone" 
+                          dataKey="count" 
+                          stroke="#8b5cf6" 
+                          fill="#8b5cf6" 
+                          fillOpacity={0.6}
+                          name="가입자 수"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* 입회 신청 추이 */}
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle>입회 신청 추이</CardTitle>
+                    <CardDescription>일별 입회 신청 현황</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={statistics?.applicationSubmissions || []}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="date" 
+                          tickFormatter={(value) => new Date(value).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                        />
+                        <YAxis />
+                        <Tooltip 
+                          labelFormatter={(value) => new Date(value).toLocaleDateString('ko-KR')}
+                        />
+                        <Legend />
+                        <Area 
+                          type="monotone" 
+                          dataKey="count" 
+                          stroke="#3b82f6" 
+                          fill="#3b82f6" 
+                          fillOpacity={0.6}
+                          name="신청 수"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* 상태별 통계 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>신청 상태별 통계</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={statistics?.statusStats?.map((s: any) => ({
+                              name: s.status === 'pending' ? '대기중' : s.status === 'approved' ? '승인됨' : '거부됨',
+                              value: Number(s.count)
+                            })) || []}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={(entry) => `${entry.name}: ${entry.value}`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            <Cell fill="#fbbf24" />
+                            <Cell fill="#10b981" />
+                            <Cell fill="#ef4444" />
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>결제 상태별 통계</CardTitle>
+                      <CardDescription>승인된 신청 기준</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart
+                          data={statistics?.paymentStats?.map((p: any) => ({
+                            name: p.paymentStatus === 'pending' ? '미결제' : 
+                                  p.paymentStatus === 'deposit_requested' ? '입금 요청' : '확인 완료',
+                            value: Number(p.count)
+                          })) || []}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="value" fill="#3b82f6" name="건수" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            )}
+          </TabsContent>
 
           <TabsContent value="applications">
             {/* 통계 차트 */}
