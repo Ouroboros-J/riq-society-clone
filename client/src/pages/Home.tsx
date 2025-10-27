@@ -37,24 +37,7 @@ export default function Home() {
             PRO IIS QUI ULTRA COGITANT
           </h1>
         </div>
-        <button
-          className="absolute bottom-8 animate-bounce cursor-pointer bg-transparent border-none"
-          onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-          aria-label="다음 섹션으로 스크롤"
-        >
-          <svg
-            className="w-6 h-6 text-muted-foreground"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-          </svg>
-        </button>
+
       </section>
 
       {/* Main Intro Section */}
