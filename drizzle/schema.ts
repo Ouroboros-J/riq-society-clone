@@ -46,39 +46,4 @@ export const certificates = mysqlTable("certificates", {
 export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = typeof certificates.$inferInsert;
 
-export const applications = mysqlTable("applications", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  
-  // Step 1: Personal Information
-  fullName: varchar("fullName", { length: 255 }).notNull(),
-  email: varchar("email", { length: 320 }).notNull(),
-  dateOfBirth: varchar("dateOfBirth", { length: 50 }).notNull(),
-  phone: varchar("phone", { length: 50 }),
-  
-  // Step 2: Test Scores
-  testType: varchar("testType", { length: 255 }).notNull(),
-  testScore: varchar("testScore", { length: 100 }).notNull(),
-  testDate: varchar("testDate", { length: 50 }),
-  
-  // Step 3: Supporting Documents
-  documentUrls: text("documentUrls"), // JSON array of URLs
-  
-  // Application Status
-  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
-  adminNotes: text("adminNotes"),
-  
-  // Timestamps
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  submittedAt: timestamp("submittedAt"),
-  reviewedAt: timestamp("reviewedAt"),
-  
-  // Draft support
-  isDraft: int("isDraft").default(1).notNull(), // 1 = draft, 0 = submitted
-});
-
-export type Application = typeof applications.$inferSelect;
-export type InsertApplication = typeof applications.$inferInsert;
-
 // TODO: Add your tables here

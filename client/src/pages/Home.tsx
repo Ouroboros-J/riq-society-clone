@@ -12,30 +12,19 @@ export default function Home() {
 
   return (
     <>
-      {/* Skip to content link for accessibility */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded"
-      >
-        본문으로 건너뛰기
-      </a>
       <Header />
-      <main id="main-content" className="min-h-screen bg-background text-foreground" role="main">
+      <div className="min-h-screen bg-background text-foreground">
         <GalaxyBackground />
       
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-4" aria-label="히어로 섹션">
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-4">
         <div className="text-center z-10">
           <img src="/riq-logo.svg" alt="RIQ Society Logo" className="w-[280px] md:w-[400px] mx-auto mb-8" />
           <h1 className="hero-subtitle tracking-[0.1em] mb-8 text-white font-light" style={{ fontSize: '16px' }}>
             PRO IIS QUI ULTRA COGITANT
           </h1>
         </div>
-        <button
-          className="absolute bottom-8 animate-bounce cursor-pointer bg-transparent border-none"
-          onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-          aria-label="다음 섹션으로 스크롤"
-        >
+        <div className="absolute bottom-8 animate-bounce">
           <svg
             className="w-6 h-6 text-muted-foreground"
             fill="none"
@@ -44,15 +33,14 @@ export default function Home() {
             strokeWidth="2"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            aria-hidden="true"
           >
             <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
           </svg>
-        </button>
+        </div>
       </section>
 
       {/* Main Intro Section */}
-      <section className="section-responsive relative px-4 md:px-10 bg-background" style={{ paddingTop: '60px', paddingBottom: '60px' }} aria-label="소개">
+      <section className="section-responsive relative px-4 md:px-10 bg-background" style={{ paddingTop: '60px', paddingBottom: '60px' }}>
         <div className="container max-w-[900px] mx-auto text-center z-10">
           <h2 className="font-semibold mb-2 text-2xl md:text-[32px]" style={{ letterSpacing: '3px', color: '#ffffff' }}>
             "그 이상을 생각하는 이들을 위해"
@@ -89,9 +77,8 @@ export default function Home() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px] transition-all duration-300 hover:scale-105"
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px]"
                   onClick={() => window.location.href = getLoginUrl()}
-                  aria-label="로그인 또는 회원가입"
                 >
                   로그인 / 회원가입
                 </Button>
@@ -107,22 +94,11 @@ export default function Home() {
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
-                  <Link href="/application">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px] transition-all duration-300 hover:scale-105"
-                      aria-label="입회 신청"
-                    >
-                      입회 신청
-                    </Button>
-                  </Link>
                   <Link href="/mypage">
                     <Button
                       variant="outline"
                       size="lg"
-                      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px] transition-all duration-300 hover:scale-105"
-                      aria-label="마이페이지"
+                      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px]"
                     >
                       마이페이지
                     </Button>
@@ -132,7 +108,7 @@ export default function Home() {
                       <Button
                         variant="outline"
                         size="lg"
-                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px] transition-all duration-300 hover:scale-105"
+                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-w-[200px]"
                       >
                         관리자 페이지
                       </Button>
@@ -154,7 +130,7 @@ export default function Home() {
       </section>
 
       {/* Admission Section */}
-      <section className="section-responsive relative px-4 md:px-10 bg-background" style={{ paddingTop: '60px', paddingBottom: '60px' }} aria-label="입회 안내">
+      <section className="section-responsive relative px-4 md:px-10 bg-background" style={{ paddingTop: '60px', paddingBottom: '60px' }}>
         <div className="container max-w-[900px] mx-auto z-10">
           <div className="flex items-center gap-5 mb-6">
             <div className="flex items-center justify-center">
@@ -169,7 +145,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Card 1: 표준 지능 검사 */}
-            <div className="card-hover border border-border rounded-lg p-4 md:p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }} tabIndex={0}>
+            <div className="border border-border rounded-lg p-4 md:p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }}>
               <h3 className="font-medium mb-5 pb-4 border-b text-base md:text-lg" style={{ color: '#d0d0d0', borderColor: '#3a3a3a' }}>
                 표준 지능 검사
               </h3>
@@ -222,7 +198,7 @@ export default function Home() {
             </div>
 
             {/* Card 2: 학업 및 인지 능력 검사 */}
-            <div className="card-hover border border-border rounded-lg p-4 md:p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }} tabIndex={0}>
+            <div className="border border-border rounded-lg p-4 md:p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }}>
               <h3 className="font-medium mb-5 pb-4 border-b text-base md:text-lg" style={{ color: '#d0d0d0', borderColor: '#3a3a3a' }}>
                 학업 및 인지 능력 검사
               </h3>
@@ -259,7 +235,7 @@ export default function Home() {
             </div>
 
             {/* Card 3: 대학 및 대학원 진학 시험 */}
-            <div className="card-hover border border-border rounded-lg p-4 md:p-6 md:col-span-2 lg:col-span-1" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }} tabIndex={0}>
+            <div className="border border-border rounded-lg p-4 md:p-6 md:col-span-2 lg:col-span-1" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }}>
               <h3 className="font-medium mb-5 pb-4 border-b text-base md:text-lg" style={{ color: '#d0d0d0', borderColor: '#3a3a3a' }}>
                 대학 및 대학원 진학 시험
               </h3>
@@ -324,7 +300,7 @@ export default function Home() {
           <p>© 2024 RIQ Society. All rights reserved.</p>
         </div>
       </footer>
-      </main>
+      </div>
     </>
   );
 }
