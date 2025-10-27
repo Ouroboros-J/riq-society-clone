@@ -19,6 +19,7 @@ import SEO from "@/components/SEO";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import imageCompression from "browser-image-compression";
 
 // Step 1: Personal Information Schema
 const step1Schema = z.object({
@@ -120,10 +121,53 @@ export default function Application() {
     toast.success("2단계 완료!");
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setUploadedFiles(files);
+      
+      // 파일 크기 체크 (10MB 제한)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      for (const file of files) {
+        if (file.size > MAX_FILE_SIZE) {
+          toast.error(`${file.name}은(는) 10MB를 초과합니다. 더 작은 파일을 선택해주세요.`);
+          return;
+        }
+      }
+      
+      // 이미지 파일 압축
+      const compressedFiles: File[] = [];
+      for (const file of files) {
+        const isImage = file.type.startsWith('image/');
+        
+        if (isImage && file.type !== 'image/svg+xml') {
+          try {
+            toast.info(`${file.name} 압축 중...`);
+            const options = {
+              maxSizeMB: 1,
+              maxWidthOrHeight: 1920,
+              useWebWorker: true,
+              initialQuality: 0.8,
+            };
+            const compressedFile = await imageCompression(file, options);
+            
+            const originalSizeMB = (file.size / 1024 / 1024).toFixed(2);
+            const compressedSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
+            const compressionRate = ((1 - compressedFile.size / file.size) * 100).toFixed(0);
+            
+            toast.success(`${file.name} 압축 완료! ${originalSizeMB}MB → ${compressedSizeMB}MB (${compressionRate}% 감소)`);
+            compressedFiles.push(compressedFile);
+          } catch (error) {
+            console.error('이미지 압축 실패:', error);
+            toast.error(`${file.name} 압축 실패. 원본 파일을 사용합니다.`);
+            compressedFiles.push(file);
+          }
+        } else {
+          // PDF나 기타 파일은 압축 없이 그대로
+          compressedFiles.push(file);
+        }
+      }
+      
+      setUploadedFiles(compressedFiles);
     }
   };
 
@@ -363,10 +407,15 @@ export default function Application() {
                   {uploadedFiles.length > 0 && (
                     <div className="mt-4">
                       <h3 className="font-medium mb-2">업로드된 파일:</h3>
-                      <ul className="space-y-1">
+                      <ul className="space-y-2">
                         {uploadedFiles.map((file, index) => (
-                          <li key={index} className="text-sm text-muted-foreground">
-                            • {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          <li key={index} className="text-sm">
+                            <div className="flex items-center justify-between bg-muted/50 p-2 rounded">
+                              <span className="font-medium">{file.name}</span>
+                              <span className="text-muted-foreground">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                              </span>
+                            </div>
                           </li>
                         ))}
                       </ul>
