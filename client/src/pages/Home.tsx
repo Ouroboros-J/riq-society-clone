@@ -20,7 +20,7 @@ export default function Home() {
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4">
         <div className="text-center z-10">
           <img src="/riq-logo.svg" alt="RIQ Society Logo" className="w-[280px] md:w-[400px] mx-auto mb-8" />
-          <h1 className="text-lg tracking-[0.1em] mb-8 text-white font-light" style={{ fontSize: '18px' }}>
+          <h1 className="hero-subtitle tracking-[0.1em] mb-8 text-white font-light" style={{ fontSize: '16px' }}>
             PRO IIS QUI ULTRA COGITANT
           </h1>
         </div>
@@ -40,14 +40,14 @@ export default function Home() {
       </section>
 
       {/* Main Intro Section */}
-      <section className="relative px-10 bg-background" style={{ paddingTop: '100px', paddingBottom: '100px' }}>
+      <section className="section-responsive relative px-4 md:px-10 bg-background" style={{ paddingTop: '60px', paddingBottom: '60px' }}>
         <div className="container max-w-[900px] mx-auto text-center z-10">
-          <h2 className="font-semibold mb-2" style={{ fontSize: '32px', letterSpacing: '3px', color: '#ffffff' }}>
+          <h2 className="font-semibold mb-2 text-2xl md:text-[32px]" style={{ letterSpacing: '3px', color: '#ffffff' }}>
             "그 이상을 생각하는 이들을 위해"
           </h2>
-          <p className="mb-12 font-light" style={{ fontSize: '18px', color: '#ffffff' }}>RIQ Society</p>
+          <p className="mb-12 font-light text-base md:text-lg" style={{ color: '#ffffff' }}>RIQ Society</p>
           
-          <div className="space-y-6 mb-8" style={{ fontSize: '18px', lineHeight: '1.8' }}>
+          <div className="space-y-6 mb-8 text-base md:text-lg" style={{ lineHeight: '1.8' }}>
             <p>
               The RIQ Society 는 표준화된 지능검사에서 표준편차 15 기준 135점 이상, 즉 지능 상위 1% 이내인 모든 개인에게 열려 있는 비영리 고지능단체입니다.
             </p>
@@ -130,26 +130,26 @@ export default function Home() {
       </section>
 
       {/* Admission Section */}
-      <section className="relative px-10 bg-background" style={{ paddingTop: '100px', paddingBottom: '100px' }}>
+      <section className="section-responsive relative px-4 md:px-10 bg-background" style={{ paddingTop: '60px', paddingBottom: '60px' }}>
         <div className="container max-w-[900px] mx-auto z-10">
           <div className="flex items-center gap-5 mb-6">
             <div className="flex items-center justify-center">
               <img src="/riq-icon.svg" alt="R Icon" className="w-11 h-11" />
             </div>
-            <h2 className="font-semibold" style={{ fontSize: '28px', color: '#ffffff' }}>Admission</h2>
+            <h2 className="font-semibold text-2xl md:text-[28px]" style={{ color: '#ffffff' }}>Admission</h2>
           </div>
           
-          <p className="mb-10 max-w-3xl" style={{ fontSize: '18px', lineHeight: '1.8', textIndent: '1.5em' }}>
+          <p className="mb-10 max-w-3xl text-base md:text-lg" style={{ lineHeight: '1.8', textIndent: '1.5em' }}>
             RIQ Society에 입회하기 위해서는, <strong>전 세계 상위 1% 이내의 지적 능력</strong>을 지녔음을 본 단체에 입증해야 합니다. 입회 절차에서 인정하는 시험은 아래와 같습니다.
           </p>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Card 1: 표준 지능 검사 */}
-            <div className="border border-border rounded-lg p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }}>
-              <h3 className="font-medium mb-5 pb-4 border-b" style={{ fontSize: '18px', color: '#d0d0d0', borderColor: '#3a3a3a' }}>
+            <div className="border border-border rounded-lg p-4 md:p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }}>
+              <h3 className="font-medium mb-5 pb-4 border-b text-base md:text-lg" style={{ color: '#d0d0d0', borderColor: '#3a3a3a' }}>
                 표준 지능 검사
               </h3>
-              <ul className="space-y-4" style={{ fontSize: '16px', lineHeight: '1.5', color: '#bbb' }}>
+              <ul className="space-y-4 text-sm md:text-base" style={{ lineHeight: '1.5', color: '#bbb' }}>
                 <li className="flex items-start">
                   <span className="mr-2" style={{ color: '#666' }}>›</span>
                   <span className="font-semibold">RIQ Admission Test, SD15 135</span>
@@ -198,11 +198,11 @@ export default function Home() {
             </div>
 
             {/* Card 2: 학업 및 인지 능력 검사 */}
-            <div className="border border-border rounded-lg p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }}>
-              <h3 className="font-medium mb-5 pb-4 border-b" style={{ fontSize: '18px', color: '#d0d0d0', borderColor: '#3a3a3a' }}>
+            <div className="border border-border rounded-lg p-4 md:p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }}>
+              <h3 className="font-medium mb-5 pb-4 border-b text-base md:text-lg" style={{ color: '#d0d0d0', borderColor: '#3a3a3a' }}>
                 학업 및 인지 능력 검사
               </h3>
-              <ul className="space-y-4" style={{ fontSize: '16px', lineHeight: '1.5', color: '#bbb' }}>
+              <ul className="space-y-4 text-sm md:text-base" style={{ lineHeight: '1.5', color: '#bbb' }}>
                 <li className="flex items-start">
                   <span className="mr-2" style={{ color: '#666' }}>›</span>
                   <span>Cognitive Abilities Test (CogAT), 99%</span>
@@ -235,11 +235,11 @@ export default function Home() {
             </div>
 
             {/* Card 3: 대학 및 대학원 진학 시험 */}
-            <div className="border border-border rounded-lg p-6 md:col-span-2 lg:col-span-1" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }}>
-              <h3 className="font-medium mb-5 pb-4 border-b" style={{ fontSize: '18px', color: '#d0d0d0', borderColor: '#3a3a3a' }}>
+            <div className="border border-border rounded-lg p-4 md:p-6 md:col-span-2 lg:col-span-1" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: '#2a2a2a' }}>
+              <h3 className="font-medium mb-5 pb-4 border-b text-base md:text-lg" style={{ color: '#d0d0d0', borderColor: '#3a3a3a' }}>
                 대학 및 대학원 진학 시험
               </h3>
-              <ul className="space-y-4" style={{ fontSize: '16px', lineHeight: '1.5', color: '#bbb' }}>
+              <ul className="space-y-4 text-sm md:text-base" style={{ lineHeight: '1.5', color: '#bbb' }}>
                 <li className="flex items-start">
                   <span className="mr-2" style={{ color: '#666' }}>›</span>
                   <span>American College Testing Program (ACT), 30 (adminstered on or after October 1989)</span>

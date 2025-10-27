@@ -140,6 +140,21 @@
 }
 
 @layer components {
+  /* Hero subtitle responsive */
+  @media (min-width: 768px) {
+    .hero-subtitle {
+      font-size: 18px !important;
+    }
+  }
+
+  /* Section padding responsive */
+  @media (min-width: 768px) {
+    .section-responsive {
+      padding-top: 100px !important;
+      padding-bottom: 100px !important;
+    }
+  }
+
   /**
    * Custom container utility that centers content and adds responsive padding.
    *
