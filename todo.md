@@ -416,3 +416,25 @@
 - [x] robots.txt 설정
 - [x] 다른 페이지들에 SEO 컴포넌트 추가 (Application, FAQ, Blog, BlogPost, Resources, MyPage)
 
+
+
+
+## Phase 6: 성능 최적화 (진행 중)
+
+- [x] Three.js 파티클 최적화
+  - [x] 파티클 수 조정 (모바일 15,000개, 데스크톱 45,000개)
+  - [x] requestAnimationFrame 최적화 (cleanup 시 cancelAnimationFrame)
+  - [x] 메모리 누수 방지 (forceContextLoss)
+  - [x] 모바일에서 pixelRatio 1로 제한
+  - [x] 모바일에서 마우스 parallax 효과 비활성화
+- [ ] 이미지 최적화
+  - [ ] lazy loading 적용
+  - [ ] WebP 포맷 지원
+  - [ ] 이미지 압축
+- [ ] 코드 스플리팅
+  - [ ] 라우트 기반 코드 스플리팅
+  - [ ] 번들 크기 분석
+- [ ] 캐싱 전략
+  - [ ] 브라우저 캐싱 헤더 설정
+  - [ ] API 응답 캐싱
+

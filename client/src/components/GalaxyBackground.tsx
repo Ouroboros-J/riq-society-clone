@@ -20,15 +20,19 @@ export default function GalaxyBackground() {
       alpha: true,
     });
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // 모바일/데스크톱 감지
+    const isMobile = window.innerWidth < 768;
+    
+    // 고해상도 디스플레이에서 성능 최적화
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
     camera.position.z = 50;
 
-    // Galaxy Parameters
+    // Galaxy Parameters - 모바일/데스크톱 분리
     const galaxyParameters = {
-      count: 65000,
-      size: 0.012,
+      count: isMobile ? 15000 : 45000, // 모바일에서 파티클 수 대폭 감소
+      size: isMobile ? 0.015 : 0.012,
       radius: 23,
       branches: 5,
       spin: 1,
@@ -114,22 +118,30 @@ export default function GalaxyBackground() {
       mouseX = (event.clientX - window.innerWidth / 2) / 1000;
       mouseY = (event.clientY - window.innerHeight / 2) / 1000;
     };
-    document.addEventListener('mousemove', handleMouseMove);
+    
+    // 모바일에서는 마우스 이벤트 리스너 등록 안 함
+    if (!isMobile) {
+      document.addEventListener('mousemove', handleMouseMove);
+    }
 
-    // Animation Loop
+    // Animation Loop - 성능 최적화
     const clock = new THREE.Clock();
+    let animationFrameId: number;
+    
     const animate = () => {
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
       const elapsedTime = clock.getElapsedTime();
 
       if (galaxy.points) {
         galaxy.points.rotation.y = elapsedTime * 0.025;
       }
 
-      // Mouse parallax effect
-      camera.position.x += (mouseX - camera.position.x) * 0.05;
-      camera.position.y += (-mouseY - camera.position.y) * 0.05;
-      camera.lookAt(scene.position);
+      // Mouse parallax effect - 모바일에서는 비활성화
+      if (!isMobile) {
+        camera.position.x += (mouseX - camera.position.x) * 0.05;
+        camera.position.y += (-mouseY - camera.position.y) * 0.05;
+        camera.lookAt(scene.position);
+      }
 
       renderer.render(scene, camera);
     };
@@ -141,18 +153,23 @@ export default function GalaxyBackground() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      const newIsMobile = window.innerWidth < 768;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, newIsMobile ? 1 : 2));
     };
     window.addEventListener('resize', handleResize);
 
-    // Cleanup
+    // Cleanup - 메모리 누수 방지
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animationFrameId);
+      if (!isMobile) {
+        document.removeEventListener('mousemove', handleMouseMove);
+      }
       window.removeEventListener('resize', handleResize);
       galaxy.geometry.dispose();
       galaxy.material.dispose();
       scene.remove(galaxy.points);
       renderer.dispose();
+      renderer.forceContextLoss();
     };
   }, []);
 
