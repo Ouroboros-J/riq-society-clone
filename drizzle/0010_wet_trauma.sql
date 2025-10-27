@@ -1,0 +1,20 @@
+CREATE TABLE `applications` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`fullName` varchar(255) NOT NULL,
+	`email` varchar(320) NOT NULL,
+	`dateOfBirth` varchar(50) NOT NULL,
+	`phone` varchar(50),
+	`testType` varchar(255) NOT NULL,
+	`testScore` varchar(100) NOT NULL,
+	`testDate` varchar(50),
+	`documentUrls` text,
+	`status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+	`adminNotes` text,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	`submittedAt` timestamp,
+	`reviewedAt` timestamp,
+	`isDraft` int NOT NULL DEFAULT 1,
+	CONSTRAINT `applications_id` PRIMARY KEY(`id`)
+);

@@ -2,10 +2,14 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { confirmPayment, createCertificate, getAllCertificates, getAllUsers, getCertificateById, getPendingPayments, getUserByOpenId, getUserCertificates, requestDepositConfirmation, updateCertificateStatus, updateUserApprovalStatus } from "./db";
+import { confirmPayment, getAllUsers, getPendingPayments, getUserByOpenId, updateUserApprovalStatus } from "./db";
+import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
+import { getDb } from "./db";
+import { applications } from "../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import { storagePut } from "./storage";
-import { generateCertificateApprovedEmail, generateCertificateRejectedEmail, generatePaymentRequestEmail, sendEmail } from "./_core/email";
+import { sendEmail } from "./_core/email";
 
 export const appRouter = router({
   system: systemRouter,
@@ -25,58 +29,7 @@ export const appRouter = router({
     listUsers: adminProcedure.query(async () => {
       return await getAllUsers();
     }),
-    listAllCertificates: adminProcedure.query(async () => {
-      return await getAllCertificates();
-    }),
-    approveCertificate: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const result = await updateCertificateStatus(input.id, "approved");
-        
-        // Get certificate and user info to send email
-        const certificate = await getCertificateById(input.id);
-        if (certificate) {
-          const users = await getAllUsers();
-          const user = users.find(u => u.id === certificate.userId);
-          
-          if (user && user.email) {
-            const tossLink = process.env.TOSS_PAYMENT_LINK || 'https://toss.me/riqsociety';
-            const kakaoPayLink = 'https://open.kakao.com/o/g7mjmhGg';
-            
-            const emailHtml = generatePaymentRequestEmail(user.name || '회원', tossLink, kakaoPayLink);
-            await sendEmail({
-              to: user.email,
-              subject: '[RIQ Society] 증명서 승인 완료 - 입회비 납부 안내',
-              html: emailHtml,
-            });
-          }
-        }
-        
-        return result;
-      }),
-    rejectCertificate: adminProcedure
-      .input(z.object({ id: z.number(), reason: z.string() }))
-      .mutation(async ({ input }) => {
-        const result = await updateCertificateStatus(input.id, "rejected", input.reason);
-        
-        // Get certificate and user info to send email
-        const certificate = await getCertificateById(input.id);
-        if (certificate) {
-          const users = await getAllUsers();
-          const user = users.find(u => u.id === certificate.userId);
-          
-          if (user && user.email) {
-            const emailHtml = generateCertificateRejectedEmail(user.name || '회원', input.reason);
-            await sendEmail({
-              to: user.email,
-              subject: '[RIQ Society] 증명서 검토 결과',
-              html: emailHtml,
-            });
-          }
-        }
-        
-        return result;
-      }),
+
     updateUserApproval: adminProcedure
       .input(z.object({ userId: z.number(), status: z.enum(["pending", "approved", "rejected"]) }))
       .mutation(async ({ input }) => {
@@ -90,53 +43,146 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await confirmPayment(input.userId);
       }),
+
+    // Application 관리
+    listApplications: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error("Database connection failed");
+      return await db.select().from(applications).orderBy(desc(applications.createdAt));
+    }),
+
+    updateApplicationStatus: adminProcedure
+      .input(z.object({ 
+        applicationId: z.number(), 
+        status: z.enum(["pending", "approved", "rejected"]),
+        adminNotes: z.string().optional()
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        await db.update(applications)
+          .set({ 
+            status: input.status,
+            adminNotes: input.adminNotes,
+            updatedAt: new Date()
+          })
+          .where(eq(applications.id, input.applicationId));
+        return { success: true };
+      }),
+
+    confirmApplicationPayment: adminProcedure
+      .input(z.object({ applicationId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        await db.update(applications)
+          .set({ 
+            paymentStatus: "confirmed",
+            paymentConfirmedAt: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(applications.id, input.applicationId));
+        return { success: true };
+      }),
   }),
 
-  certificate: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      return await getUserCertificates(ctx.user.id);
+
+
+  application: router({
+    getMyApplication: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserApplication(ctx.user.id);
     }),
-    upload: protectedProcedure
+
+    submit: protectedProcedure
+      .input(
+        z.object({
+          fullName: z.string(),
+          email: z.string().email(),
+          dateOfBirth: z.string(),
+          phone: z.string().optional(),
+          testType: z.string(),
+          testScore: z.string(),
+          testDate: z.string().optional(),
+          documentUrls: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const existing = await getUserApplication(ctx.user.id);
+        
+        if (existing) {
+          return await updateApplication(existing.id, {
+            ...input,
+            isDraft: 0,
+          });
+        }
+        
+        return await createApplication({
+          userId: ctx.user.id,
+          ...input,
+          isDraft: 0,
+        });
+      }),
+
+    uploadDocument: protectedProcedure
       .input(
         z.object({
           fileName: z.string(),
           fileType: z.string(),
           fileData: z.string(),
-          testName: z.string().optional(),
-          score: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const buffer = Buffer.from(input.fileData, "base64");
-        const fileKey = `certificates/${ctx.user.id}/${Date.now()}-${input.fileName}`;
+        const fileKey = `applications/${ctx.user.id}/${Date.now()}-${input.fileName}`;
         const { url } = await storagePut(fileKey, buffer, input.fileType);
-
-        return await createCertificate({
-          userId: ctx.user.id,
-          fileUrl: url,
-          fileName: input.fileName,
-          fileType: input.fileType,
-          testName: input.testName,
-          score: input.score,
-        });
+        
+        return { url };
       }),
-    requestDeposit: protectedProcedure
-      .input(z.object({ depositorName: z.string(), depositDate: z.string() }))
-      .mutation(async ({ ctx, input }) => {
-        return await requestDepositConfirmation(ctx.user.id, input.depositorName, input.depositDate);
-      }),
-  }),
 
-  payment: router({
-    getStatus: protectedProcedure.query(async ({ ctx }) => {
-      const users = await getAllUsers();
-      const user = users.find(u => u.id === ctx.user.id);
-      return {
-        paymentStatus: user?.paymentStatus || 'pending',
-        depositorName: user?.depositorName,
-        depositDate: user?.depositDate,
-      };
+    listAll: adminProcedure.query(async () => {
+      return await getAllApplications();
     }),
+
+    updateStatus: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          status: z.enum(["pending", "approved", "rejected"]),
+          adminNotes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await updateApplicationStatus(input.id, input.status, input.adminNotes);
+      }),
+    requestPayment: protectedProcedure
+      .input(
+        z.object({
+          depositorName: z.string(),
+          depositDate: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        const application = await getUserApplication(ctx.user!.id);
+        
+        if (!application) {
+          throw new Error("신청 내역을 찾을 수 없습니다");
+        }
+        
+        if (application.status !== "approved") {
+          throw new Error("승인된 신청만 결제할 수 있습니다");
+        }
+        
+        await db.update(applications).set({
+          paymentStatus: "deposit_requested",
+          depositorName: input.depositorName,
+          depositDate: input.depositDate,
+        }).where(eq(applications.id, application.id));
+        
+        return { success: true };
+      }),
   }),
 });
 
