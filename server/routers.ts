@@ -4,6 +4,9 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { confirmPayment, createCertificate, getAllCertificates, getAllUsers, getCertificateById, getPendingPayments, getUserByOpenId, getUserCertificates, requestDepositConfirmation, updateCertificateStatus, updateUserApprovalStatus } from "./db";
 import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
+import { getDb } from "./db";
+import { applications } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { storagePut } from "./storage";
 import { generateCertificateApprovedEmail, generateCertificateRejectedEmail, generatePaymentRequestEmail, sendEmail } from "./_core/email";
@@ -205,6 +208,35 @@ export const appRouter = router({
       )
       .mutation(async ({ input }) => {
         return await updateApplicationStatus(input.id, input.status, input.adminNotes);
+      }),
+    requestPayment: protectedProcedure
+      .input(
+        z.object({
+          depositorName: z.string(),
+          depositDate: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        const application = await getUserApplication(ctx.user!.id);
+        
+        if (!application) {
+          throw new Error("신청 내역을 찾을 수 없습니다");
+        }
+        
+        if (application.status !== "approved") {
+          throw new Error("승인된 신청만 결제할 수 있습니다");
+        }
+        
+        await db.update(applications).set({
+          paymentStatus: "deposit_requested",
+          depositorName: input.depositorName,
+          depositDate: input.depositDate,
+        }).where(eq(applications.id, application.id));
+        
+        return { success: true };
       }),
   }),
 });

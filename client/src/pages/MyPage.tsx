@@ -46,6 +46,19 @@ export default function MyPage() {
     },
   });
 
+  const requestPaymentMutation = trpc.application.requestPayment.useMutation({
+    onSuccess: () => {
+      toast.success("입금 확인 요청이 제출되었습니다.");
+      setDepositorName("");
+      setDepositDate("");
+      // Refetch application data
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast.error("입금 확인 요청에 실패했습니다: " + error.message);
+    },
+  });
+
   const uploadMutation = trpc.certificate.upload.useMutation({
     onSuccess: () => {
       toast.success("증명서가 성공적으로 제출되었습니다.");
@@ -118,6 +131,14 @@ export default function MyPage() {
       return;
     }
     requestDepositMutation.mutate({ depositorName, depositDate });
+  };
+
+  const handleRequestPayment = () => {
+    if (!depositorName || !depositDate) {
+      toast.error("입금자명과 입금일시를 모두 입력해주세요.");
+      return;
+    }
+    requestPaymentMutation.mutate({ depositorName, depositDate });
   };
 
   if (loading) {
@@ -213,6 +234,54 @@ export default function MyPage() {
                     <Label>관리자 메모</Label>
                     <p className="text-sm text-muted-foreground">{application.adminNotes}</p>
                   </div>
+                )}
+                
+                {/* Payment Section */}
+                {application.status === "approved" && (
+                  <>
+                    <div className="border-t pt-4 mt-4">
+                      <Label>결제 상태</Label>
+                      <div className="mt-2">{getPaymentStatusBadge(application.paymentStatus)}</div>
+                    </div>
+                    
+                    {application.paymentStatus === "pending" && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="app-depositor">입금자명</Label>
+                          <Input
+                            id="app-depositor"
+                            value={depositorName}
+                            onChange={(e) => setDepositorName(e.target.value)}
+                            placeholder="입금하신 분의 성함을 입력해주세요"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="app-deposit-date">입금일시</Label>
+                          <Input
+                            id="app-deposit-date"
+                            type="datetime-local"
+                            value={depositDate}
+                            onChange={(e) => setDepositDate(e.target.value)}
+                          />
+                        </div>
+                        <Button onClick={handleRequestPayment} disabled={requestPaymentMutation.isPending}>
+                          {requestPaymentMutation.isPending ? "제출 중..." : "입금 확인 요청"}
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {application.paymentStatus === "deposit_requested" && (
+                      <div className="text-sm text-muted-foreground">
+                        입금 확인 요청이 제출되었습니다. 관리자 확인을 기다려주세요.
+                      </div>
+                    )}
+                    
+                    {application.paymentStatus === "confirmed" && (
+                      <div className="text-sm text-green-600">
+                        결제가 확인되었습니다. 정회원 승인을 기다려주세요.
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

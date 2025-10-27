@@ -299,3 +299,29 @@
 - [ ] 캐싱 전략 구현
 
 
+
+
+
+## Certificate → Application 시스템 통합
+
+### 데이터베이스 확장
+- [x] applications 테이블에 결제 관련 필드 추가 (paymentStatus, depositorName, depositDate, paymentConfirmedAt)
+- [ ] applications 테이블에 approvalStatus 필드 추가
+
+### Application에 결제 기능 추가
+- [x] 입금 확인 요청 API (application.requestPayment)
+- [x] 마이페이지에 입금 확인 요청 폼 추가 (승인된 신청에 대해)
+- [x] 결제 상태 배지 표시
+
+### Certificate 시스템 제거
+- [ ] 마이페이지에서 Certificate 업로드 폼 제거
+- [ ] 마이페이지에서 Certificate 목록 테이블 제거
+- [ ] tRPC에서 certificate 라우터 제거 (또는 deprecated)
+
+### 관리자 페이지 업데이트
+- [ ] Certificate 목록 → Application 목록으로 변경
+- [ ] Application 승인/거부 UI
+- [ ] 입금 확인 UI
+- [ ] 정회원 승인 UI
+
+

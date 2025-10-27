@@ -68,6 +68,12 @@ export const applications = mysqlTable("applications", {
   status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
   adminNotes: text("adminNotes"),
   
+  // Payment Information
+  paymentStatus: mysqlEnum("paymentStatus", ["pending", "deposit_requested", "confirmed"]).default("pending").notNull(),
+  depositorName: varchar("depositorName", { length: 100 }),
+  depositDate: varchar("depositDate", { length: 50 }),
+  paymentConfirmedAt: timestamp("paymentConfirmedAt"),
+  
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
