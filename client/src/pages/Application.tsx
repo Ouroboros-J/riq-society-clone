@@ -17,6 +17,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import Header from "@/components/Header";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 // Step 1: Personal Information Schema
 const step1Schema = z.object({
@@ -33,22 +34,18 @@ const step2Schema = z.object({
   testDate: z.string().optional(),
 });
 
-// Step 3: Documents Schema
-const step3Schema = z.object({
-  documents: z.array(z.instanceof(File)).min(1, "최소 1개의 증빙 서류를 업로드해주세요"),
-});
-
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
-type Step3Data = z.infer<typeof step3Schema>;
 
 export default function Application() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<Step1Data & Step2Data>>({});
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+
+  const submitMutation = trpc.application.submit.useMutation();
+  const uploadMutation = trpc.application.uploadDocument.useMutation();
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
@@ -96,77 +93,45 @@ export default function Application() {
       return;
     }
 
-    setIsSubmitting(true);
-
     try {
-      // Upload files to S3
+      // Upload files
       const documentUrls: string[] = [];
       for (const file of uploadedFiles) {
-        const formDataUpload = new FormData();
-        formDataUpload.append("file", file);
-
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          body: formDataUpload,
+        const reader = new FileReader();
+        const fileData = await new Promise<string>((resolve) => {
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            resolve(base64.split(",")[1]); // Remove data:image/png;base64, prefix
+          };
+          reader.readAsDataURL(file);
         });
 
-        if (!uploadResponse.ok) {
-          throw new Error("파일 업로드 실패");
-        }
+        const result = await uploadMutation.mutateAsync({
+          fileName: file.name,
+          fileType: file.type,
+          fileData,
+        });
 
-        const { url } = await uploadResponse.json();
-        documentUrls.push(url);
+        documentUrls.push(result.url);
       }
 
       // Submit application
-      const applicationData = {
-        ...formData,
+      await submitMutation.mutateAsync({
+        fullName: formData.fullName!,
+        email: formData.email!,
+        dateOfBirth: formData.dateOfBirth!,
+        phone: formData.phone,
+        testType: formData.testType!,
+        testScore: formData.testScore!,
+        testDate: formData.testDate,
         documentUrls: JSON.stringify(documentUrls),
-        isDraft: 0,
-      };
-
-      const response = await fetch("/api/applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(applicationData),
       });
-
-      if (!response.ok) {
-        throw new Error("신청 제출 실패");
-      }
 
       toast.success("입회 신청이 완료되었습니다!");
       setLocation("/mypage");
     } catch (error) {
       console.error("Application submission error:", error);
       toast.error("신청 제출 중 오류가 발생했습니다");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSaveDraft = async () => {
-    try {
-      const draftData = {
-        ...formData,
-        documentUrls: JSON.stringify([]),
-        isDraft: 1,
-      };
-
-      const response = await fetch("/api/applications/draft", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draftData),
-      });
-
-      if (!response.ok) {
-        throw new Error("임시 저장 실패");
-      }
-
-      toast.success("임시 저장되었습니다");
-    } catch (error) {
-      console.error("Draft save error:", error);
-      toast.error("임시 저장 중 오류가 발생했습니다");
     }
   };
 
@@ -194,7 +159,7 @@ export default function Application() {
           {/* Step 1: Personal Information */}
           {currentStep === 1 && (
             <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-6">
-              <div className="bg-card border border-border rounded-lg p-6">
+              <div className="bg-card border border-border rounded-lg p-6 card-hover">
                 <h2 className="text-2xl font-semibold mb-6">개인정보</h2>
                 
                 <div className="space-y-4">
@@ -252,10 +217,7 @@ export default function Application() {
                 </div>
               </div>
 
-              <div className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handleSaveDraft}>
-                  임시 저장
-                </Button>
+              <div className="flex justify-end">
                 <Button type="submit">다음</Button>
               </div>
             </form>
@@ -264,7 +226,7 @@ export default function Application() {
           {/* Step 2: Test Scores */}
           {currentStep === 2 && (
             <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
-              <div className="bg-card border border-border rounded-lg p-6">
+              <div className="bg-card border border-border rounded-lg p-6 card-hover">
                 <h2 className="text-2xl font-semibold mb-6">시험 점수</h2>
                 
                 <div className="space-y-4">
@@ -323,12 +285,7 @@ export default function Application() {
                 <Button type="button" variant="outline" onClick={() => setCurrentStep(1)}>
                   이전
                 </Button>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={handleSaveDraft}>
-                    임시 저장
-                  </Button>
-                  <Button type="submit">다음</Button>
-                </div>
+                <Button type="submit">다음</Button>
               </div>
             </form>
           )}
@@ -336,7 +293,7 @@ export default function Application() {
           {/* Step 3: Documents */}
           {currentStep === 3 && (
             <div className="space-y-6">
-              <div className="bg-card border border-border rounded-lg p-6">
+              <div className="bg-card border border-border rounded-lg p-6 card-hover">
                 <h2 className="text-2xl font-semibold mb-6">증빙 서류</h2>
                 
                 <div className="space-y-4">
@@ -376,9 +333,9 @@ export default function Application() {
                 </Button>
                 <Button
                   onClick={handleFinalSubmit}
-                  disabled={isSubmitting || uploadedFiles.length === 0}
+                  disabled={submitMutation.isPending || uploadMutation.isPending || uploadedFiles.length === 0}
                 >
-                  {isSubmitting ? (
+                  {(submitMutation.isPending || uploadMutation.isPending) ? (
                     <>
                       <LoadingSpinner size="sm" className="mr-2" />
                       제출 중...

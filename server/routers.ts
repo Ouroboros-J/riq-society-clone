@@ -3,6 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { confirmPayment, createCertificate, getAllCertificates, getAllUsers, getCertificateById, getPendingPayments, getUserByOpenId, getUserCertificates, requestDepositConfirmation, updateCertificateStatus, updateUserApprovalStatus } from "./db";
+import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
 import { z } from "zod";
 import { storagePut } from "./storage";
 import { generateCertificateApprovedEmail, generateCertificateRejectedEmail, generatePaymentRequestEmail, sendEmail } from "./_core/email";
@@ -137,6 +138,74 @@ export const appRouter = router({
         depositDate: user?.depositDate,
       };
     }),
+  }),
+
+  application: router({
+    getMyApplication: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserApplication(ctx.user.id);
+    }),
+
+    submit: protectedProcedure
+      .input(
+        z.object({
+          fullName: z.string(),
+          email: z.string().email(),
+          dateOfBirth: z.string(),
+          phone: z.string().optional(),
+          testType: z.string(),
+          testScore: z.string(),
+          testDate: z.string().optional(),
+          documentUrls: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const existing = await getUserApplication(ctx.user.id);
+        
+        if (existing) {
+          return await updateApplication(existing.id, {
+            ...input,
+            isDraft: 0,
+          });
+        }
+        
+        return await createApplication({
+          userId: ctx.user.id,
+          ...input,
+          isDraft: 0,
+        });
+      }),
+
+    uploadDocument: protectedProcedure
+      .input(
+        z.object({
+          fileName: z.string(),
+          fileType: z.string(),
+          fileData: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const buffer = Buffer.from(input.fileData, "base64");
+        const fileKey = `applications/${ctx.user.id}/${Date.now()}-${input.fileName}`;
+        const { url } = await storagePut(fileKey, buffer, input.fileType);
+        
+        return { url };
+      }),
+
+    listAll: adminProcedure.query(async () => {
+      return await getAllApplications();
+    }),
+
+    updateStatus: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          status: z.enum(["pending", "approved", "rejected"]),
+          adminNotes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await updateApplicationStatus(input.id, input.status, input.adminNotes);
+      }),
   }),
 });
 

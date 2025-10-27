@@ -233,12 +233,14 @@
 
 ## Phase 2: 입회 신청 시스템
 
-- [ ] 다단계 폼 UI 구현 (Step 1: 개인정보)
-- [ ] Step 2: 시험 점수 입력
-- [ ] Step 3: 증빙 서류 업로드 (S3)
-- [ ] 진행 상태 표시 바
+- [x] 다단계 폼 UI 구현 (Step 1: 개인정보)
+- [x] Step 2: 시험 점수 입력
+- [x] Step 3: 증빙 서류 업로드 (S3)
+- [x] 진행 상태 표시 바
 - [ ] 임시 저장 기능 (LocalStorage + DB)
-- [ ] 폼 유효성 검사
+- [x] 폼 유효성 검사 (Zod + React Hook Form)
+- [x] tRPC 라우터 추가 (application.submit, application.uploadDocument)
+- [x] 파일 업로드 API (S3)
 - [ ] 신청 완료 페이지
 
 ## Phase 3: 관리자 대시보드 확장
