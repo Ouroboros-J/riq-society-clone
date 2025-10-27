@@ -61,6 +61,50 @@ export default function SEO({
       
       {/* Canonical URL */}
       <link rel="canonical" href={url} />
+      
+      {/* Schema.org JSON-LD */}
+      {type === 'website' && (
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "RIQ Society",
+            "url": "https://riq-society.com",
+            "logo": "https://riq-society.com/logo.png",
+            "description": "표준점수 145 이상의 지능검사 결과를 가진 고지능자들의 모임",
+            "sameAs": [
+              "https://www.facebook.com/riqsociety",
+              "https://twitter.com/riqsociety"
+            ]
+          })}
+        </script>
+      )}
+      
+      {type === 'article' && author && publishedTime && (
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": title,
+            "description": description,
+            "image": image,
+            "author": {
+              "@type": "Organization",
+              "name": author
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "RIQ Society",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://riq-society.com/logo.png"
+              }
+            },
+            "datePublished": publishedTime,
+            "dateModified": modifiedTime || publishedTime
+          })}
+        </script>
+      )}
     </Helmet>
   );
 }

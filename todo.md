@@ -411,7 +411,7 @@
 
 - [x] 메타 태그 시스템 구현 (페이지별 title, description, keywords)
 - [x] Open Graph 태그 추가 (소셜 미디어 공유 최적화)
-- [ ] Schema.org 구조화 데이터 추가
+- [x] Schema.org 구조화 데이터 추가 (Organization, Article, FAQPage)
 - [x] sitemap.xml 자동 생성
 - [x] robots.txt 설정
 - [x] 다른 페이지들에 SEO 컴포넌트 추가 (Application, FAQ, Blog, BlogPost, Resources, MyPage)

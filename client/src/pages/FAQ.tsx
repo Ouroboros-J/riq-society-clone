@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { trpc } from '../lib/trpc';
 import Header from '../components/Header';
 import SEO from '../components/SEO';
@@ -30,6 +31,24 @@ export default function FAQ() {
         description="RIQ Society에 대해 자주 묻는 질문과 답변. 입회 자격, 신청 절차, 회비, 혜택 등에 대한 정보를 확인하세요."
         keywords="RIQ Society FAQ, 자주 묻는 질문, 입회 자격, 신청 방법, 회비"
       />
+      {faqs && faqs.length > 0 && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": faqs.map((faq: any) => ({
+                "@type": "Question",
+                "name": faq.question,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": faq.answer
+                }
+              }))
+            })}
+          </script>
+        </Helmet>
+      )}
       <Header />
       <div className="min-h-screen bg-background pt-16">
         <div className="container py-16">
