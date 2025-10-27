@@ -44,11 +44,14 @@ export default function Application() {
   const [formData, setFormData] = useState<Partial<Step1Data & Step2Data>>({});
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
+  const [selectedTest, setSelectedTest] = useState<string>("");
+  const [otherTestName, setOtherTestName] = useState<string>("");
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
   const submitMutation = trpc.application.submit.useMutation();
   const uploadMutation = trpc.application.uploadDocument.useMutation();
+  const recognizedTestsQuery = trpc.recognizedTest.list.useQuery();
 
   // Load draft from LocalStorage on mount
   useEffect(() => {
@@ -324,29 +327,61 @@ export default function Application() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="testType">시험 종류 *</Label>
-                    <Select
-                      onValueChange={(value) => step2Form.setValue("testType", value)}
-                      defaultValue={formData.testType}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="시험을 선택하세요" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="RIQ Admission Test">RIQ Admission Test</SelectItem>
-                        <SelectItem value="Mensa">Mensa</SelectItem>
-                        <SelectItem value="WAIS">WAIS</SelectItem>
-                        <SelectItem value="Stanford-Binet">Stanford-Binet</SelectItem>
-                        <SelectItem value="SAT">SAT</SelectItem>
-                        <SelectItem value="GRE">GRE</SelectItem>
-                        <SelectItem value="Other">기타</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {recognizedTestsQuery.isLoading ? (
+                      <div className="flex items-center justify-center p-4">
+                        <LoadingSpinner size="sm" />
+                        <span className="ml-2 text-sm text-muted-foreground">시험 목록 불러오는 중...</span>
+                      </div>
+                    ) : (
+                      <Select
+                        onValueChange={(value) => {
+                          setSelectedTest(value);
+                          if (value === "OTHER") {
+                            step2Form.setValue("testType", "");
+                          } else {
+                            step2Form.setValue("testType", value);
+                            setOtherTestName("");
+                          }
+                        }}
+                        defaultValue={formData.testType}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="시험을 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {recognizedTestsQuery.data?.map((test: any) => (
+                            <SelectItem key={test.id} value={test.testName}>
+                              {test.testName}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="OTHER">기타 시험</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                     {step2Form.formState.errors.testType && (
                       <p className="text-sm text-destructive mt-1">
                         {step2Form.formState.errors.testType.message}
                       </p>
                     )}
                   </div>
+
+                  {selectedTest === "OTHER" && (
+                    <div>
+                      <Label htmlFor="otherTestName">기타 시험 이름 *</Label>
+                      <Input
+                        id="otherTestName"
+                        value={otherTestName}
+                        onChange={(e) => {
+                          setOtherTestName(e.target.value);
+                          step2Form.setValue("testType", e.target.value);
+                        }}
+                        placeholder="예: 한국 지능 검사"
+                      />
+                      <p className="text-sm text-muted-foreground mt-2">
+                        기타 시험은 관리자의 수동 검토가 필요합니다.
+                      </p>
+                    </div>
+                  )}
 
                   <div>
                     <Label htmlFor="testScore">점수 *</Label>

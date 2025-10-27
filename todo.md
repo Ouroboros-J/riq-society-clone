@@ -500,3 +500,48 @@
   - [x] 다중 파일 업로드 지원
 
 
+
+
+
+## Phase 9: AI 기반 자동 검증 시스템 (오토 파일럿 모드)
+
+### Phase 9-1: 시험 목록 및 UI
+- [x] 공식 인정 시험 목록 데이터베이스 스키마 추가 (recognizedTests 테이블)
+- [x] 시험 목록 시드 데이터 추가 (23개 공식 인정 시험)
+- [x] recognizedTest tRPC 라우터 구현
+- [x] Application 페이지에 시험 선택 콤보박스 추가
+- [x] "기타 시험" 선택지 추가
+- [x] "기타 시험" 선택 시 텍스트 입력 필드 표시
+- [x] applications 테이블에 isOtherTest, otherTestName 필드 추가
+
+### Phase 9-2: AI 모델 관리
+- [x] aiSettings 테이블 생성 (platform, apiKey, selectedModel, isEnabled)
+- [x] aiSettings tRPC 라우터 구현
+- [x] 관리자 페이지에 AI 설정 탭 추가
+- [x] API 키 입력 UI (OpenAI, Claude, Gemini, Perplexity)
+- [x] 모델 선택 드롭다운 (OpenAI: GPT-4o, GPT-4 Turbo 등)
+- [x] API 키 저장 기능 연결
+- [ ] 각 플랫폼별 모델 목록 동적 로딩 API (선택 사항)
+- [ ] 최소 2개 모델 활성화 검증
+- [x] 오토 파일럿 모드 토글 UI
+
+### Phase 9-3: AI 자동 검증
+- [ ] AI 검증 프롬프트 템플릿 설계
+- [ ] 다중 AI 교차 검증 로직 (모든 AI 결과 일치 필요)
+- [ ] aiVerifications 테이블 생성 (applicationId, platform, model, result, reasoning)
+- [ ] 검증 결과 저장 및 표시
+- [ ] "기타 시험" 선택 시 AI 검증 건너뛰기
+- [ ] 검증 진행 상태 표시 (관리자 대시보드)
+
+### Phase 9-4: 거절 사유 자동 생성
+- [ ] AI 거절 사유 생성 API
+- [ ] 관리자 검토 및 수정 UI
+- [ ] 거절 사유 이메일 템플릿
+- [ ] 자동 전송 옵션 (관리자 승인 후)
+
+### Phase 9-5: 관리자 제어 및 최종 승인
+- [ ] AI 검증 결과 요약 표시 (관리자 대시보드)
+- [ ] 최종 승인/거부 버튼 (AI 검증 후에도 관리자 필수)
+- [ ] 검증 이력 조회 기능
+
+

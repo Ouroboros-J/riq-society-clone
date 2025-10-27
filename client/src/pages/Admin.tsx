@@ -72,6 +72,23 @@ export default function Admin() {
   const [resourceFileSize, setResourceFileSize] = useState<number | undefined>(undefined);
   const [resourceCategory, setResourceCategory] = useState('');
   
+  // AI 설정 - 각 플랫폼별 상태 관리
+  const [openaiApiKey, setOpenaiApiKey] = useState<string>('');
+  const [openaiModel, setOpenaiModel] = useState<string>('');
+  const [openaiEnabled, setOpenaiEnabled] = useState<boolean>(false);
+  
+  const [anthropicApiKey, setAnthropicApiKey] = useState<string>('');
+  const [anthropicModel, setAnthropicModel] = useState<string>('');
+  const [anthropicEnabled, setAnthropicEnabled] = useState<boolean>(false);
+  
+  const [googleApiKey, setGoogleApiKey] = useState<string>('');
+  const [googleModel, setGoogleModel] = useState<string>('');
+  const [googleEnabled, setGoogleEnabled] = useState<boolean>(false);
+  
+  const [perplexityApiKey, setPerplexityApiKey] = useState<string>('');
+  const [perplexityModel, setPerplexityModel] = useState<string>('');
+  const [perplexityEnabled, setPerplexityEnabled] = useState<boolean>(false);
+  
   // 통계 날짜 범위
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
@@ -170,6 +187,20 @@ export default function Admin() {
   
   const { data: resources, isLoading: resourcesLoading, refetch: refetchResources } = trpc.resource.listAdmin.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === 'admin',
+  });
+  
+  const { data: aiSettings, isLoading: aiSettingsLoading, refetch: refetchAiSettings } = trpc.aiSettings.list.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+  
+  const upsertAiSettingMutation = trpc.aiSettings.upsert.useMutation({
+    onSuccess: () => {
+      refetchAiSettings();
+      toast.success('AI 설정이 저장되었습니다.');
+    },
+    onError: (error) => {
+      toast.error(`저장 실패: ${error.message}`);
+    },
   });
   
   const createResourceMutation = trpc.resource.create.useMutation({
@@ -329,6 +360,7 @@ export default function Admin() {
             <TabsTrigger value="faq">FAQ 관리</TabsTrigger>
             <TabsTrigger value="blog">블로그 관리</TabsTrigger>
             <TabsTrigger value="resources">리소스 관리</TabsTrigger>
+            <TabsTrigger value="ai-settings">AI 설정</TabsTrigger>
           </TabsList>
 
           <TabsContent value="statistics">
@@ -1480,6 +1512,247 @@ export default function Admin() {
                     </TableBody>
                   </Table>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* AI 설정 */}
+          <TabsContent value="ai-settings">
+            <Card>
+              <CardHeader>
+                <CardTitle>AI 모델 설정</CardTitle>
+                <CardDescription>
+                  입회 신청 서류 자동 검증을 위한 AI 모델을 설정합니다.
+                  <br />
+                  <strong>최소 2개 이상의 AI 모델을 활성화해야 오토 파일럿 모드가 작동합니다.</strong>
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* OpenAI */}
+                <div className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">OpenAI (ChatGPT)</h3>
+                    <Badge variant="secondary">GPT-4, GPT-3.5</Badge>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="openai-api-key">API 키</Label>
+                      <Input
+                        id="openai-api-key"
+                        type="password"
+                        placeholder="sk-..."
+                        value={openaiApiKey}
+                        onChange={(e) => setOpenaiApiKey(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="openai-model">모델 선택</Label>
+                      <Select
+                        value={openaiModel}
+                        onValueChange={(value) => setOpenaiModel(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="모델을 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                          <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                          <SelectItem value="gpt-4">GPT-4</SelectItem>
+                          <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="openai-enabled"
+                        checked={openaiEnabled}
+                        onCheckedChange={(checked) => setOpenaiEnabled(!!checked)}
+                      />
+                      <Label htmlFor="openai-enabled">활성화</Label>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        upsertAiSettingMutation.mutate({
+                          platform: 'openai',
+                          apiKey: openaiApiKey,
+                          selectedModel: openaiModel,
+                          isEnabled: openaiEnabled ? 1 : 0,
+                        });
+                      }}
+                    >
+                      저장
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Anthropic (Claude) */}
+                <div className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Anthropic (Claude)</h3>
+                    <Badge variant="secondary">Claude 3</Badge>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="anthropic-api-key">API 키</Label>
+                      <Input
+                        id="anthropic-api-key"
+                        type="password"
+                        placeholder="sk-ant-..."
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="anthropic-model">모델 선택</Label>
+                      <Select value={anthropicModel} onValueChange={(value) => setAnthropicModel(value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="모델을 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
+                          <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet</SelectItem>
+                          <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="anthropic-enabled"
+                        checked={anthropicEnabled}
+                        onCheckedChange={(checked) => setAnthropicEnabled(!!checked)}
+                      />
+                      <Label htmlFor="anthropic-enabled">활성화</Label>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        upsertAiSettingMutation.mutate({
+                          platform: 'anthropic',
+                          apiKey: anthropicApiKey,
+                          selectedModel: anthropicModel,
+                          isEnabled: anthropicEnabled ? 1 : 0,
+                        });
+                      }}
+                    >
+                      저장
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Google (Gemini) */}
+                <div className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Google (Gemini)</h3>
+                    <Badge variant="secondary">Gemini Pro</Badge>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="google-api-key">API 키</Label>
+                      <Input
+                        id="google-api-key"
+                        type="password"
+                        placeholder="AIza..."
+                        value={googleApiKey}
+                        onChange={(e) => setGoogleApiKey(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="google-model">모델 선택</Label>
+                      <Select value={googleModel} onValueChange={(value) => setGoogleModel(value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="모델을 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash</SelectItem>
+                          <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                          <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="google-enabled"
+                        checked={googleEnabled}
+                        onCheckedChange={(checked) => setGoogleEnabled(!!checked)}
+                      />
+                      <Label htmlFor="google-enabled">활성화</Label>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        upsertAiSettingMutation.mutate({
+                          platform: 'google',
+                          apiKey: googleApiKey,
+                          selectedModel: googleModel,
+                          isEnabled: googleEnabled ? 1 : 0,
+                        });
+                      }}
+                    >
+                      저장
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Perplexity */}
+                <div className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Perplexity</h3>
+                    <Badge variant="secondary">Sonar Pro</Badge>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="perplexity-api-key">API 키</Label>
+                      <Input
+                        id="perplexity-api-key"
+                        type="password"
+                        placeholder="pplx-..."
+                        value={perplexityApiKey}
+                        onChange={(e) => setPerplexityApiKey(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="perplexity-model">모델 선택</Label>
+                      <Select value={perplexityModel} onValueChange={(value) => setPerplexityModel(value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="모델을 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sonar-pro">Sonar Pro</SelectItem>
+                          <SelectItem value="sonar">Sonar</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="perplexity-enabled"
+                        checked={perplexityEnabled}
+                        onCheckedChange={(checked) => setPerplexityEnabled(!!checked)}
+                      />
+                      <Label htmlFor="perplexity-enabled">활성화</Label>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        upsertAiSettingMutation.mutate({
+                          platform: 'perplexity',
+                          apiKey: perplexityApiKey,
+                          selectedModel: perplexityModel,
+                          isEnabled: perplexityEnabled ? 1 : 0,
+                        });
+                      }}
+                    >
+                      저장
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 오토 파일럿 모드 */}
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">오토 파일럿 모드</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        활성화된 모든 AI가 일치하는 결과를 내면 자동으로 승인/거부합니다.
+                      </p>
+                    </div>
+                    <Checkbox id="autopilot-enabled" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

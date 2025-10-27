@@ -8,6 +8,8 @@ import { getAllFaqs, getAllFaqsAdmin, getFaqById, createFaq, updateFaq, deleteFa
 import { getAllBlogs, getAllBlogsAdmin, getBlogBySlug, getBlogById, createBlog, updateBlog, deleteBlog } from "./db-blogs";
 import { getAllResources, getAllResourcesAdmin, getResourceById, createResource, updateResource, deleteResource, incrementDownloadCount } from "./db-resources";
 import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
+import { getAllRecognizedTests, getRecognizedTestById, createRecognizedTest, updateRecognizedTest, deleteRecognizedTest } from "./db-recognized-tests";
+import { getAllAiSettings, getAiSettingByPlatform, upsertAiSetting, getEnabledAiSettings, countEnabledAiSettings } from "./db-ai-settings";
 import { getDb } from "./db";
 import { applications, users } from "../drizzle/schema";
 import { eq, desc, sql, gte, and } from "drizzle-orm";
@@ -288,6 +290,82 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         return await deleteBlog(input.id);
+      }),
+  }),
+
+  aiSettings: router({
+    list: adminProcedure.query(async () => {
+      return await getAllAiSettings();
+    }),
+
+    getByPlatform: adminProcedure
+      .input(z.object({ platform: z.string() }))
+      .query(async ({ input }) => {
+        return await getAiSettingByPlatform(input.platform);
+      }),
+
+    upsert: adminProcedure
+      .input(z.object({
+        platform: z.string(),
+        apiKey: z.string().optional(),
+        selectedModel: z.string().optional(),
+        isEnabled: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await upsertAiSetting(input);
+      }),
+
+    getEnabled: adminProcedure.query(async () => {
+      return await getEnabledAiSettings();
+    }),
+
+    countEnabled: adminProcedure.query(async () => {
+      return await countEnabledAiSettings();
+    }),
+  }),
+
+  recognizedTest: router({
+    list: publicProcedure.query(async () => {
+      return await getAllRecognizedTests();
+    }),
+
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await getRecognizedTestById(input.id);
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        category: z.string(),
+        testName: z.string(),
+        description: z.string().optional(),
+        requiredScore: z.string().optional(),
+        displayOrder: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await createRecognizedTest(input);
+      }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        category: z.string().optional(),
+        testName: z.string().optional(),
+        description: z.string().optional(),
+        requiredScore: z.string().optional(),
+        displayOrder: z.number().optional(),
+        isActive: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await updateRecognizedTest(id, data);
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await deleteRecognizedTest(input.id);
       }),
   }),
 

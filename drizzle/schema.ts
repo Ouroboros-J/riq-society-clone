@@ -60,6 +60,8 @@ export const applications = mysqlTable("applications", {
   testType: varchar("testType", { length: 255 }).notNull(),
   testScore: varchar("testScore", { length: 100 }).notNull(),
   testDate: varchar("testDate", { length: 50 }),
+  isOtherTest: int("isOtherTest").default(0).notNull(), // 1 = 기타 시험, 0 = 공식 인정 시험
+  otherTestName: varchar("otherTestName", { length: 255 }), // 기타 시험 이름
   
   // Step 3: Supporting Documents
   documentUrls: text("documentUrls"), // JSON array of URLs
@@ -160,4 +162,61 @@ export const resources = mysqlTable("resources", {
 
 export type Resource = typeof resources.$inferSelect;
 export type InsertResource = typeof resources.$inferInsert;
+
+// 공식 인정 시험 목록
+export const recognizedTests = mysqlTable("recognizedTests", {
+  id: int("id").autoincrement().primaryKey(),
+  category: varchar("category", { length: 100 }).notNull(), // "표준 지능 검사", "학업 능력 검사", "대학 진학 시험"
+  testName: varchar("testName", { length: 255 }).notNull(),
+  description: text("description"),
+  requiredScore: varchar("requiredScore", { length: 100 }), // 예: "IQ 135 이상", "99%ile"
+  displayOrder: int("displayOrder").default(0).notNull(),
+  isActive: int("isActive").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type RecognizedTest = typeof recognizedTests.$inferSelect;
+export type InsertRecognizedTest = typeof recognizedTests.$inferInsert;
+
+// AI 모델 설정
+export const aiSettings = mysqlTable("aiSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  platform: varchar("platform", { length: 50 }).notNull().unique(), // "openai", "anthropic", "google", "perplexity"
+  apiKey: text("apiKey"), // 암호화 권장
+  selectedModel: varchar("selectedModel", { length: 100 }), // 예: "gpt-4", "claude-3-opus"
+  isEnabled: int("isEnabled").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AiSetting = typeof aiSettings.$inferSelect;
+export type InsertAiSetting = typeof aiSettings.$inferInsert;
+
+// AI 검증 결과
+export const aiVerifications = mysqlTable("aiVerifications", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  platform: varchar("platform", { length: 50 }).notNull(),
+  model: varchar("model", { length: 100 }).notNull(),
+  result: mysqlEnum("result", ["approved", "rejected", "uncertain"]).notNull(),
+  reasoning: text("reasoning"), // AI가 제시한 이유
+  confidence: int("confidence"), // 0-100 신뢰도
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AiVerification = typeof aiVerifications.$inferSelect;
+export type InsertAiVerification = typeof aiVerifications.$inferInsert;
+
+// 오토 파일럿 모드 설정
+export const systemSettings = mysqlTable("systemSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  settingKey: varchar("settingKey", { length: 100 }).notNull().unique(),
+  settingValue: text("settingValue"),
+  description: text("description"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SystemSetting = typeof systemSettings.$inferSelect;
+export type InsertSystemSetting = typeof systemSettings.$inferInsert;
 
