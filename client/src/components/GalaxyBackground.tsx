@@ -23,16 +23,16 @@ export default function GalaxyBackground() {
     // 모바일/데스크톱 감지
     const isMobile = window.innerWidth < 768;
     
-    // 고해상도 디스플레이에서 성능 최적화
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 2));
+    // 고해상도 디스플레이 지원 (제한 없음)
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
     camera.position.z = 50;
 
-    // Galaxy Parameters - 모바일/데스크톱 분리
+    // Galaxy Parameters - 원본 사이트와 동일하게 설정
     const galaxyParameters = {
-      count: isMobile ? 15000 : 45000, // 모바일에서 파티클 수 대폭 감소
-      size: isMobile ? 0.015 : 0.012,
+      count: 65000, // 모든 기기에서 동일한 파티클 수
+      size: 0.012,
       radius: 23,
       branches: 5,
       spin: 1,
@@ -153,8 +153,7 @@ export default function GalaxyBackground() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-      const newIsMobile = window.innerWidth < 768;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, newIsMobile ? 1 : 2));
+      renderer.setPixelRatio(window.devicePixelRatio);
     };
     window.addEventListener('resize', handleResize);
 

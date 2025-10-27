@@ -427,6 +427,9 @@
   - [x] 메모리 누수 방지 (forceContextLoss)
   - [x] 모바일에서 pixelRatio 1로 제한
   - [x] 모바일에서 마우스 parallax 효과 비활성화
+  - [x] 파티클 수 원래대로 복원 (65,000개) - 하이엔드 타겟층에 맞춤
+  - [x] pixelRatio 제한 제거 (고해상도 그대로)
+  - [x] 필수 최적화만 유지 (메모리 누수 방지, 마우스 parallax 모바일 비활성화)
 - [ ] 이미지 최적화
   - [ ] lazy loading 적용
   - [ ] WebP 포맷 지원
