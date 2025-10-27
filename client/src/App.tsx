@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import MyPage from "./pages/MyPage";
+import Application from "./pages/Application";
 
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path={"/admin"} component={Admin} />
       <Route path={"/auth"} component={Auth} />
       <Route path={"/mypage"} component={MyPage} />
+      <Route path={"/application"} component={Application} />
 
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
