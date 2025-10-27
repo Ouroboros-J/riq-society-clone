@@ -6,6 +6,7 @@ import { confirmPayment, getAllUsers, getPendingPayments, getUserByOpenId, updat
 import { getAllEmailTemplates, getEmailTemplate, updateEmailTemplate, createEmailTemplate } from "./db-email-templates";
 import { getAllFaqs, getAllFaqsAdmin, getFaqById, createFaq, updateFaq, deleteFaq } from "./db-faqs";
 import { getAllBlogs, getAllBlogsAdmin, getBlogBySlug, getBlogById, createBlog, updateBlog, deleteBlog } from "./db-blogs";
+import { getAllResources, getAllResourcesAdmin, getResourceById, createResource, updateResource, deleteResource, incrementDownloadCount } from "./db-resources";
 import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
 import { getDb } from "./db";
 import { applications, users } from "../drizzle/schema";
@@ -287,6 +288,65 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         return await deleteBlog(input.id);
+      }),
+  }),
+
+  resource: router({
+    list: publicProcedure.query(async () => {
+      return await getAllResources();
+    }),
+
+    listAdmin: adminProcedure.query(async () => {
+      return await getAllResourcesAdmin();
+    }),
+
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await getResourceById(input.id);
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        fileUrl: z.string(),
+        fileName: z.string().optional(),
+        fileType: z.string().optional(),
+        fileSize: z.number().optional(),
+        category: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await createResource(input);
+      }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        fileUrl: z.string().optional(),
+        fileName: z.string().optional(),
+        fileType: z.string().optional(),
+        fileSize: z.number().optional(),
+        category: z.string().optional(),
+        isPublished: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await updateResource(id, data);
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await deleteResource(input.id);
+      }),
+
+    incrementDownload: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await incrementDownloadCount(input.id);
       }),
   }),
 

@@ -61,6 +61,17 @@ export default function Admin() {
   const [blogThumbnailUrl, setBlogThumbnailUrl] = useState('');
   const [blogCategory, setBlogCategory] = useState('');
   
+  // 리소스 관리
+  const [resourceDialogOpen, setResourceDialogOpen] = useState(false);
+  const [editingResource, setEditingResource] = useState<any>(null);
+  const [resourceTitle, setResourceTitle] = useState('');
+  const [resourceDescription, setResourceDescription] = useState('');
+  const [resourceFileUrl, setResourceFileUrl] = useState('');
+  const [resourceFileName, setResourceFileName] = useState('');
+  const [resourceFileType, setResourceFileType] = useState('');
+  const [resourceFileSize, setResourceFileSize] = useState<number | undefined>(undefined);
+  const [resourceCategory, setResourceCategory] = useState('');
+  
   // 통계 날짜 범위
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
@@ -154,6 +165,41 @@ export default function Admin() {
     onSuccess: () => {
       refetchBlogs();
       toast.success('블로그가 삭제되었습니다.');
+    },
+  });
+  
+  const { data: resources, isLoading: resourcesLoading, refetch: refetchResources } = trpc.resource.listAdmin.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+  
+  const createResourceMutation = trpc.resource.create.useMutation({
+    onSuccess: () => {
+      refetchResources();
+      setResourceDialogOpen(false);
+      setResourceTitle('');
+      setResourceDescription('');
+      setResourceFileUrl('');
+      setResourceFileName('');
+      setResourceFileType('');
+      setResourceFileSize(undefined);
+      setResourceCategory('');
+      toast.success('리소스가 생성되었습니다.');
+    },
+  });
+  
+  const updateResourceMutation = trpc.resource.update.useMutation({
+    onSuccess: () => {
+      refetchResources();
+      setResourceDialogOpen(false);
+      setEditingResource(null);
+      toast.success('리소스가 수정되었습니다.');
+    },
+  });
+  
+  const deleteResourceMutation = trpc.resource.delete.useMutation({
+    onSuccess: () => {
+      refetchResources();
+      toast.success('리소스가 삭제되었습니다.');
     },
   });
   
@@ -282,6 +328,7 @@ export default function Admin() {
             <TabsTrigger value="email-templates">이메일 템플릿</TabsTrigger>
             <TabsTrigger value="faq">FAQ 관리</TabsTrigger>
             <TabsTrigger value="blog">블로그 관리</TabsTrigger>
+            <TabsTrigger value="resources">리소스 관리</TabsTrigger>
           </TabsList>
 
           <TabsContent value="statistics">
@@ -1315,6 +1362,244 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* 리소스 관리 탭 */}
+          <TabsContent value="resources">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>리소스 관리</CardTitle>
+                    <CardDescription>다운로드 가능한 자료를 관리합니다</CardDescription>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      setEditingResource(null);
+                      setResourceTitle('');
+                      setResourceDescription('');
+                      setResourceFileUrl('');
+                      setResourceFileName('');
+                      setResourceFileType('');
+                      setResourceFileSize(undefined);
+                      setResourceCategory('');
+                      setResourceDialogOpen(true);
+                    }}
+                  >
+                    리소스 추가
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {resourcesLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>제목</TableHead>
+                        <TableHead>카테고리</TableHead>
+                        <TableHead>파일 크기</TableHead>
+                        <TableHead>다운로드</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead className="text-right">관리</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {resources && resources.length > 0 ? (
+                        resources.map((resource: any) => (
+                          <TableRow key={resource.id}>
+                            <TableCell className="max-w-md truncate">{resource.title}</TableCell>
+                            <TableCell>{resource.category || '-'}</TableCell>
+                            <TableCell>
+                              {resource.fileSize 
+                                ? resource.fileSize < 1024 * 1024 
+                                  ? `${(resource.fileSize / 1024).toFixed(1)} KB`
+                                  : `${(resource.fileSize / (1024 * 1024)).toFixed(1)} MB`
+                                : '-'
+                              }
+                            </TableCell>
+                            <TableCell>{resource.downloadCount || 0}회</TableCell>
+                            <TableCell>
+                              <Badge variant={resource.isPublished ? 'default' : 'secondary'}>
+                                {resource.isPublished ? '공개' : '비공개'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setEditingResource(resource);
+                                  setResourceTitle(resource.title);
+                                  setResourceDescription(resource.description || '');
+                                  setResourceFileUrl(resource.fileUrl);
+                                  setResourceFileName(resource.fileName || '');
+                                  setResourceFileType(resource.fileType || '');
+                                  setResourceFileSize(resource.fileSize);
+                                  setResourceCategory(resource.category || '');
+                                  setResourceDialogOpen(true);
+                                }}
+                              >
+                                수정
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm('리소스를 삭제하시겠습니까?')) {
+                                    deleteResourceMutation.mutate({ id: resource.id });
+                                  }
+                                }}
+                              >
+                                삭제
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  updateResourceMutation.mutate({
+                                    id: resource.id,
+                                    isPublished: resource.isPublished ? 0 : 1,
+                                  });
+                                }}
+                              >
+                                {resource.isPublished ? '비공개' : '공개'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            등록된 리소스가 없습니다.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+        {/* 리소스 편집 모달 */}
+        <Dialog open={resourceDialogOpen} onOpenChange={setResourceDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{editingResource ? '리소스 수정' : '리소스 추가'}</DialogTitle>
+              <DialogDescription>
+                다운로드 가능한 자료를 등록해주세요.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="resourceTitle">제목</Label>
+                <Input
+                  id="resourceTitle"
+                  placeholder="리소스 제목"
+                  value={resourceTitle}
+                  onChange={(e) => setResourceTitle(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="resourceDescription">설명</Label>
+                <Textarea
+                  id="resourceDescription"
+                  placeholder="리소스에 대한 간략한 설명"
+                  value={resourceDescription}
+                  onChange={(e) => setResourceDescription(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="resourceFileUrl">파일 URL</Label>
+                <Input
+                  id="resourceFileUrl"
+                  placeholder="https://..."
+                  value={resourceFileUrl}
+                  onChange={(e) => setResourceFileUrl(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="resourceFileName">파일명</Label>
+                  <Input
+                    id="resourceFileName"
+                    placeholder="document.pdf"
+                    value={resourceFileName}
+                    onChange={(e) => setResourceFileName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="resourceFileType">파일 타입</Label>
+                  <Input
+                    id="resourceFileType"
+                    placeholder="application/pdf"
+                    value={resourceFileType}
+                    onChange={(e) => setResourceFileType(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="resourceFileSize">파일 크기 (bytes)</Label>
+                  <Input
+                    id="resourceFileSize"
+                    type="number"
+                    placeholder="1024000"
+                    value={resourceFileSize || ''}
+                    onChange={(e) => setResourceFileSize(e.target.value ? parseInt(e.target.value) : undefined)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="resourceCategory">카테고리</Label>
+                  <Input
+                    id="resourceCategory"
+                    placeholder="예: 서류"
+                    value={resourceCategory}
+                    onChange={(e) => setResourceCategory(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setResourceDialogOpen(false)}>
+                취소
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (editingResource) {
+                    updateResourceMutation.mutate({
+                      id: editingResource.id,
+                      title: resourceTitle,
+                      description: resourceDescription || undefined,
+                      fileUrl: resourceFileUrl,
+                      fileName: resourceFileName || undefined,
+                      fileType: resourceFileType || undefined,
+                      fileSize: resourceFileSize,
+                      category: resourceCategory || undefined,
+                    });
+                  } else {
+                    createResourceMutation.mutate({
+                      title: resourceTitle,
+                      description: resourceDescription || undefined,
+                      fileUrl: resourceFileUrl,
+                      fileName: resourceFileName || undefined,
+                      fileType: resourceFileType || undefined,
+                      fileSize: resourceFileSize,
+                      category: resourceCategory || undefined,
+                    });
+                  }
+                }}
+                disabled={!resourceTitle || !resourceFileUrl}
+              >
+                {editingResource ? '수정' : '추가'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* 블로그 편집 모달 */}
         <Dialog open={blogDialogOpen} onOpenChange={setBlogDialogOpen}>

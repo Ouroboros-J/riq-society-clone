@@ -140,3 +140,24 @@ export const blogs = mysqlTable("blogs", {
 export type Blog = typeof blogs.$inferSelect;
 export type InsertBlog = typeof blogs.$inferInsert;
 
+
+
+
+export const resources = mysqlTable("resources", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  fileUrl: text("fileUrl").notNull(),
+  fileName: varchar("fileName", { length: 255 }),
+  fileType: varchar("fileType", { length: 50 }),
+  fileSize: int("fileSize"),
+  category: varchar("category", { length: 100 }),
+  isPublished: int("isPublished").default(0).notNull(),
+  downloadCount: int("downloadCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Resource = typeof resources.$inferSelect;
+export type InsertResource = typeof resources.$inferInsert;
+
