@@ -55,17 +55,16 @@ export default function Header() {
                 </Button>
               </Link>
 
-              <Link href="/resources">
-                <Button variant="ghost" className="w-full justify-start" size="lg">
-                  <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  리소스
-                </Button>
-              </Link>
-
               {isAuthenticated ? (
                 <>
+                  <Link href="/resources">
+                    <Button variant="ghost" className="w-full justify-start" size="lg">
+                      <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      리소스
+                    </Button>
+                  </Link>
                   <Link href="/mypage">
                     <Button variant="ghost" className="w-full justify-start" size="lg">
                       <User className="mr-2 h-5 w-5" />

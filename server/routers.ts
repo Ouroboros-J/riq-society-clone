@@ -292,7 +292,7 @@ export const appRouter = router({
   }),
 
   resource: router({
-    list: publicProcedure.query(async () => {
+    list: protectedProcedure.query(async () => {
       return await getAllResources();
     }),
 
@@ -300,7 +300,7 @@ export const appRouter = router({
       return await getAllResourcesAdmin();
     }),
 
-    getById: publicProcedure
+    getById: protectedProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return await getResourceById(input.id);

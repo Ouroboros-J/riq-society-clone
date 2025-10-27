@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { trpc } from '../lib/trpc';
+import { useAuth } from '../_core/hooks/useAuth';
+import { useLocation } from 'wouter';
 import Header from '../components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -8,8 +10,34 @@ import { Download, FileText, File, Image, Video, Music } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Resources() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const { data: resources, isLoading } = trpc.resource.list.useQuery();
+  const { data: resources, isLoading } = trpc.resource.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      toast.error('로그인이 필요한 페이지입니다.');
+      setLocation('/');
+    }
+  }, [authLoading, isAuthenticated, setLocation]);
+  
+  if (authLoading) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-background pt-16 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return null;
+  }
   const incrementDownloadMutation = trpc.resource.incrementDownload.useMutation();
 
   const handleDownload = (resource: any) => {

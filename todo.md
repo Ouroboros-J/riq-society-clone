@@ -374,3 +374,12 @@
 - [x] TypeScript 모듈 캐시 문제 해결 (db-email-templates.ts로 분리)
 - [x] 이메일 템플릿 초기 데이터 삽입 (application_approved, application_rejected, payment_confirmed)
 
+
+
+
+## 버그 수정
+
+- [x] 리소스 페이지를 회원 전용으로 변경 (현재 공개 페이지)
+- [x] 리소스 API를 protectedProcedure로 변경
+- [x] Header의 리소스 링크를 로그인한 사용자에게만 표시
+
