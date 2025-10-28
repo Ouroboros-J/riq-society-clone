@@ -413,8 +413,8 @@ export async function verifyApplicationWithAI(
   testName: string,
   testScore: string,
   testCategory: string,
-  identityDocumentImages: string[], // 신원 증명 서류 이미지 배열
-  testResultImages: string[], // 시험 결과지 이미지 배열
+  identityDocumentUrl: string | null, // 신원 증명 서류 URL
+  testResultUrl: string | null, // 시험 결과지 URL
   applicationId?: number
 ): Promise<{
   approved: boolean;

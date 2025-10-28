@@ -968,26 +968,21 @@
 
 
 
-### Phase 9-8: PDF 파일 처리 (AI 검증 시 이미지 변환)
-- [x] PDF → 이미지 변환 함수 구현
-  - [x] pdf2image 라이브러리 설치 확인
-  - [x] S3에서 PDF 다운로드
-  - [x] 모든 페이지를 개별 JPG 이미지로 변환
-  - [x] Base64 배열로 반환
-- [x] s3-helper.ts에 getDocumentAsBase64Array 함수 추가
-  - [x] PDF: 모든 페이지를 이미지 배열로 변환
-  - [x] 이미지: 단일 이미지를 배열로 반환
-  - [x] 파일 형식 자동 감지 (확장자)
-- [x] verifyApplicationWithAI 함수 시그니처 변경
-  - [x] identityDocumentImages 배열 파라미터 추가
-  - [x] testResultImages 배열 파라미터 추가
+### Phase 9-8: PDF 파일 처리 (모든 플랫폼 PDF 지원)
+- [x] PDF → 이미지 변환 함수 구현 (사용 안 함)
+- [x] verifyApplicationWithAI 함수 시그니처 수정
+  - [x] identityDocumentUrl, testResultUrl 파라미터로 변경
 - [ ] AI 검증 함수 내부 로직 수정
-  - [ ] OpenAI 검증 함수: 여러 이미지 content 배열로 추가
-  - [ ] Claude 검증 함수: 여러 이미지 content 배열로 추가
-  - [ ] Gemini 검증 함수: 여러 이미지 parts 배열로 추가
-  - [ ] Perplexity 검증 함수: 여러 이미지 content 배열로 추가
-  - [ ] 프롬프트에 이미지 순서 명시
+  - [ ] OpenAI: PDF/이미지 원본 Base64로 전달
+  - [ ] Claude: PDF/이미지 원본 Base64로 전달
+  - [ ] Gemini: PDF/이미지 원본 Base64로 전달
+  - [ ] Perplexity: 이미지는 image_url (data URI), PDF는 file_url (base64)
+  - [ ] 2개 파일(신원 증명 + 시험 결과지) 모두 전달
+  - [ ] 프롬프트에 파일 순서 명시
+- [ ] Perplexity 모델 제한 추가
+  - [ ] sonar, sonar-pro만 이미지/파일 지원
+  - [ ] reasoning 계열, deep-research는 미지원
+  - [ ] AI 검증 시 sonar/sonar-pro 아닌 모델 선택 시 경고 또는 건너뛰기
 - [ ] routers.ts에서 verifyApplicationWithAI 호출 부분 수정
-  - [ ] identityDocumentUrl과 testResultUrl을 각각 getDocumentAsBase64Array로 변환
-  - [ ] 변환된 이미지 배열을 verifyApplicationWithAI에 전달
+  - [ ] identityDocumentUrl과 testResultUrl을 그대로 전달
 
