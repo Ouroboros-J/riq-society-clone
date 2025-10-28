@@ -16,8 +16,7 @@ import { getAiAccuracyStats, getOverallAiAccuracy } from "./db-ai-accuracy";
 import { getEventStats, getPageViewStats, getConversionStats } from "./posthog-api";
 import { verifyApplicationWithAI } from "./ai-verification";
 import { getFirstDocumentAsBase64 } from "./s3-helper";
-import { getModelsByPlatform } from "./ai-models";
-import { validateApiKey } from "./ai-key-validation";
+
 import { createApplicationReview, getApplicationReviewsByApplicationId, getAllPendingReviews, updateApplicationReviewStatus, incrementReviewRequestCount } from "./db-application-reviews";
 import { getDb } from "./db";
 import { applications, users, applicationReviews } from "../drizzle/schema";

@@ -1466,3 +1466,25 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
   - [x] 응시 날짜가 미래가 아닌지 확인
   - [x] 응시 날짜가 합리적인 범위인지 확인 (not too old)
 
+
+
+
+## Phase 20-9: OpenRouter 전환 후 불필요한 코드 정리 ✅ 완료
+
+- [x] 불필요한 파일 삭제
+  - [x] ai-verification-old.ts (백업 파일, 24KB)
+  - [x] ai-key-validation.ts (사용되지 않음)
+  - [x] ai-models.ts (사용되지 않음)
+- [x] routers.ts import 정리
+  - [x] getModelsByPlatform import 제거
+  - [x] validateApiKey import 제거
+- [x] 환경 변수 정리 확인
+  - [x] OPENAI_API_KEY, ANTHROPIC_API_KEY 등 기존 API 키 관련 코드 확인 (없음)
+  - [x] 필요 없는 환경 변수 참조 제거 (없음)
+
+**정리 결과:**
+- 삭제된 파일: 3개 (ai-verification-old.ts, ai-key-validation.ts, ai-models.ts)
+- 제거된 import: 2개 (getModelsByPlatform, validateApiKey)
+- 남은 AI 관련 파일: 2개 (ai-prompts.ts, ai-verification.ts)
+- 현재 사용 중인 API 키: OPENROUTER_API_KEY만
+
