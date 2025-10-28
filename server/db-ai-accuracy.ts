@@ -6,9 +6,9 @@ export interface AiAccuracyStats {
   platform: string;
   totalVerifications: number;
   truePositive: number; // AI 승인 + 관리자 승인
-  trueNegative: number; // AI 거부 + 관리자 거부
-  falsePositive: number; // AI 승인 + 관리자 거부
-  falseNegative: number; // AI 거부 + 관리자 승인
+  trueNegative: number; // AI 반려 + 관리자 반려
+  falsePositive: number; // AI 승인 + 관리자 반려
+  falseNegative: number; // AI 반려 + 관리자 승인
   accuracy: number; // (TP + TN) / Total
   precision: number; // TP / (TP + FP)
   recall: number; // TP / (TP + FN)

@@ -81,7 +81,7 @@ export function AIVerificationResults({ applicationId, verificationProgress, isV
                 'secondary'
               }>
                 {verification.result === 'approved' ? '승인' :
-                 verification.result === 'rejected' ? '거부' :
+                 verification.result === 'rejected' ? '반려' :
                  '불확실'}
               </Badge>
             </div>

@@ -63,7 +63,7 @@ export async function sendApplicationApprovedEmail(
 }
 
 /**
- * 입회 신청 거부 이메일
+ * 입회 신청 반려 이메일
  * Summarizer AI의 영어 응답을 활용한 전문적인 템플릿
  */
 export async function sendApplicationRejectedEmail(
@@ -186,7 +186,7 @@ export async function sendReviewApprovedEmail(
 }
 
 /**
- * 재검토 요청 거부 이메일
+ * 재검토 요청 반려 이메일
  */
 export async function sendReviewRejectedEmail(
   to: string,

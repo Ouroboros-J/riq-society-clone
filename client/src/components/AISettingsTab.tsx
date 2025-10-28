@@ -213,7 +213,7 @@ export function AISettingsTab() {
               <div>
                 <h3 className="text-lg font-semibold">오토 파일럿 모드</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  모든 Verifier AI가 일치하는 결과를 내면 Summarizer가 최종 메시지를 생성하여 자동으로 승인/거부합니다.
+                  모든 Verifier AI가 일치하는 결과를 내면 Summarizer가 최종 메시지를 생성하여 자동으로 승인/반려합니다.
                 </p>
                 <p className="text-sm mt-2">
                   <Badge variant={validation?.valid ? "default" : "destructive"}>

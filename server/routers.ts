@@ -696,14 +696,14 @@ export const appRouter = router({
         }
         
         if (application.status !== 'rejected') {
-          throw new Error("거부된 신청에만 이메일을 재발송할 수 있습니다");
+          throw new Error("반려된 신청에만 이메일을 재발송할 수 있습니다");
         }
         
         if (!application.adminNotes) {
-          throw new Error("거부 사유가 없습니다");
+          throw new Error("반려 사유가 없습니다");
         }
         
-        // 거부 이메일 재발송
+        // 반려 이메일 재발송
         await sendApplicationRejectedEmail(
           application.email,
           application.fullName,

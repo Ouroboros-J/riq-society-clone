@@ -70,7 +70,7 @@ export default function MyPage() {
       // PostHog 이벤트 추적
       posthog.capture('rejection_email_resent');
       
-      toast.success("거부 사유 이메일이 재발송되었습니다.");
+      toast.success("반려 사유 이메일이 재발송되었습니다.");
     },
     onError: (error) => {
       toast.error("이메일 재발송에 실패했습니다: " + error.message);
@@ -113,7 +113,7 @@ export default function MyPage() {
       case "approved":
         return <Badge className="bg-green-500">승인됨</Badge>;
       case "rejected":
-        return <Badge variant="destructive">거부됨</Badge>;
+        return <Badge variant="destructive">반려됨</Badge>;
       default:
         return <Badge variant="secondary">대기중</Badge>;
     }
@@ -124,7 +124,7 @@ export default function MyPage() {
       case "approved":
         return <Badge className="bg-green-500">승인된 회원</Badge>;
       case "rejected":
-        return <Badge variant="destructive">거부됨</Badge>;
+        return <Badge variant="destructive">반려됨</Badge>;
       default:
         return <Badge variant="secondary">승인 대기중</Badge>;
     }
@@ -230,9 +230,9 @@ export default function MyPage() {
                 {application.status === 'rejected' && (
                   <div className="space-y-4">
                     <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
-                      <Label className="text-destructive">입회 신청 거부</Label>
+                      <Label className="text-destructive">입회 신청 반려</Label>
                       <p className="text-sm mt-2">
-                        입회 신청이 거부되었습니다. 상세한 거부 사유는 <strong>등록된 이메일로 발송</strong>되었습니다.
+                        입회 신청이 반려되었습니다. 상세한 반려 사유는 <strong>등록된 이메일로 발송</strong>되었습니다.
                       </p>
                       <p className="text-sm mt-2 text-muted-foreground">
                         등록된 이메일: <strong>{user?.email}</strong>

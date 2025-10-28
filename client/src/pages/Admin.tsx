@@ -391,7 +391,7 @@ export default function Admin() {
       updateApplicationStatusMutation.mutate({
         applicationId: rejectApplicationId,
         status: 'rejected',
-        adminNotes: rejectReason.trim() || '관리자가 거부했습니다.'
+        adminNotes: rejectReason.trim() || '관리자가 반려했습니다.'
       });
     } else {
       toast.error("신청을 선택해주세요.");
@@ -414,7 +414,7 @@ export default function Admin() {
       if (data.approved) {
         toast.success("AI 검증 완료: 승인됨");
       } else {
-        toast.warning(`AI 검증 완료: 거부됨 - ${data.reason}`);
+        toast.warning(`AI 검증 완료: 반려됨 - ${data.reason}`);
       }
       refetchApplications();
       // AI 검증 결과 모달 자동 열기
@@ -831,7 +831,7 @@ export default function Admin() {
                         <PieChart>
                           <Pie
                             data={[].map((s: any) => ({
-                              name: s.status === 'pending' ? '대기중' : s.status === 'approved' ? '승인됨' : '거부됨',
+                              name: s.status === 'pending' ? '대기중' : s.status === 'approved' ? '승인됨' : '반려됨',
                               value: Number(s.count)
                             })) || []}
                             cx="50%"
@@ -1021,7 +1021,7 @@ export default function Admin() {
                               <CardContent>
                                 <div className="text-3xl font-bold text-destructive">{overallAccuracy.falsePositiveRate.toFixed(2)}%</div>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  AI 승인 → 관리자 거부
+                                  AI 승인 → 관리자 반려
                                 </p>
                               </CardContent>
                             </Card>
@@ -1032,7 +1032,7 @@ export default function Admin() {
                               <CardContent>
                                 <div className="text-3xl font-bold text-orange-500">{overallAccuracy.falseNegativeRate.toFixed(2)}%</div>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  AI 거부 → 관리자 승인
+                                  AI 반려 → 관리자 승인
                                 </p>
                               </CardContent>
                             </Card>
@@ -1107,7 +1107,7 @@ export default function Admin() {
                         data={[
                           { name: '대기중', value: applications?.filter((a: any) => a.status === 'pending').length || 0 },
                           { name: '승인됨', value: applications?.filter((a: any) => a.status === 'approved').length || 0 },
-                          { name: '거부됨', value: applications?.filter((a: any) => a.status === 'rejected').length || 0 },
+                          { name: '반려됨', value: applications?.filter((a: any) => a.status === 'rejected').length || 0 },
                         ]}
                         cx="50%"
                         cy="50%"
@@ -1181,7 +1181,7 @@ export default function Admin() {
                         <SelectItem value="all">전체</SelectItem>
                         <SelectItem value="pending">대기중</SelectItem>
                         <SelectItem value="approved">승인됨</SelectItem>
-                        <SelectItem value="rejected">거부됨</SelectItem>
+                        <SelectItem value="rejected">반려됨</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1222,19 +1222,19 @@ export default function Admin() {
                       size="sm"
                       variant="destructive"
                       onClick={() => {
-                        if (confirm(`${selectedApplications.length}건의 신청을 거부하시겠습니까?`)) {
+                        if (confirm(`${selectedApplications.length}건의 신청을 반려하시겠습니까?`)) {
                           selectedApplications.forEach(id => {
                             updateApplicationStatusMutation.mutate({
                               applicationId: id,
                               status: 'rejected',
-                              adminNotes: '일괄 거부 처리'
+                              adminNotes: '일괄 반려 처리'
                             });
                           });
                           setSelectedApplications([]);
                         }
                       }}
                     >
-                      선택항목 일괄 거부 ({selectedApplications.length})
+                      선택항목 일괄 반려 ({selectedApplications.length})
                     </Button>
                     <Button
                       size="sm"
@@ -1303,7 +1303,7 @@ export default function Admin() {
                               'secondary'
                             }>
                               {app.status === 'approved' ? '승인됨' :
-                               app.status === 'rejected' ? '거부됨' :
+                               app.status === 'rejected' ? '반려됨' :
                                '대기중'}
                             </Badge>
                           </TableCell>
@@ -1385,7 +1385,7 @@ export default function Admin() {
                                       setRejectDialogOpen(true);
                                     }}
                                   >
-                                    거부
+                                    반려
                                   </Button>
                                 </>
                               )}
@@ -1444,7 +1444,7 @@ export default function Admin() {
                         </TableCell>
                         <TableCell>
                           {u.approvalStatus === 'approved' && <Badge className="bg-green-500">승인됨</Badge>}
-                          {u.approvalStatus === 'rejected' && <Badge variant="destructive">거부됨</Badge>}
+                          {u.approvalStatus === 'rejected' && <Badge variant="destructive">반려됨</Badge>}
                           {u.approvalStatus === 'pending' && <Badge variant="secondary">대기중</Badge>}
                         </TableCell>
                         <TableCell>{new Date(u.createdAt).toLocaleDateString('ko-KR')}</TableCell>
@@ -1466,7 +1466,7 @@ export default function Admin() {
                                   variant="destructive"
                                   onClick={() => updateUserApprovalMutation.mutate({ userId: u.id, status: 'rejected' })}
                                 >
-                                  거부
+                                  반려
                                 </Button>
                               )}
                             </div>
@@ -1647,7 +1647,7 @@ export default function Admin() {
                       'secondary'
                     }>
                       {selectedApplication.status === 'approved' ? '승인됨' :
-                       selectedApplication.status === 'rejected' ? '거부됨' :
+                       selectedApplication.status === 'rejected' ? '반려됨' :
                        '대기중'}
                     </Badge>
                   </div>
@@ -2520,7 +2520,7 @@ export default function Admin() {
                     <div>
                       <h3 className="text-lg font-semibold">오토 파일럿 모드</h3>
                       <p className="text-sm text-muted-foreground mt-1">
-                        활성화된 모든 AI가 일치하는 결과를 내면 자동으로 승인/거부합니다.
+                        활성화된 모든 AI가 일치하는 결과를 내면 자동으로 승인/반려합니다.
                       </p>
                       <p className="text-sm mt-2">
                         <Badge variant={canEnableAutopilot ? "default" : "destructive"}>
@@ -2568,7 +2568,7 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle>재검토 요청 목록</CardTitle>
                 <CardDescription>
-AI 검증에서 거부된 신청자가 재검토를 요청한 목록입니다.
+AI 검증에서 반려된 신청자가 재검토를 요청한 목록입니다.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -2622,7 +2622,7 @@ AI 검증에서 거부된 신청자가 재검토를 요청한 목록입니다.
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => {
-                                  if (confirm('재검토 거부하시겠습니까?')) {
+                                  if (confirm('재검토 반려하시겠습니까?')) {
                                     updateReviewStatusMutation.mutate({
                                       reviewId: item.review.id,
                                       status: 'rejected',
@@ -2630,7 +2630,7 @@ AI 검증에서 거부된 신청자가 재검토를 요청한 목록입니다.
                                   }
                                 }}
                               >
-                                거부
+                                반려
                               </Button>
                             </div>
                           </TableCell>
@@ -2982,18 +2982,18 @@ AI 검증에서 거부된 신청자가 재검토를 요청한 목록입니다.
           </DialogContent>
         </Dialog>
 
-        {/* 거부 사유 입력 모달 */}
+        {/* 반려 사유 입력 모달 */}
         <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>입회 신청 거부</DialogTitle>
+              <DialogTitle>입회 신청 반려</DialogTitle>
               <DialogDescription>
-                거부 사유를 입력하면 신청자가 마이페이지에서 확인할 수 있습니다. (선택 사항)
+                반려 사유를 입력하면 신청자가 마이페이지에서 확인할 수 있습니다. (선택 사항)
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="rejectReason">거부 사유</Label>
+                <Label htmlFor="rejectReason">반려 사유</Label>
                 <Textarea
                   id="rejectReason"
                   placeholder="예: 제출하신 시험 점수가 입회 기준에 미달합니다. (선택 사항)"
@@ -3008,7 +3008,7 @@ AI 검증에서 거부된 신청자가 재검토를 요청한 목록입니다.
                 취소
               </Button>
               <Button variant="destructive" onClick={handleReject}>
-                거부 확정
+                반려 확정
               </Button>
             </DialogFooter>
           </DialogContent>
