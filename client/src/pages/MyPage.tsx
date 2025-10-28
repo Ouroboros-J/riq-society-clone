@@ -247,11 +247,11 @@ export default function MyPage() {
                         {resendEmailMutation.isPending ? '발송 중...' : '이메일 재발송'}
                       </Button>
                     </div>
-                    {(application.reviewRequestCount || 0) < 1 && (
+                    {(application.reviewRequestCount || 0) < 2 && (
                       <div className="space-y-2">
                         <Label>재검토 요청</Label>
                         <p className="text-sm text-muted-foreground">
-AI 검증 결과에 오류가 있다고 생각하신다면 재검토를 요청할 수 있습니다. (최대 1회)
+AI 검증 결과에 오류가 있다고 생각하신다면 재검토를 요청할 수 있습니다. (최대 2회)
                         </p>
                         <Button
                           variant="outline"
@@ -261,7 +261,7 @@ AI 검증 결과에 오류가 있다고 생각하신다면 재검토를 요청�
                         </Button>
                       </div>
                     )}
-                    {(application.reviewRequestCount || 0) >= 1 && (
+                    {(application.reviewRequestCount || 0) >= 2 && (
                       <div className="p-4 bg-muted rounded-md">
                         <p className="text-sm text-muted-foreground">
                           재검토 요청이 제출되었습니다. 관리자가 검토 중입니다.

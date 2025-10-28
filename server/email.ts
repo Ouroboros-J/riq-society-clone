@@ -119,7 +119,7 @@ export async function sendApplicationRejectedEmail(
               If you believe there has been an error in the verification process, you may request a manual review through your account dashboard.
             </p>
             <p style="margin: 0; color: #1e3a8a; font-size: 15px; line-height: 1.6;">
-              <strong>Note:</strong> You can request a review only once. Please ensure all documents are clear and meet the requirements before submitting.
+              <strong>Note:</strong> You can request a review up to 2 times. Please ensure all documents are clear and meet the requirements before submitting.
             </p>
           </div>
           
