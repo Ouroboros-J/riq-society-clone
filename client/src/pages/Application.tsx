@@ -43,7 +43,8 @@ type Step2Data = z.infer<typeof step2Schema>;
 export default function Application() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<Step1Data & Step2Data>>({});
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [identityDocument, setIdentityDocument] = useState<File | null>(null);
+  const [testResultDocument, setTestResultDocument] = useState<File | null>(null);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
   const [testCategory, setTestCategory] = useState<string>("");
   const [selectedTest, setSelectedTest] = useState<string>("");
@@ -131,83 +132,128 @@ export default function Application() {
     toast.success("2단계 완료!");
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
+  const handleIdentityDocumentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
       
       // 파일 크기 체크 (10MB 제한)
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-      for (const file of files) {
-        if (file.size > MAX_FILE_SIZE) {
-          toast.error(`${file.name}은(는) 10MB를 초과합니다. 더 작은 파일을 선택해주세요.`);
-          return;
-        }
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${file.name}은(는) 10MB를 초과합니다. 더 작은 파일을 선택해주세요.`);
+        return;
       }
       
       // 이미지 파일 압축
-      const compressedFiles: File[] = [];
-      for (const file of files) {
-        const isImage = file.type.startsWith('image/');
-        
-        if (isImage && file.type !== 'image/svg+xml') {
-          try {
-            toast.info(`${file.name} 압축 중...`);
-            const options = {
-              maxSizeMB: 1,
-              maxWidthOrHeight: 1920,
-              useWebWorker: true,
-              initialQuality: 0.8,
-            };
-            const compressedFile = await imageCompression(file, options);
-            
-            const originalSizeMB = (file.size / 1024 / 1024).toFixed(2);
-            const compressedSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
-            const compressionRate = ((1 - compressedFile.size / file.size) * 100).toFixed(0);
-            
-            toast.success(`${file.name} 압축 완료! ${originalSizeMB}MB → ${compressedSizeMB}MB (${compressionRate}% 감소)`);
-            compressedFiles.push(compressedFile);
-          } catch (error) {
-            console.error('이미지 압축 실패:', error);
-            toast.error(`${file.name} 압축 실패. 원본 파일을 사용합니다.`);
-            compressedFiles.push(file);
-          }
-        } else {
-          // PDF나 기타 파일은 압축 없이 그대로
-          compressedFiles.push(file);
+      const isImage = file.type.startsWith('image/');
+      let finalFile = file;
+      
+      if (isImage && file.type !== 'image/svg+xml') {
+        try {
+          toast.info(`${file.name} 압축 중...`);
+          const options = {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+            initialQuality: 0.8,
+          };
+          const compressedFile = await imageCompression(file, options);
+          
+          const originalSizeMB = (file.size / 1024 / 1024).toFixed(2);
+          const compressedSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
+          const compressionRate = ((1 - compressedFile.size / file.size) * 100).toFixed(0);
+          
+          toast.success(`${file.name} 압축 완료! ${originalSizeMB}MB → ${compressedSizeMB}MB (${compressionRate}% 감소)`);
+          finalFile = compressedFile;
+        } catch (error) {
+          console.error('이미지 압축 실패:', error);
+          toast.error(`${file.name} 압축 실패. 원본 파일을 사용합니다.`);
         }
       }
       
-      setUploadedFiles(compressedFiles);
+      setIdentityDocument(finalFile);
+    }
+  };
+
+  const handleTestResultDocumentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // 파일 크기 체크 (10MB 제한)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${file.name}은(는) 10MB를 초과합니다. 더 작은 파일을 선택해주세요.`);
+        return;
+      }
+      
+      // 이미지 파일 압축
+      const isImage = file.type.startsWith('image/');
+      let finalFile = file;
+      
+      if (isImage && file.type !== 'image/svg+xml') {
+        try {
+          toast.info(`${file.name} 압축 중...`);
+          const options = {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+            initialQuality: 0.8,
+          };
+          const compressedFile = await imageCompression(file, options);
+          
+          const originalSizeMB = (file.size / 1024 / 1024).toFixed(2);
+          const compressedSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
+          const compressionRate = ((1 - compressedFile.size / file.size) * 100).toFixed(0);
+          
+          toast.success(`${file.name} 압축 완료! ${originalSizeMB}MB → ${compressedSizeMB}MB (${compressionRate}% 감소)`);
+          finalFile = compressedFile;
+        } catch (error) {
+          console.error('이미지 압축 실패:', error);
+          toast.error(`${file.name} 압축 실패. 원본 파일을 사용합니다.`);
+        }
+      }
+      
+      setTestResultDocument(finalFile);
     }
   };
 
   const handleFinalSubmit = async () => {
-    if (uploadedFiles.length === 0) {
-      toast.error("최소 1개의 증빙 서류를 업로드해주세요");
+    if (!identityDocument || !testResultDocument) {
+      toast.error("신원 증명 서류와 시험 결과지를 모두 업로드해주세요");
       return;
     }
 
     try {
-      // Upload files
-      const documentUrls: string[] = [];
-      for (const file of uploadedFiles) {
-        const reader = new FileReader();
-        const fileData = await new Promise<string>((resolve) => {
-          reader.onload = () => {
-            const base64 = reader.result as string;
-            resolve(base64.split(",")[1]); // Remove data:image/png;base64, prefix
-          };
-          reader.readAsDataURL(file);
-        });
+      // Upload identity document
+      const identityReader = new FileReader();
+      const identityFileData = await new Promise<string>((resolve) => {
+        identityReader.onload = () => {
+          const base64 = identityReader.result as string;
+          resolve(base64.split(",")[1]); // Remove data:image/png;base64, prefix
+        };
+        identityReader.readAsDataURL(identityDocument);
+      });
 
-        const result = await uploadMutation.mutateAsync({
-          fileName: file.name,
-          fileType: file.type,
-          fileData,
-        });
+      const identityResult = await uploadMutation.mutateAsync({
+        fileName: identityDocument.name,
+        fileType: identityDocument.type,
+        fileData: identityFileData,
+      });
 
-        documentUrls.push(result.url);
-      }
+      // Upload test result document
+      const testResultReader = new FileReader();
+      const testResultFileData = await new Promise<string>((resolve) => {
+        testResultReader.onload = () => {
+          const base64 = testResultReader.result as string;
+          resolve(base64.split(",")[1]); // Remove data:image/png;base64, prefix
+        };
+        testResultReader.readAsDataURL(testResultDocument);
+      });
+
+      const testResultResult = await uploadMutation.mutateAsync({
+        fileName: testResultDocument.name,
+        fileType: testResultDocument.type,
+        fileData: testResultFileData,
+      });
 
       // Submit application
       await submitMutation.mutateAsync({
@@ -218,7 +264,9 @@ export default function Application() {
         testType: formData.testType!,
         testScore: formData.testScore!,
         testDate: formData.testDate,
-        documentUrls: JSON.stringify(documentUrls),
+        identityDocumentUrl: identityResult.url,
+        testResultUrl: testResultResult.url,
+        documentUrls: JSON.stringify([identityResult.url, testResultResult.url]), // 호환성
       });
 
       // Clear draft from LocalStorage
@@ -228,7 +276,7 @@ export default function Application() {
       posthog.capture('application_submitted', {
         testType: formData.testType,
         hasOtherTest: selectedTest === 'other',
-        documentCount: documentUrls.length,
+        documentCount: 2, // 신원 증명 + 시험 결과지
       });
       
       toast.success("입회 신청이 완료되었습니다!");
@@ -489,36 +537,60 @@ export default function Application() {
                         본인의 신원을 증명하는 방법은 여러 가지가 있습니다. 일반적으로 <strong>주민등록증, 운전면허증, 여권, 학생증, 국가 자격증</strong> 등을 사용합니다.
                       </p>
                     </div>
-                    <Input
-                      id="documents"
-                      type="file"
-                      multiple
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleFileChange}
-                      className="cursor-pointer"
-                    />
-                    <p className="text-sm text-muted-foreground mt-2">
-                      PDF, JPG, PNG 파일만 업로드 가능합니다. 시험 성적표 및 신원 증명 서류를 함께 업로드해주세요.
+                    {/* 신원 증명 서류 업로드 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="identity-document" className="text-base font-semibold">
+                        1. 신원 증명 서류 업로드 *
+                      </Label>
+                      <Input
+                        id="identity-document"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleIdentityDocumentChange}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        주민등록증, 운전면허증, 여권, 학생증 등 본인의 신원을 증명할 수 있는 서류를 업로드해주세요.
+                      </p>
+                      {identityDocument && (
+                        <div className="flex items-center justify-between bg-green-50 dark:bg-green-950 p-2 rounded">
+                          <span className="font-medium text-sm">{identityDocument.name}</span>
+                          <span className="text-muted-foreground text-sm">
+                            {(identityDocument.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 시험 결과지 업로드 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="test-result-document" className="text-base font-semibold">
+                        2. 시험 결과지 업로드 *
+                      </Label>
+                      <Input
+                        id="test-result-document"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleTestResultDocumentChange}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        시험 성적표 또는 결과지를 업로드해주세요. 본인 이름, 점수, 시험명, 응시 날짜 등이 포함되어야 합니다.
+                      </p>
+                      {testResultDocument && (
+                        <div className="flex items-center justify-between bg-green-50 dark:bg-green-950 p-2 rounded">
+                          <span className="font-medium text-sm">{testResultDocument.name}</span>
+                          <span className="text-muted-foreground text-sm">
+                            {(testResultDocument.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="text-sm text-muted-foreground mt-4">
+                      PDF, JPG, PNG 파일만 업로드 가능합니다. 각 파일은 10MB 이하여야 합니다.
                     </p>
                   </div>
-
-                  {uploadedFiles.length > 0 && (
-                    <div className="mt-4">
-                      <h3 className="font-medium mb-2">업로드된 파일:</h3>
-                      <ul className="space-y-2">
-                        {uploadedFiles.map((file, index) => (
-                          <li key={index} className="text-sm">
-                            <div className="flex items-center justify-between bg-muted/50 p-2 rounded">
-                              <span className="font-medium">{file.name}</span>
-                              <span className="text-muted-foreground">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB
-                              </span>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -528,7 +600,7 @@ export default function Application() {
                 </Button>
                 <Button
                   onClick={handleFinalSubmit}
-                  disabled={submitMutation.isPending || uploadMutation.isPending || uploadedFiles.length === 0}
+                  disabled={submitMutation.isPending || uploadMutation.isPending || !identityDocument || !testResultDocument}
                 >
                   {(submitMutation.isPending || uploadMutation.isPending) ? (
                     <>

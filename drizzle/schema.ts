@@ -51,7 +51,9 @@ export const applications = mysqlTable("applications", {
   otherTestName: varchar("otherTestName", { length: 255 }), // 기타 시험 이름
   
   // Step 3: Supporting Documents
-  documentUrls: text("documentUrls"), // JSON array of URLs
+  documentUrls: text("documentUrls"), // JSON array of URLs (호환성을 위해 유지)
+  identityDocumentUrl: text("identityDocumentUrl"), // 신원 증명 서류 URL
+  testResultUrl: text("testResultUrl"), // 시험 결과지 URL
   
   // Application Status
   status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
