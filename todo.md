@@ -1642,3 +1642,10 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Test table scrolling on mobile devices
 - [x] Verify all tables are horizontally scrollable
 
+
+
+## UI Fix: Admin Badge Color
+- [x] Change admin badge color from red (destructive) to a more appropriate color (e.g., blue/primary)
+- [x] Update Header component admin badge styling
+
+
