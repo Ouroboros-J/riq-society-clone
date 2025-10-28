@@ -21,6 +21,13 @@ export const users = mysqlTable("users", {
   paymentStatus: mysqlEnum("paymentStatus", ["pending", "deposit_requested", "confirmed"]).default("pending").notNull(),
   depositorName: varchar("depositorName", { length: 100 }),
   depositDate: varchar("depositDate", { length: 50 }),
+  
+  // Membership period management
+  membershipType: mysqlEnum("membershipType", ["annual", "lifetime"]),
+  membershipStartDate: timestamp("membershipStartDate"),
+  membershipExpiryDate: timestamp("membershipExpiryDate"),
+  membershipRenewedAt: timestamp("membershipRenewedAt"),
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

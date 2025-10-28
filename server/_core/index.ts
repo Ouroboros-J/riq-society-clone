@@ -2,12 +2,14 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import cron from "node-cron";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import sitemapRouter from "../routes/sitemap";
+import { checkAndDowngradeExpiredMembers, notifyExpiringMembers } from "../cron-membership";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -62,6 +64,29 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    
+    // Cron Jobs 설정
+    // 매일 자정(00:00)에 만료된 회원 자동 등급 하락
+    cron.schedule('0 0 * * *', async () => {
+      console.log('[Cron] Running daily membership expiry check...');
+      try {
+        await checkAndDowngradeExpiredMembers();
+      } catch (error) {
+        console.error('[Cron] Error in membership expiry check:', error);
+      }
+    });
+    
+    // 매일 오전 9시에 만료 임박 회원 알림
+    cron.schedule('0 9 * * *', async () => {
+      console.log('[Cron] Running daily membership expiry notification...');
+      try {
+        await notifyExpiringMembers();
+      } catch (error) {
+        console.error('[Cron] Error in membership expiry notification:', error);
+      }
+    });
+    
+    console.log('[Cron] Scheduled jobs initialized');
   });
 }
 

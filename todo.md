@@ -1360,3 +1360,68 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - 두 번째 재검토: 최종 확인 → 진정성 있는 신청자에게 마지막 기회
 
 
+
+
+
+## Phase 20: 회원 기간 관리 시스템
+
+### 1. DB 스키마 변경 ✅ 완료
+- [x] users 테이블에 필드 추가
+  - [x] membershipType: enum("annual", "lifetime") - 연회원/평생회원 구분
+  - [x] membershipStartDate: timestamp - 회원 시작일
+  - [x] membershipExpiryDate: timestamp (nullable) - 회원 만료일 (평생회원은 null)
+  - [x] membershipRenewedAt: timestamp - 마지막 갱신일
+- [x] 마이그레이션 실행 (pnpm db:push)
+  - [x] 마이그레이션 파일: 0026_organic_ben_grimm.sql
+
+### 2. 연회비 입금 확인 시 회원 기간 설정 ✅ 완료
+- [x] confirmApplicationPayment mutation 수정
+  - [x] membershipType 파라미터 추가 ("annual" 또는 "lifetime", 기본값: "annual")
+  - [x] membershipStartDate = 현재 시간
+  - [x] membershipExpiryDate = 연회원이면 1년 후, 평생회원이면 null
+  - [x] membershipRenewedAt = 현재 시간
+- [ ] 관리자 페이지 UI 수정 (나중에 Phase 4에서 처리)
+  - [ ] 입금 확인 시 회원 유형 선택 (연회원/평생회원)
+  - [ ] 기본값: 연회원
+
+### 3. 회원 기간 만료 체크 로직 ✅ 완료
+- [x] db-membership.ts 회원 기간 관리 함수 작성
+  - [x] getExpiredMembers(): 만료된 회원 조회
+  - [x] downgradeExpiredMembers(): 자동 등급 하락 (member → user)
+  - [x] renewMembership(): 회원 기간 연장
+  - [x] getMembersExpiringWithin(days): 만료 임박 회원 조회
+- [x] cron-membership.ts Cron Job 함수 작성
+  - [x] checkAndDowngradeExpiredMembers(): 만료 회원 처리
+  - [x] notifyExpiringMembers(): 만료 임박 알림
+- [x] server/_core/index.ts에 Cron Job 설정
+  - [x] 매일 자정 00:00: 만료 회원 자동 등급 하락
+  - [x] 매일 오전 09:00: 만료 임박 회원 알림
+- [x] node-cron 패키지 설치
+
+### 4. 회원 기간 연장 기능
+- [ ] 관리자 페이지에 "회원 기간 연장" 기능
+  - [ ] 연회원: +1년 연장
+  - [ ] 평생회원으로 전환
+  - [ ] 수동 날짜 설정
+- [ ] renewMembership mutation 추가
+
+### 5. 만료 전 알림 기능
+- [ ] 만료 30일 전 이메일 알림
+- [ ] 만료 7일 전 이메일 알림
+- [ ] 만료 당일 이메일 알림
+- [ ] 알림 발송 cron job
+
+### 6. 마이페이지 UI
+- [ ] 회원 유형 표시 (연회원/평생회원)
+- [ ] 회원 시작일 표시
+- [ ] 회원 만료일 표시 (평생회원은 "평생" 표시)
+- [ ] 남은 일수 표시 (연회원만)
+- [ ] 갱신 안내 (만료 임박 시)
+
+### 7. 관리자 페이지 UI
+- [ ] 회원 목록에 회원 유형, 만료일 표시
+- [ ] 만료 임박 회원 필터링
+- [ ] 만료된 회원 필터링
+- [ ] 회원 기간 연장 버튼
+
+

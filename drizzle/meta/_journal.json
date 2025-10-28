@@ -183,6 +183,13 @@
       "when": 1761676519729,
       "tag": "0025_mighty_magneto",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1761680266554,
+      "tag": "0026_organic_ben_grimm",
+      "breakpoints": true
     }
   ]
 }

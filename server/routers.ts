@@ -121,7 +121,10 @@ export const appRouter = router({
       }),
 
     confirmApplicationPayment: adminProcedure
-      .input(z.object({ applicationId: z.number() }))
+      .input(z.object({ 
+        applicationId: z.number(),
+        membershipType: z.enum(["annual", "lifetime"]).default("annual")
+      }))
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database connection failed");
@@ -145,11 +148,21 @@ export const appRouter = router({
           })
           .where(eq(applications.id, input.applicationId));
         
-        // 사용자 role을 member로 변경
+        // 사용자 role을 member로 변경 및 회원 기간 설정
+        const now = new Date();
+        const membershipStartDate = now;
+        const membershipExpiryDate = input.membershipType === "annual" 
+          ? new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000) // 1년 후
+          : null; // 평생회원은 null
+        
         await db.update(users)
           .set({ 
             role: "member",
-            updatedAt: new Date()
+            membershipType: input.membershipType,
+            membershipStartDate,
+            membershipExpiryDate,
+            membershipRenewedAt: now,
+            updatedAt: now
           })
           .where(eq(users.id, application.userId));
         
