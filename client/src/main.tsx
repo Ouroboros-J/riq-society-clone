@@ -5,6 +5,7 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import { HelmetProvider } from 'react-helmet-async';
+import { initPostHog } from "@/lib/posthog";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
@@ -72,6 +73,9 @@ const trpcClient = trpc.createClient({
     }),
   ],
 });
+
+// PostHog 초기화
+initPostHog();
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>

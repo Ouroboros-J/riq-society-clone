@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { posthog } from "@/lib/posthog";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import Header from "@/components/Header";
 import SEO from "@/components/SEO";
@@ -220,6 +221,13 @@ export default function Application() {
 
       // Clear draft from LocalStorage
       localStorage.removeItem('application-draft');
+      
+      // PostHog 이벤트 추적
+      posthog.capture('application_submitted', {
+        testType: formData.testType,
+        hasOtherTest: selectedTest === 'other',
+        documentCount: documentUrls.length,
+      });
       
       toast.success("입회 신청이 완료되었습니다!");
       setLocation("/mypage");

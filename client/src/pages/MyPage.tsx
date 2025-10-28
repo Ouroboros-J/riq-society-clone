@@ -14,6 +14,7 @@ import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { posthog } from "@/lib/posthog";
 
 export default function MyPage() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -30,6 +31,12 @@ export default function MyPage() {
 
   const requestPaymentMutation = trpc.application.requestPayment.useMutation({
     onSuccess: () => {
+      // PostHog 이벤트 추적
+      posthog.capture('payment_request_submitted', {
+        depositorName,
+        depositDate,
+      });
+      
       toast.success("입금 확인 요청이 제출되엁습니다.");
       setDepositorName("");
       setDepositDate("");
@@ -43,6 +50,11 @@ export default function MyPage() {
 
   const requestReviewMutation = trpc.applicationReview.requestReview.useMutation({
     onSuccess: () => {
+      // PostHog 이벤트 추적
+      posthog.capture('review_request_submitted', {
+        reason: reviewRequestReason,
+      });
+      
       toast.success("재검토 요청이 제출되었습니다.");
       setReviewRequestReason("");
       setShowReviewDialog(false);
