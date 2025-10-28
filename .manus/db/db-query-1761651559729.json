@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE applications SET status = 'pending' WHERE id = 2 LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DsBm4SjbxZ8LdH.ae93e0dc1c76 --database 7yk2Cjgf3WcBwNeW2NtrwQ --execute UPDATE applications SET status = 'pending' WHERE id = 2 LIMIT 1;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1512
+}

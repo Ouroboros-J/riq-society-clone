@@ -155,6 +155,10 @@ export default function Admin() {
     enabled: isAuthenticated && user?.role === 'admin',
   });
   
+  const { data: enabledAiCount } = trpc.aiSettings.countEnabled.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+  
   const createFaqMutation = trpc.faq.create.useMutation({
     onSuccess: () => {
       refetchFaqs();
@@ -1325,7 +1329,8 @@ export default function Admin() {
                                       setIsVerifying(true);
                                       verifyWithAIMutation.mutate({ applicationId: app.id });
                                     }}
-                                    disabled={isVerifying}
+                                    disabled={isVerifying || !enabledAiCount || enabledAiCount < 2}
+                                    title={(enabledAiCount !== undefined && enabledAiCount < 2) ? '최소 2개 이상의 AI 모델이 활성화되어야 합니다.' : ''}
                                   >
                                     {isVerifying ? 'AI 검증 중...' : 'AI 검증 실행'}
                                   </Button>

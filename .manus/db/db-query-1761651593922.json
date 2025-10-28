@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, fullName, status FROM applications ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DsBm4SjbxZ8LdH.ae93e0dc1c76 --database 7yk2Cjgf3WcBwNeW2NtrwQ --execute SELECT id, fullName, status FROM applications ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "fullName": "김AI최종",
+      "status": "rejected"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfullName\tstatus\n1\t김AI최종\trejected\n",
+  "stderr": "",
+  "execution_time_ms": 1553
+}
