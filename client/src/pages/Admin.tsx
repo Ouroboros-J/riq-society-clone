@@ -216,10 +216,34 @@ export default function Admin() {
   const { data: aiSettings, isLoading: aiSettingsLoading, refetch: refetchAiSettings } = trpc.aiSettings.list.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === 'admin',
   });
+
+  // 활성화된 고유 AI 플랫폼 개수 계산
+  const enabledPlatforms = new Set(
+    aiSettings?.filter((setting: any) => setting.isEnabled === 1).map((setting: any) => setting.platform) || []
+  );
+  const enabledPlatformCount = enabledPlatforms.size;
+  const canEnableAutopilot = enabledPlatformCount >= 2;
   
   const upsertAiSettingMutation = trpc.aiSettings.upsert.useMutation({
-    onSuccess: () => {
-      refetchAiSettings();
+    onSuccess: async () => {
+      await refetchAiSettings();
+      
+      // AI 설정 변경 후 활성화된 플랫폼 개수 확인
+      const updatedSettings = await refetchAiSettings();
+      const updatedEnabledPlatforms = new Set(
+        updatedSettings.data?.filter((setting: any) => setting.isEnabled === 1).map((setting: any) => setting.platform) || []
+      );
+      
+      // 2개 미만이면 오토파일럿 자동 비활성화
+      if (updatedEnabledPlatforms.size < 2 && autopilotEnabled) {
+        setAutopilotEnabled(false);
+        await setSystemSettingMutation.mutateAsync({
+          key: 'autopilot_enabled',
+          value: '0',
+        });
+        toast.warning('활성화된 AI 플랫폼이 2개 미만이므로 오토 파일럿 모드가 비활성화되었습니다.');
+      }
+      
       toast.success('AI 설정이 저장되었습니다.');
     },
     onError: (error) => {
@@ -2027,11 +2051,26 @@ export default function Admin() {
                       <p className="text-sm text-muted-foreground mt-1">
                         활성화된 모든 AI가 일치하는 결과를 내면 자동으로 승인/거부합니다.
                       </p>
+                      <p className="text-sm mt-2">
+                        <Badge variant={canEnableAutopilot ? "default" : "destructive"}>
+                          활성화된 플랫폼: {enabledPlatformCount}/2
+                        </Badge>
+                        {!canEnableAutopilot && (
+                          <span className="text-destructive ml-2">
+                            최소 2개 이상의 AI 플랫폼을 활성화해야 합니다.
+                          </span>
+                        )}
+                      </p>
                     </div>
                     <Checkbox
                       id="autopilot-enabled"
                       checked={autopilotEnabled}
+                      disabled={!canEnableAutopilot}
                       onCheckedChange={(checked) => {
+                        if (!canEnableAutopilot) {
+                          toast.error('오토 파일럿 모드를 활성화하려면 최소 2개 이상의 AI 모델을 활성화해야 합니다.');
+                          return;
+                        }
                         const enabled = !!checked;
                         setAutopilotEnabled(enabled);
                         // 즉시 저장
