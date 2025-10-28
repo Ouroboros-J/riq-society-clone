@@ -38,14 +38,14 @@ export default function Header() {
             </Button>
           </Link>
 
-          <Link href="/mypage">
-            <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
-              회원
-            </Button>
-          </Link>
-
           {isAuthenticated && (
             <>
+              <Link href="/mypage">
+                <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
+                  회원
+                </Button>
+              </Link>
+
               <Link href="/resources">
                 <Button variant="ghost" size="sm" className="text-foreground hover:text-primary relative">
                   리소스

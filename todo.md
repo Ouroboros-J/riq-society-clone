@@ -1566,3 +1566,10 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Add address edit section to MyPage.tsx
 - [x] Test address input and update flow
 
+
+
+## Bug Fix: 회원 메뉴 접근 권한
+- [x] "회원" 메뉴를 로그인한 사용자에게만 표시
+- [x] 데스크톱 메뉴에서 isAuthenticated 조건 추가
+- [x] 모바일 메뉴는 이미 올바르게 구현되어 있음 확인
+
