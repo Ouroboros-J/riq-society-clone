@@ -169,7 +169,7 @@ export default function MyPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <div className="space-y-2">
                     <Label className="text-muted-foreground">시험 종류</Label>
                     <p className="text-lg font-semibold">
@@ -182,6 +182,12 @@ export default function MyPage() {
                     <Label className="text-muted-foreground">점수</Label>
                     <p className="text-lg font-semibold text-green-600 dark:text-green-400">
                       {application.testScore}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">시험 날짜</Label>
+                    <p className="text-lg font-semibold">
+                      {application.testDate || "-"}
                     </p>
                   </div>
                   <div className="space-y-2">
