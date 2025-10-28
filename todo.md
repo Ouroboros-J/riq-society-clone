@@ -1597,3 +1597,48 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Update mobile menu order: 홈, (로그인 시: 회원, 리소스, 저널, 커뮤니티), 블로그, FAQ, 가게
 - [x] Test mobile menu navigation
 
+
+
+
+## Social Login: Google Only
+- [x] Check current OAuth providers (Google, GitHub, etc.)
+- [x] Remove non-Google OAuth providers if any (Already Google only)
+- [x] Update Auth.tsx to show only Google login (Already done)
+- [x] Update server OAuth configuration (Already done)
+- [x] Test Google login flow
+
+## Responsive Design Review
+- [ ] Review all pages for mobile responsiveness
+- [ ] Check breakpoints (sm, md, lg, xl)
+- [ ] Review typography scaling (text-sm, text-base, text-lg, etc.)
+- [ ] Review spacing (padding, margin) on mobile vs desktop
+- [ ] Review button sizes and touch targets (min 44x44px)
+- [ ] Review form inputs on mobile
+- [ ] Review navigation (Header, Footer) on all screen sizes
+- [ ] Apply design principles from:
+  - [ ] shadcn/ui (primary reference)
+  - [ ] OpenAI website
+  - [ ] Perplexity website
+  - [ ] Apple website
+- [ ] Test on mobile device or browser DevTools
+
+
+
+
+## Theme Update: shadcn/ui Default (Zinc Dark)
+- [x] Update index.css with shadcn/ui Zinc Dark theme colors
+- [x] Remove custom green (120) and blue (217) colors
+- [x] Apply Zinc/Slate color palette
+- [x] Update primary, secondary, accent colors
+- [x] Update chart colors to Zinc palette
+- [x] Test theme across all pages
+- [x] Verify contrast ratios for accessibility
+
+
+
+
+## Fix: Admin Tables Mobile Responsiveness
+- [x] Wrap all Table components in Admin.tsx with overflow-x-auto div (9 tables)
+- [x] Test table scrolling on mobile devices
+- [x] Verify all tables are horizontally scrollable
+

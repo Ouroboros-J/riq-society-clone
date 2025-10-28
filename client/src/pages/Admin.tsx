@@ -1268,7 +1268,8 @@ export default function Admin() {
                 {applicationsLoading ? (
                   <p>로딩 중...</p>
                 ) : (
-                  <Table>
+                  <div className="overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-12">
@@ -1424,7 +1425,8 @@ export default function Admin() {
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
