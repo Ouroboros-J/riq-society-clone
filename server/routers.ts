@@ -12,6 +12,7 @@ import { getAllRecognizedTests, getRecognizedTestById, createRecognizedTest, upd
 import { getAllAiSettings, getAiSettingByPlatform, upsertAiSetting, getEnabledAiSettings, countEnabledAiSettings } from "./db-ai-settings";
 import { isAutopilotEnabled, getSystemSetting, setSystemSetting } from "./db-system-settings";
 import { saveMultipleAiVerifications, getAiVerificationsByApplicationId } from "./db-ai-verifications";
+import { getAiAccuracyStats, getOverallAiAccuracy } from "./db-ai-accuracy";
 import { verifyApplicationWithAI } from "./ai-verification";
 import { getFirstDocumentAsBase64 } from "./s3-helper";
 import { getModelsByPlatform } from "./ai-models";
@@ -545,6 +546,16 @@ export const appRouter = router({
       .input(z.object({ applicationId: z.number() }))
       .query(async ({ input }) => {
         return await getAiVerificationsByApplicationId(input.applicationId);
+      }),
+
+    getAccuracyStats: adminProcedure
+      .query(async () => {
+        return await getAiAccuracyStats();
+      }),
+
+    getOverallAccuracy: adminProcedure
+      .query(async () => {
+        return await getOverallAiAccuracy();
       }),
   }),
 

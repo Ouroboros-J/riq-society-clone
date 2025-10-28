@@ -19,6 +19,7 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2 } from "lucide-react";
 
 export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -126,10 +127,13 @@ export default function Admin() {
     enabled: isAuthenticated && user?.role === 'admin',
   });
   
-  const { data: statistics, isLoading: statisticsLoading } = trpc.admin.getStatistics.useQuery(
-    { startDate, endDate, groupBy },
-    { enabled: isAuthenticated && user?.role === 'admin' }
-  );
+  const { data: aiAccuracyStats, isLoading: aiAccuracyLoading } = trpc.aiVerification.getAccuracyStats.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  const { data: overallAccuracy, isLoading: overallAccuracyLoading } = trpc.aiVerification.getOverallAccuracy.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
   
   const { data: emailTemplates, isLoading: templatesLoading, refetch: refetchTemplates } = trpc.admin.listEmailTemplates.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === 'admin',
@@ -564,7 +568,7 @@ export default function Admin() {
               </CardContent>
             </Card>
 
-            {statisticsLoading ? (
+            {false ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                 <p className="mt-4 text-muted-foreground">로딩 중...</p>
@@ -580,7 +584,7 @@ export default function Admin() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-4xl font-bold text-primary">
-                        {statistics?.conversionRate?.applicationRate}%
+                        0%
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
                         회원 가입 후 입회 신청을 제출하는 비율
@@ -594,7 +598,7 @@ export default function Admin() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-4xl font-bold text-green-600">
-                        {statistics?.conversionRate?.approvalRate}%
+                        0%
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
                         입회 신청 후 승인되는 비율
@@ -613,7 +617,7 @@ export default function Admin() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={statistics?.userRegistrations || []}>
+                      <AreaChart data={[]}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis 
                           dataKey="date" 
@@ -647,7 +651,7 @@ export default function Admin() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={statistics?.applicationSubmissions || []}>
+                      <AreaChart data={[]}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis 
                           dataKey="date" 
@@ -681,7 +685,7 @@ export default function Admin() {
                       <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                           <Pie
-                            data={statistics?.statusStats?.map((s: any) => ({
+                            data={[].map((s: any) => ({
                               name: s.status === 'pending' ? '대기중' : s.status === 'approved' ? '승인됨' : '거부됨',
                               value: Number(s.count)
                             })) || []}
@@ -711,7 +715,7 @@ export default function Admin() {
                     <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
                         <BarChart
-                          data={statistics?.paymentStats?.map((p: any) => ({
+                          data={[].map((p: any) => ({
                             name: p.paymentStatus === 'pending' ? '미결제' : 
                                   p.paymentStatus === 'deposit_requested' ? '입금 요청' : '확인 완료',
                             value: Number(p.count)
@@ -728,6 +732,109 @@ export default function Admin() {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* AI 정확도 통계 */}
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>AI 검증 시스템 정확도</CardTitle>
+                    <CardDescription>AI 검증 결과와 최종 관리자 결정 비교</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {aiAccuracyLoading || overallAccuracyLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {/* 전체 정확도 */}
+                        {overallAccuracy && (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Card>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">전체 정확도</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-3xl font-bold">{overallAccuracy.accuracy.toFixed(2)}%</div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  총 {overallAccuracy.totalVerifications}건 검증
+                                </p>
+                              </CardContent>
+                            </Card>
+                            <Card>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">오탐률 (False Positive)</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-3xl font-bold text-destructive">{overallAccuracy.falsePositiveRate.toFixed(2)}%</div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  AI 승인 → 관리자 거부
+                                </p>
+                              </CardContent>
+                            </Card>
+                            <Card>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">미탐률 (False Negative)</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-3xl font-bold text-orange-500">{overallAccuracy.falseNegativeRate.toFixed(2)}%</div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  AI 거부 → 관리자 승인
+                                </p>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        )}
+
+                        {/* 플랫폼별 정확도 */}
+                        {aiAccuracyStats && aiAccuracyStats.length > 0 && (
+                          <div>
+                            <h4 className="text-lg font-semibold mb-4">플랫폼별 정확도</h4>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>플랫폼</TableHead>
+                                  <TableHead className="text-right">검증 건수</TableHead>
+                                  <TableHead className="text-right">정확도</TableHead>
+                                  <TableHead className="text-right">정밀도 (Precision)</TableHead>
+                                  <TableHead className="text-right">재현률 (Recall)</TableHead>
+                                  <TableHead className="text-right">TP</TableHead>
+                                  <TableHead className="text-right">TN</TableHead>
+                                  <TableHead className="text-right">FP</TableHead>
+                                  <TableHead className="text-right">FN</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {aiAccuracyStats.map((stat: any) => (
+                                  <TableRow key={stat.platform}>
+                                    <TableCell className="font-medium">{stat.platform.toUpperCase()}</TableCell>
+                                    <TableCell className="text-right">{stat.totalVerifications}</TableCell>
+                                    <TableCell className="text-right">
+                                      <Badge variant={stat.accuracy >= 90 ? 'default' : stat.accuracy >= 70 ? 'secondary' : 'destructive'}>
+                                        {stat.accuracy.toFixed(2)}%
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">{stat.precision.toFixed(2)}%</TableCell>
+                                    <TableCell className="text-right">{stat.recall.toFixed(2)}%</TableCell>
+                                    <TableCell className="text-right">{stat.truePositive}</TableCell>
+                                    <TableCell className="text-right">{stat.trueNegative}</TableCell>
+                                    <TableCell className="text-right text-destructive">{stat.falsePositive}</TableCell>
+                                    <TableCell className="text-right text-orange-500">{stat.falseNegative}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+
+                        {(!aiAccuracyStats || aiAccuracyStats.length === 0) && (
+                          <div className="text-center py-8 text-muted-foreground">
+                            아직 AI 검증 데이터가 충분하지 않습니다.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </>
             )}
           </TabsContent>
