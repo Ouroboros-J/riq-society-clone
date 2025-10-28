@@ -78,21 +78,24 @@ export default function Admin() {
   const [openaiApiKey, setOpenaiApiKey] = useState<string>('');
   const [openaiModel, setOpenaiModel] = useState<string>('');
   const [openaiEnabled, setOpenaiEnabled] = useState<boolean>(false);
+  const [openaiModels, setOpenaiModels] = useState<Array<{id: string, name: string, description?: string}>>([]);
+  const [openaiModelsLoading, setOpenaiModelsLoading] = useState(false);
   
   const [anthropicApiKey, setAnthropicApiKey] = useState<string>('');
   const [anthropicModel, setAnthropicModel] = useState<string>('');
   const [anthropicEnabled, setAnthropicEnabled] = useState<boolean>(false);
+  const [anthropicModels, setAnthropicModels] = useState<Array<{id: string, name: string, description?: string}>>([]);
+  const [anthropicModelsLoading, setAnthropicModelsLoading] = useState(false);
   
   const [googleApiKey, setGoogleApiKey] = useState<string>('');
   const [googleModel, setGoogleModel] = useState<string>('');
   const [googleEnabled, setGoogleEnabled] = useState<boolean>(false);
-  
-   const [perplexityApiKey, setPerplexityApiKey] = useState('');
-  const [perplexityModel, setPerplexityModel] = useState('');
-  const [perplexityEnabled, setPerplexityEnabled] = useState(false);
-
-  // 오토 파일럿 모드 상태
-  const [autopilotEnabled, setAutopilotEnabled] = useState(false);
+  const [googleModels, setGoogleModels] = useState<Array<{id: string, name: string, description?: string}>>([]);
+  const [googleModelsLoading, setGoogleModelsLoading] = useState(false);  const [perplexityApiKey, setPerplexityApiKey] = useState<string>('');
+  const [perplexityModel, setPerplexityModel] = useState<string>('');
+  const [perplexityEnabled, setPerplexityEnabled] = useState<boolean>(false);
+  const [perplexityModels, setPerplexityModels] = useState<Array<{id: string, name: string, description?: string}>>([]);
+  const [perplexityModelsLoading, setPerplexityModelsLoading] = useState(false);  const [autopilotEnabled, setAutopilotEnabled] = useState(false);
   
   // 통계 날짜 범위
   const [startDate, setStartDate] = useState(() => {
@@ -348,6 +351,94 @@ export default function Admin() {
       toast.error("입금 확인 실패: " + error.message);
     },
   });
+
+  // AI 설정 초기화
+  useEffect(() => {
+    if (aiSettings && aiSettings.length > 0) {
+      aiSettings.forEach((setting: any) => {
+        if (setting.platform === 'openai') {
+          setOpenaiApiKey(setting.apiKey || '');
+          setOpenaiModel(setting.selectedModel || '');
+          setOpenaiEnabled(setting.isEnabled === 1);
+        } else if (setting.platform === 'claude') {
+          setAnthropicApiKey(setting.apiKey || '');
+          setAnthropicModel(setting.selectedModel || '');
+          setAnthropicEnabled(setting.isEnabled === 1);
+        } else if (setting.platform === 'gemini') {
+          setGoogleApiKey(setting.apiKey || '');
+          setGoogleModel(setting.selectedModel || '');
+          setGoogleEnabled(setting.isEnabled === 1);
+        } else if (setting.platform === 'perplexity') {
+          setPerplexityApiKey(setting.apiKey || '');
+          setPerplexityModel(setting.selectedModel || '');
+          setPerplexityEnabled(setting.isEnabled === 1);
+        }
+      });
+    }
+  }, [aiSettings]);
+
+  const utils = trpc.useUtils();
+
+  // 모델 목록 로드 함수
+  const loadOpenAIModels = async () => {
+    if (!openaiApiKey) {
+      toast.error('OpenAI API 키를 먼저 입력하세요.');
+      return;
+    }
+    setOpenaiModelsLoading(true);
+    try {
+      const models = await utils.client.aiSettings.getAvailableModels.query({ platform: 'openai', apiKey: openaiApiKey });
+      setOpenaiModels(models);
+      toast.success(`${models.length}개의 OpenAI 모델을 불러왔습니다.`);
+    } catch (error: any) {
+      toast.error('OpenAI 모델 목록 로드 실패: ' + error.message);
+    } finally {
+      setOpenaiModelsLoading(false);
+    }
+  };
+
+  const loadAnthropicModels = async () => {
+    setAnthropicModelsLoading(true);
+    try {
+      const models = await utils.client.aiSettings.getAvailableModels.query({ platform: 'claude' });
+      setAnthropicModels(models);
+      toast.success(`${models.length}개의 Claude 모델을 불러왔습니다.`);
+    } catch (error: any) {
+      toast.error('Claude 모델 목록 로드 실패: ' + error.message);
+    } finally {
+      setAnthropicModelsLoading(false);
+    }
+  };
+
+  const loadGoogleModels = async () => {
+    if (!googleApiKey) {
+      toast.error('Google API 키를 먼저 입력하세요.');
+      return;
+    }
+    setGoogleModelsLoading(true);
+    try {
+      const models = await utils.client.aiSettings.getAvailableModels.query({ platform: 'gemini', apiKey: googleApiKey });
+      setGoogleModels(models);
+      toast.success(`${models.length}개의 Gemini 모델을 불러왔습니다.`);
+    } catch (error: any) {
+      toast.error('Gemini 모델 목록 로드 실패: ' + error.message);
+    } finally {
+      setGoogleModelsLoading(false);
+    }
+  };
+
+  const loadPerplexityModels = async () => {
+    setPerplexityModelsLoading(true);
+    try {
+      const models = await utils.client.aiSettings.getAvailableModels.query({ platform: 'perplexity' });
+      setPerplexityModels(models);
+      toast.success(`${models.length}개의 Perplexity 모델을 불러왔습니다.`);
+    } catch (error: any) {
+      toast.error('Perplexity 모델 목록 로드 실패: ' + error.message);
+    } finally {
+      setPerplexityModelsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
@@ -1642,7 +1733,18 @@ export default function Admin() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="openai-model">모델 선택</Label>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label htmlFor="openai-model">모델 선택</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={loadOpenAIModels}
+                          disabled={openaiModelsLoading || !openaiApiKey}
+                        >
+                          {openaiModelsLoading ? '로드 중...' : '모델 목록 불러오기'}
+                        </Button>
+                      </div>
                       <Select
                         value={openaiModel}
                         onValueChange={(value) => setOpenaiModel(value)}
@@ -1651,10 +1753,19 @@ export default function Admin() {
                           <SelectValue placeholder="모델을 선택하세요" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                          <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                          <SelectItem value="gpt-4">GPT-4</SelectItem>
-                          <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                          {openaiModels.length > 0 ? (
+                            openaiModels.map((model) => (
+                              <SelectItem key={model.id} value={model.id}>
+                                {model.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <>
+                              <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                              <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                              <SelectItem value="gpt-4-vision-preview">GPT-4 Vision Preview</SelectItem>
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1694,18 +1805,42 @@ export default function Admin() {
                         id="anthropic-api-key"
                         type="password"
                         placeholder="sk-ant-..."
+                        value={anthropicApiKey}
+                        onChange={(e) => setAnthropicApiKey(e.target.value)}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="anthropic-model">모델 선택</Label>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label htmlFor="anthropic-model">모델 선택</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={loadAnthropicModels}
+                          disabled={anthropicModelsLoading}
+                        >
+                          {anthropicModelsLoading ? '로드 중...' : '모델 목록 불러오기'}
+                        </Button>
+                      </div>
                       <Select value={anthropicModel} onValueChange={(value) => setAnthropicModel(value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="모델을 선택하세요" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
-                          <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet</SelectItem>
-                          <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku</SelectItem>
+                          {anthropicModels.length > 0 ? (
+                            anthropicModels.map((model) => (
+                              <SelectItem key={model.id} value={model.id}>
+                                {model.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <>
+                              <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Latest)</SelectItem>
+                              <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
+                              <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet</SelectItem>
+                              <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku</SelectItem>
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1750,15 +1885,36 @@ export default function Admin() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="google-model">모델 선택</Label>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label htmlFor="google-model">모델 선택</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={loadGoogleModels}
+                          disabled={googleModelsLoading || !googleApiKey}
+                        >
+                          {googleModelsLoading ? '로드 중...' : '모델 목록 불러오기'}
+                        </Button>
+                      </div>
                       <Select value={googleModel} onValueChange={(value) => setGoogleModel(value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="모델을 선택하세요" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash</SelectItem>
-                          <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
-                          <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                          {googleModels.length > 0 ? (
+                            googleModels.map((model) => (
+                              <SelectItem key={model.id} value={model.id}>
+                                {model.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <>
+                              <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                              <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                              <SelectItem value="gemini-pro-vision">Gemini Pro Vision</SelectItem>
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1803,14 +1959,36 @@ export default function Admin() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="perplexity-model">모델 선택</Label>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label htmlFor="perplexity-model">모델 선택</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={loadPerplexityModels}
+                          disabled={perplexityModelsLoading}
+                        >
+                          {perplexityModelsLoading ? '로드 중...' : '모델 목록 불러오기'}
+                        </Button>
+                      </div>
                       <Select value={perplexityModel} onValueChange={(value) => setPerplexityModel(value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="모델을 선택하세요" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="sonar-pro">Sonar Pro</SelectItem>
-                          <SelectItem value="sonar">Sonar</SelectItem>
+                          {perplexityModels.length > 0 ? (
+                            perplexityModels.map((model) => (
+                              <SelectItem key={model.id} value={model.id}>
+                                {model.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <>
+                              <SelectItem value="sonar-pro">Sonar Pro</SelectItem>
+                              <SelectItem value="sonar">Sonar</SelectItem>
+                              <SelectItem value="sonar-reasoning">Sonar Reasoning</SelectItem>
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>

@@ -14,6 +14,7 @@ import { isAutopilotEnabled, getSystemSetting, setSystemSetting } from "./db-sys
 import { saveMultipleAiVerifications, getAiVerificationsByApplicationId } from "./db-ai-verifications";
 import { verifyApplicationWithAI } from "./ai-verification";
 import { getFirstDocumentAsBase64 } from "./s3-helper";
+import { getModelsByPlatform } from "./ai-models";
 import { createApplicationReview, getApplicationReviewsByApplicationId, getAllPendingReviews, updateApplicationReviewStatus, incrementReviewRequestCount } from "./db-application-reviews";
 import { getDb } from "./db";
 import { applications, users, applicationReviews } from "../drizzle/schema";
@@ -427,6 +428,12 @@ export const appRouter = router({
     countEnabled: adminProcedure.query(async () => {
       return await countEnabledAiSettings();
     }),
+
+    getAvailableModels: adminProcedure
+      .input(z.object({ platform: z.string(), apiKey: z.string().optional() }))
+      .query(async ({ input }) => {
+        return await getModelsByPlatform(input.platform, input.apiKey);
+      }),
   }),
 
   recognizedTest: router({
