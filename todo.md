@@ -1615,12 +1615,12 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [ ] Review button sizes and touch targets (min 44x44px) - Intentionally kept at shadcn/ui defaults
 - [x] Review form inputs on mobile
 - [x] Review navigation (Header, Footer) on all screen sizes
-- [ ] Apply design principles from:
-  - [ ] shadcn/ui (primary reference)
-  - [ ] OpenAI website
-  - [ ] Perplexity website
-  - [ ] Apple website
-- [ ] Test on mobile device or browser DevTools
+- [x] Apply design principles from:
+  - [x] shadcn/ui (primary reference)
+  - [x] OpenAI website
+  - [x] Perplexity website
+  - [x] Apple website
+- [x] Test on mobile device or browser DevTools
 
 
 
