@@ -118,7 +118,7 @@ export default function Header() {
         </nav>
 
         {/* Mobile Hamburger Menu */}
-        <Sheet modal={true}>
+        <Sheet>
           <SheetTrigger asChild className="lg:hidden">
             <Button variant="ghost" size="icon">
               <Menu className="h-6 w-6" />
@@ -239,7 +239,7 @@ export default function Header() {
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     {isAdmin() && (
-                      <span className="inline-flex items-center text-xs bg-zinc-500/20 text-zinc-600 dark:text-zinc-400 px-2 py-0.5 rounded">
+                      <span className="inline-flex items-center text-xs bg-red-500/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded">
                         <Shield className="w-3 h-3 mr-1" />
                         관리자
                       </span>
