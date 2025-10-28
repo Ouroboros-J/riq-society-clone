@@ -1666,3 +1666,12 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Update Header.tsx admin badge variant
 - [x] Test admin badge appearance
 
+
+
+
+## Bug Fix: Sheet Still Overlapping (Portal Issue)
+- [x] Add modal={true} to Sheet component in Header.tsx
+- [x] Check if Sheet is rendered in Portal (SheetPortal used)
+- [x] Investigate CSS stacking context issues (z-[9999] applied)
+- [ ] User needs to clear browser cache or restart Manus app
+

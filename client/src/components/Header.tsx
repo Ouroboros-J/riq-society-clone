@@ -118,7 +118,7 @@ export default function Header() {
         </nav>
 
         {/* Mobile Hamburger Menu */}
-        <Sheet>
+        <Sheet modal={true}>
           <SheetTrigger asChild className="lg:hidden">
             <Button variant="ghost" size="icon">
               <Menu className="h-6 w-6" />
