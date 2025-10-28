@@ -1,15 +1,34 @@
 /**
  * S3에서 파일을 다운로드하여 Base64로 변환
  * @param fileUrl S3 파일 URL
- * @returns Base64 인코딩된 문자열
+ * @returns Base64 인코딩된 문자열과 MIME 타입
  */
-export async function downloadFileAsBase64(fileUrl: string): Promise<string> {
+export async function downloadFileAsBase64(fileUrl: string): Promise<{ base64: string; mimeType: string }> {
   try {
     // S3 URL에서 파일 다운로드
     const response = await fetch(fileUrl);
     
     if (!response.ok) {
       throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+    
+    // MIME 타입 가져오기 (Content-Type 헤더 또는 URL 확장자로 추론)
+    let mimeType = response.headers.get('content-type') || 'application/octet-stream';
+    
+    // Content-Type이 없으면 파일 확장자로 추론
+    if (mimeType === 'application/octet-stream') {
+      const url = new URL(fileUrl);
+      const pathname = url.pathname.toLowerCase();
+      
+      if (pathname.endsWith('.pdf')) {
+        mimeType = 'application/pdf';
+      } else if (pathname.endsWith('.jpg') || pathname.endsWith('.jpeg')) {
+        mimeType = 'image/jpeg';
+      } else if (pathname.endsWith('.png')) {
+        mimeType = 'image/png';
+      } else if (pathname.endsWith('.webp')) {
+        mimeType = 'image/webp';
+      }
     }
     
     // ArrayBuffer로 읽기
@@ -19,7 +38,7 @@ export async function downloadFileAsBase64(fileUrl: string): Promise<string> {
     const buffer = Buffer.from(arrayBuffer);
     const base64 = buffer.toString('base64');
     
-    return base64;
+    return { base64, mimeType };
   } catch (error: any) {
     console.error('Failed to download file from S3:', error);
     throw new Error(`S3 파일 다운로드 실패: ${error.message}`);
@@ -29,9 +48,9 @@ export async function downloadFileAsBase64(fileUrl: string): Promise<string> {
 /**
  * 여러 파일 URL을 Base64로 변환 (첫 번째 파일만 반환)
  * @param documentUrls 쉰표로 구분된 파일 URL 문자열 또는 JSON 배열 문자열
- * @returns 첫 번째 파일의 Base64 인코딩된 문자열
+ * @returns 첫 번째 파일의 Base64 인코딩된 문자열과 MIME 타입
  */
-export async function getFirstDocumentAsBase64(documentUrls: string): Promise<string | null> {
+export async function getFirstDocumentAsBase64(documentUrls: string): Promise<{ base64: string; mimeType: string } | null> {
   let urls: string[] = [];
   
   // JSON 배열 형식인지 확인
@@ -74,7 +93,7 @@ export async function getDocumentAsBase64Array(fileUrl: string): Promise<string[
       return await convertPdfToBase64Images(fileUrl);
     } else {
       // 이미지 파일은 그대로 Base64로 변환하여 배열로 반환
-      const base64 = await downloadFileAsBase64(fileUrl);
+      const { base64 } = await downloadFileAsBase64(fileUrl);
       return [base64];
     }
   } catch (error: any) {

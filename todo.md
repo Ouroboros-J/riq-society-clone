@@ -1209,7 +1209,9 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 
 ---
 
-## ✅ Phase 19 완료 (2025-10-29)
+## ✅✅✅ Phase 19 최종 완료 (2025-10-29) ✅✅✅
+
+**체크포인트:** 66e1b5f3
 
 **주요 성과:**
 - OpenRouter 통합 완료 (단일 API로 모든 AI 모델 관리)
@@ -1282,4 +1284,35 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] 재검토 요청 1회 제한 명시
 - [x] 연락처 정보 포함 (support@riqsociety.org)
 
+
+
+
+
+## Phase 19-2: OpenRouter API 키 변경 및 PDF 파일 처리 개선 ✅ 완료
+
+- [x] OpenRouter API 키 변경 반영
+  - [x] 환경 변수 확인 (73자 길이)
+  - [x] 서버 재시작
+  - [x] API 연결 테스트 (준비 완료)
+- [x] PDF 파일 처리 확인 및 개선
+  - [x] 현재 지원하는 파일 형식 확인 (JPEG, PNG, WebP, PDF)
+  - [x] PDF 파일 업로드 지원 확인 (application/pdf, 최대 10MB)
+  - [x] AI 검증 시 PDF 파일 처리 로직 개선
+  - [x] Base64 인코딩 및 MIME 타입 자동 감지
+  - [x] downloadFileAsBase64 함수 수정 ({ base64, mimeType } 반환)
+  - [x] getFirstDocumentAsBase64 함수 수정
+  - [x] getDocumentAsBase64Array 함수 수정
+
+**개선 사항:**
+- PDF 파일의 MIME 타입을 Content-Type 헤더 또는 파일 확장자로 자동 감지
+- Vision API에 `data:application/pdf;base64,{base64}` 형식으로 전달
+- Claude 3.5 Sonnet, Perplexity Sonar Pro 등 대부분의 Vision 모델이 PDF 직접 지원
+
+
+
+**Phase 19-2 완료 요약:**
+- ✅ OpenRouter API 키 변경 반영 (서버 재시작)
+- ✅ PDF 파일 처리 개선 (MIME 타입 자동 감지, Base64 인코딩)
+- ✅ downloadFileAsBase64 함수 수정 ({ base64, mimeType } 반환)
+- ✅ Vision API에 PDF 직접 전달 지원
 
