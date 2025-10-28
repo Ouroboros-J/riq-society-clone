@@ -47,12 +47,28 @@ export default function Application() {
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
   const [selectedTest, setSelectedTest] = useState<string>("");
   const [otherTestName, setOtherTestName] = useState<string>("");
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   const submitMutation = trpc.application.submit.useMutation();
   const uploadMutation = trpc.application.uploadDocument.useMutation();
   const recognizedTestsQuery = trpc.recognizedTest.list.useQuery();
+
+  // Step 1 Form (must be called before any conditional returns)
+  const step1Form = useForm<Step1Data>({
+    resolver: zodResolver(step1Schema),
+    defaultValues: formData,
+    mode: "onChange",
+    reValidateMode: "onChange",
+  });
+
+  // Step 2 Form (must be called before any conditional returns)
+  const step2Form = useForm<Step2Data>({
+    resolver: zodResolver(step2Schema),
+    defaultValues: formData,
+    mode: "onChange",
+    reValidateMode: "onChange",
+  });
 
   // Load draft from LocalStorage on mount
   useEffect(() => {
@@ -81,13 +97,8 @@ export default function Application() {
     }
   }, [formData, currentStep, isLoadingDraft]);
 
-  // Redirect if not authenticated
-  if (!isAuthenticated) {
-    setLocation("/auth");
-    return null;
-  }
-
-  if (isLoadingDraft) {
+  // Show loading spinner while auth is loading or draft is loading
+  if (authLoading || isLoadingDraft) {
     return (
       <>
         <Header />
@@ -98,24 +109,14 @@ export default function Application() {
     );
   }
 
+  // Redirect if not authenticated (only after auth loading is complete)
+  if (!isAuthenticated) {
+    setLocation("/auth");
+    return null;
+  }
+
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
-
-  // Step 1 Form
-  const step1Form = useForm<Step1Data>({
-    resolver: zodResolver(step1Schema),
-    defaultValues: formData,
-    mode: "onChange", // 실시간 유효성 검사
-    reValidateMode: "onChange",
-  });
-
-  // Step 2 Form
-  const step2Form = useForm<Step2Data>({
-    resolver: zodResolver(step2Schema),
-    defaultValues: formData,
-    mode: "onChange", // 실시간 유효성 검사
-    reValidateMode: "onChange",
-  });
 
   const handleStep1Submit = (data: Step1Data) => {
     setFormData({ ...formData, ...data });
