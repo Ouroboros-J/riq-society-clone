@@ -1642,3 +1642,11 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Test table scrolling on mobile devices
 - [x] Verify all tables are horizontally scrollable
 
+
+
+
+## Bug Fix: Mobile Hamburger Menu Overlapping
+- [x] Fix Sheet component z-index issue (z-50 → z-[100])
+- [x] Ensure hamburger menu appears above page content
+- [x] Test on mobile devices
+
