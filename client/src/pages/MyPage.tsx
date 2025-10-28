@@ -196,7 +196,7 @@ export default function MyPage() {
       <div className="min-h-screen bg-background pt-16">
         <div className="container py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">마이페이지</h1>
             <p className="text-muted-foreground">회원 정보 및 증명서 관리</p>
           </div>
 

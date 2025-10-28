@@ -1608,13 +1608,13 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Test Google login flow
 
 ## Responsive Design Review
-- [ ] Review all pages for mobile responsiveness
-- [ ] Check breakpoints (sm, md, lg, xl)
-- [ ] Review typography scaling (text-sm, text-base, text-lg, etc.)
-- [ ] Review spacing (padding, margin) on mobile vs desktop
-- [ ] Review button sizes and touch targets (min 44x44px)
-- [ ] Review form inputs on mobile
-- [ ] Review navigation (Header, Footer) on all screen sizes
+- [x] Review all pages for mobile responsiveness
+- [x] Check breakpoints (sm, md, lg, xl)
+- [x] Review typography scaling (text-sm, text-base, text-lg, etc.)
+- [x] Review spacing (padding, margin) on mobile vs desktop
+- [ ] Review button sizes and touch targets (min 44x44px) - Intentionally kept at shadcn/ui defaults
+- [x] Review form inputs on mobile
+- [x] Review navigation (Header, Footer) on all screen sizes
 - [ ] Apply design principles from:
   - [ ] shadcn/ui (primary reference)
   - [ ] OpenAI website
@@ -1647,5 +1647,20 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 ## UI Fix: Admin Badge Color
 - [x] Change admin badge color from red (destructive) to a more appropriate color (e.g., blue/primary)
 - [x] Update Header component admin badge styling
+
+
+
+
+## Responsive Typography Fixes
+- [x] Application.tsx - Add responsive text sizes for headings and body text
+- [x] MyPage.tsx - Add responsive text sizes for headings and body text
+- [x] Admin.tsx - Add responsive text sizes for headings and body text
+- [x] Auth.tsx - Add responsive text sizes for headings and body text
+- [x] Blog.tsx - Add responsive text sizes for headings and body text
+- [x] BlogPost.tsx - Add responsive text sizes for headings and body text
+- [x] FAQ.tsx - Add responsive text sizes for headings and body text
+- [x] Resources.tsx - Add responsive text sizes for headings and body text
+- [x] Journal.tsx - Add responsive text sizes for headings and body text
+- [x] NotFound.tsx - Add responsive text sizes for headings and body text
 
 

@@ -309,7 +309,7 @@ export default function Application() {
           {/* Progress Bar */}
           <div className="mb-8">
             <div className="flex justify-between items-center mb-2">
-              <h1 className="text-3xl font-bold">입회 신청</h1>
+              <h1 className="text-2xl md:text-3xl font-bold">입회 신청</h1>
               <span className="text-sm text-muted-foreground">
                 Step {currentStep} / {totalSteps}
               </span>
@@ -326,7 +326,7 @@ export default function Application() {
           {currentStep === 1 && (
             <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-6">
               <div className="bg-card border border-border rounded-lg p-6 card-hover">
-                <h2 className="text-2xl font-semibold mb-6">개인정보</h2>
+                <h2 className="text-xl md:text-2xl font-semibold mb-6">개인정보</h2>
                 
                 <div className="space-y-4">
                   <div>
@@ -382,7 +382,7 @@ export default function Application() {
                   </div>
 
                   <div className="border-t border-border pt-4 mt-4">
-                    <h3 className="text-lg font-semibold mb-4">배송 주소 (선택)</h3>
+                    <h3 className="text-base md:text-lg font-semibold mb-4">배송 주소 (선택)</h3>
                     <p className="text-sm text-muted-foreground mb-4">
                       입회 승인 후 회원증 및 환영 키트를 받을 주소를 입력해주세요.
                     </p>
@@ -443,7 +443,7 @@ export default function Application() {
           {currentStep === 2 && (
             <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
               <div className="bg-card border border-border rounded-lg p-6 card-hover">
-                <h2 className="text-2xl font-semibold mb-6">시험 점수</h2>
+                <h2 className="text-xl md:text-2xl font-semibold mb-6">시험 점수</h2>
                 
                 <div className="space-y-4">
                   {/* Step 1: 시험 유형 선택 (필터) */}
@@ -578,7 +578,7 @@ export default function Application() {
           {currentStep === 3 && (
             <div className="space-y-6">
               <div className="bg-card border border-border rounded-lg p-6 card-hover">
-                <h2 className="text-2xl font-semibold mb-6">증빙 서류</h2>
+                <h2 className="text-xl md:text-2xl font-semibold mb-6">증빙 서류</h2>
                 
                 <div className="space-y-4">
                   <div>

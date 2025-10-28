@@ -56,7 +56,7 @@ export default function Journal() {
               <div className="mb-8">
                 <BookOpen className="h-24 w-24 mx-auto text-muted-foreground" />
               </div>
-              <h1 className="text-3xl font-bold mb-4">정회원 전용 컨텐츠</h1>
+              <h1 className="text-2xl md:text-3xl font-bold mb-4">정회원 전용 컨텐츠</h1>
               <p className="text-lg text-muted-foreground mb-8">
                 저널 및 잡지는 정회원만 이용할 수 있습니다.<br />
                 입회 신청 승인 및 연회비 결제가 필요합니다.

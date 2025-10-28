@@ -668,7 +668,7 @@ export default function Admin() {
       <div className="min-h-screen bg-background pt-16">
       <div className="container py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">관리자 페이지</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">관리자 페이지</h1>
           <p className="text-muted-foreground">RIQ Society 회원 관리</p>
         </div>
 
