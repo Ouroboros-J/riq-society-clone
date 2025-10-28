@@ -1580,3 +1580,20 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] 모바일 메뉴에서 "커뮤니티" 메뉴를 로그인한 사용자에게만 표시
 - [x] 데스크톱 메뉴에도 "커뮤니티" 메뉴 추가 (로그인한 사용자에게만)
 
+
+
+## Bug Fix: Footer.tsx 중첩된 <a> 태그 에러
+- [x] Footer.tsx에서 Link 안의 <a> 태그 제거
+- [x] Link 컴포넌트에 className 직접 적용
+
+
+
+
+## Mobile Menu & Hero Section Improvement
+- [x] Add 블로그 and FAQ to mobile hamburger menu (all users)
+- [x] Remove "입회" from mobile hamburger menu
+- [x] Change Home.tsx hero section button to "입회 신청하기" (unauthenticated users)
+- [x] Show "마이페이지" button for authenticated users in hero section
+- [x] Update mobile menu order: 홈, (로그인 시: 회원, 리소스, 저널, 커뮤니티), 블로그, FAQ, 가게
+- [x] Test mobile menu navigation
+

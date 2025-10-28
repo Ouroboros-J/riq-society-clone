@@ -136,13 +136,6 @@ export default function Header() {
                 </Button>
               </Link>
 
-              <Link href="/application">
-                <Button variant="ghost" className="w-full justify-start" size="lg">
-                  <FileText className="mr-2 h-5 w-5" />
-                  입회
-                </Button>
-              </Link>
-
               {isAuthenticated && (
                 <>
                   <Link href="/mypage">
@@ -184,6 +177,20 @@ export default function Header() {
                   </a>
                 </>
               )}
+
+              <Link href="/blog">
+                <Button variant="ghost" className="w-full justify-start" size="lg">
+                  <BookOpen className="mr-2 h-5 w-5" />
+                  블로그
+                </Button>
+              </Link>
+
+              <Link href="/faq">
+                <Button variant="ghost" className="w-full justify-start" size="lg">
+                  <HelpCircle className="mr-2 h-5 w-5" />
+                  FAQ
+                </Button>
+              </Link>
 
               <Link href="/shop">
                 <Button variant="ghost" className="w-full justify-start" size="lg">

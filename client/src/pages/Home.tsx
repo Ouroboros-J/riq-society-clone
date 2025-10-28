@@ -75,17 +75,16 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             {!isAuthenticated ? (
-              <>
+              <Link href="/application">
                 <Button
                   variant="outline"
                   size="lg"
                   className="border-white text-white hover:bg-white hover:text-black min-w-[200px] transition-all duration-300 hover:scale-105"
-                  onClick={() => window.location.href = getLoginUrl()}
-                  aria-label="로그인 또는 회원가입"
+                  aria-label="입회 신청하기"
                 >
-                  로그인 / 회원가입
+                  입회 신청하기
                 </Button>
-              </>
+              </Link>
             ) : (
               <>
                 <div className="text-center mb-4">
@@ -97,16 +96,6 @@ export default function Home() {
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
-                  <Link href="/application">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="border-white text-white hover:bg-white hover:text-black min-w-[200px] transition-all duration-300 hover:scale-105"
-                      aria-label="입회 신청"
-                    >
-                      입회 신청
-                    </Button>
-                  </Link>
                   <Link href="/mypage">
                     <Button
                       variant="outline"
