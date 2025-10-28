@@ -11,7 +11,8 @@ export function getVerifierPrompt(
   applicantName: string,
   applicantBirthDate: string,
   testName: string,
-  testScore: string
+  testScore: string,
+  testDate?: string
 ): string {
   const basePrompt = `You are a strict document verification expert for a high-IQ society.
 
@@ -22,6 +23,7 @@ Your role is to thoroughly verify the authenticity of submitted documents and id
 - Date of Birth: ${applicantBirthDate}
 - Test: ${testName}
 - Score: ${testScore}
+- Test Date (Provided by Applicant): ${testDate || 'Not provided'}
 
 **Documents to verify:**
 1. First image: Identity document (ID card, driver's license, passport, etc.)
@@ -44,7 +46,8 @@ Your role is to thoroughly verify the authenticity of submitted documents and id
    - Test name clearly stated (e.g., WAIS, WISC, Stanford-Binet, Raven's, etc.)?
    - Full score or percentile rank clearly stated?
    - Does the score meet the top 1% threshold (IQ 135+ or equivalent)?
-   - Test date present?
+   - Test date present and matches "${testDate || 'the provided date'}"?
+   - Is the test date reasonable (not in the future, not too old)?
    - Testing location present?
    - Psychologist's license number present?
    - Psychologist's contact information present?
@@ -68,7 +71,8 @@ Your role is to thoroughly verify the authenticity of submitted documents and id
    - Test name clearly stated (e.g., DAS, CogAT, NNAT, Otis-Lennon, MAT, etc.)?
    - Score or percentile rank clearly stated?
    - Does the score meet the top 1% threshold?
-   - Test date present?
+   - Test date present and matches "${testDate || 'the provided date'}"?
+   - Is the test date reasonable (not in the future, not too old)?
    - Testing institution name present?
    - Official seal or signature present?
    - Does the name on the certificate match "${applicantName}"?
@@ -89,7 +93,8 @@ Your role is to thoroughly verify the authenticity of submitted documents and id
    - Test name clearly stated (e.g., SAT, ACT, GRE, GMAT, LSAT, MCAT, etc.)?
    - Score clearly stated?
    - Does the score meet the top 1% threshold?
-   - Test date present?
+   - Test date present and matches "${testDate || 'the provided date'}"?
+   - Is the test date reasonable (not in the future, not too old)?
    - Official testing organization name present (e.g., College Board, ETS, etc.)?
    - Official seal or watermark present?
    - Does the name on the certificate match "${applicantName}"?

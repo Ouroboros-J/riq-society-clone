@@ -130,6 +130,7 @@ export async function verifyApplicationWithAI(
   testResultUrl: string,
   applicantName: string,
   applicantBirthDate: string,
+  testDate?: string,
   applicationId?: number
 ): Promise<{
   approved: boolean;
@@ -174,7 +175,8 @@ export async function verifyApplicationWithAI(
       applicantName,
       applicantBirthDate,
       testName,
-      testScore
+      testScore,
+      testDate
     );
 
     const verifierResults: Array<{

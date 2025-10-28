@@ -341,7 +341,40 @@ export const appRouter = router({
           throw new Error(validation.error || 'Invalid AI settings configuration');
         }
         
-        const result = await verifyApplicationWithAI(input.applicationId);
+        // 신청 정보 조회
+        const application = await db.select().from(applications).where(eq(applications.id, input.applicationId)).limit(1);
+        if (!application || application.length === 0) {
+          throw new Error('신청서를 찾을 수 없습니다.');
+        }
+        const app = application[0];
+        
+        // 필수 필드 확인
+        if (!app.identityDocument || !app.testResult) {
+          throw new Error('신원 증명 서류 또는 시험 결과지가 없습니다.');
+        }
+        
+        // testCategory 결정
+        let testCategory = 'standard_iq'; // 기본값
+        if (app.testType.includes('SAT') || app.testType.includes('ACT') || app.testType.includes('GRE') || 
+            app.testType.includes('GMAT') || app.testType.includes('LSAT') || app.testType.includes('MCAT')) {
+          testCategory = 'university_admission';
+        } else if (app.testType.includes('CogAT') || app.testType.includes('NNAT') || 
+                   app.testType.includes('DAS') || app.testType.includes('MAT')) {
+          testCategory = 'academic_cognitive';
+        }
+        
+        // AI 검증 실행
+        const result = await verifyApplicationWithAI(
+          app.testType,
+          app.testScore,
+          testCategory,
+          app.identityDocument,
+          app.testResult,
+          app.fullName,
+          app.birthDate,
+          app.testDate || undefined,
+          input.applicationId
+        );
         return result;
       }),
 

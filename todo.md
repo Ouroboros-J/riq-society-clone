@@ -1445,3 +1445,24 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
   - [x] testDate가 없는 경우 "-" 표시
   - [x] 반응형 디자인: md:grid-cols-2 lg:grid-cols-4
 
+
+
+
+## Phase 20-8: AI 검증에 응시 날짜 추가 ✅ 완료
+
+- [x] ai-prompts.ts 수정
+  - [x] getVerifierPrompt 함수에 testDate 파라미터 추가 (optional)
+  - [x] Verifier 프롬프트에 응시 날짜 정보 포함 ("Test Date (Provided by Applicant)")
+  - [x] 응시 날짜 일치성 검증 체크리스트 추가 (3개 시험 유형 모두)
+- [x] ai-verification.ts 수정
+  - [x] verifyApplicationWithAI 함수에 testDate 파라미터 추가
+  - [x] getVerifierPrompt 호출 시 testDate 파라미터 전달
+- [x] routers.ts 수정
+  - [x] verifyApplication mutation에서 신청 정보 조회
+  - [x] testDate 포함하여 verifyApplicationWithAI 호출
+  - [x] testCategory 자동 결정 로직 추가
+- [x] 검증 항목 추가
+  - [x] 증명서의 날짜와 입력한 응시 날짜 일치 여부
+  - [x] 응시 날짜가 미래가 아닌지 확인
+  - [x] 응시 날짜가 합리적인 범위인지 확인 (not too old)
+
