@@ -23,6 +23,7 @@ import { applications, users, applicationReviews } from "../drizzle/schema";
 import { eq, desc, sql, gte, and } from "drizzle-orm";
 import { z } from "zod";
 import { storagePut } from "./storage";
+import { validateFileUpload } from "./file-validation";
 import { sendEmail } from "./_core/email";
 import { sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendReviewApprovedEmail, sendReviewRejectedEmail, sendPaymentConfirmedEmail } from "./email";
 
@@ -688,8 +689,14 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        // 파일 업로드 보안 검증
+        const validation = validateFileUpload(input.fileName, input.fileType, input.fileData);
+        if (!validation.valid) {
+          throw new Error(validation.error || '파일 업로드 검증 실패');
+        }
+        
         const buffer = Buffer.from(input.fileData, "base64");
-        const fileKey = `applications/${ctx.user.id}/${Date.now()}-${input.fileName}`;
+        const fileKey = `applications/${ctx.user.id}/${Date.now()}-${validation.sanitizedFileName}`;
         const { url } = await storagePut(fileKey, buffer, input.fileType);
         
         return { url };

@@ -3,6 +3,7 @@ import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import { setupWebSocket } from "./websocket.js";
+import { apiLimiter } from "./rate-limit.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,6 +11,10 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // Rate limiting 미들웨어 적용
+  app.use('/api/', apiLimiter);
+  console.log('[Rate Limit] API rate limiting enabled');
 
   // Serve static files from dist/public in production
   const staticPath =
