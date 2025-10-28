@@ -1488,3 +1488,38 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - 남은 AI 관련 파일: 2개 (ai-prompts.ts, ai-verification.ts)
 - 현재 사용 중인 API 키: OPENROUTER_API_KEY만
 
+
+
+
+## Phase 21: 저널/잡지 전용 페이지 (하이브리드 방식)
+
+### 목표
+기존 리소스 시스템을 활용하되, 저널/잡지만 별도 페이지로 표시
+
+### 1. Journal.tsx 페이지 생성 ✅ 완료
+- [x] `/journal` 라우트 생성 (App.tsx)
+- [x] 리소스 API에서 `category="저널"` 또는 `category="잡지"` 필터링
+  - [x] 영어 카테고리도 지원 (Journal, Magazine)
+- [x] 저널 전용 UI 디자인
+  - [x] 발행일 표시 (createdAt 사용)
+  - [x] 그리드 레이아웃 (카드 형식, 3열)
+  - [x] 다운로드 버튼
+  - [x] 파일 타입 아이콘 표시
+  - [x] 파일 크기 표시
+  - [x] 카테고리 Badge 표시
+- [x] 정회원 전용 접근 제어 (canAccessResources)
+
+### 2. Header 메뉴 추가 ✅ 완료
+- [x] Header.tsx에 "저널" 메뉴 추가
+- [x] BookOpen 아이콘 사용
+- [x] 정회원 전용 Badge 표시
+
+### 3. SEO 최적화 ✅ 완료
+- [x] 메타 태그 추가 (title, description, keywords)
+- [x] 키워드 설정 ("RIQ Society 저널, 잡지, 정회원 혜택, 연구 자료, 고지능 연구")
+
+### 4. 관리자 가이드
+- [x] 기존 리소c스 관리 탭 활용
+- [x] 카테고0리를 "저널" 또는 "잡지"로 설정하면 자동으로 /journal 페이지에 표시
+- [x] description 필드에 호수, 발행 정보 등 입력 가능
+
