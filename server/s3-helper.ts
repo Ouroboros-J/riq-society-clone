@@ -28,11 +28,24 @@ export async function downloadFileAsBase64(fileUrl: string): Promise<string> {
 
 /**
  * 여러 파일 URL을 Base64로 변환 (첫 번째 파일만 반환)
- * @param documentUrls 쉼표로 구분된 파일 URL 문자열
+ * @param documentUrls 쉰표로 구분된 파일 URL 문자열 또는 JSON 배열 문자열
  * @returns 첫 번째 파일의 Base64 인코딩된 문자열
  */
 export async function getFirstDocumentAsBase64(documentUrls: string): Promise<string | null> {
-  const urls = documentUrls.split(',').map(url => url.trim()).filter(url => url);
+  let urls: string[] = [];
+  
+  // JSON 배열 형식인지 확인
+  if (documentUrls.trim().startsWith('[')) {
+    try {
+      urls = JSON.parse(documentUrls);
+    } catch (e) {
+      console.error('Failed to parse documentUrls as JSON:', e);
+      return null;
+    }
+  } else {
+    // 쉰표로 구분된 형식
+    urls = documentUrls.split(',').map(url => url.trim()).filter(url => url);
+  }
   
   if (urls.length === 0) {
     return null;

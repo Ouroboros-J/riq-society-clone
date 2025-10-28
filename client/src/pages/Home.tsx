@@ -255,11 +255,11 @@ export default function Home() {
               <ul className="space-y-4 text-sm md:text-base" style={{ lineHeight: '1.5', color: '#bbb' }}>
                 <li className="flex items-start">
                   <span className="mr-2" style={{ color: '#666' }}>›</span>
-                  <span>American College Testing Program (ACT), 30 (adminstered on or after October 1989)</span>
+                  <span>American College Testing Program (ACT), 34 (adminstered on or after October 1989)</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mr-2" style={{ color: '#666' }}>›</span>
-                  <span>American College Testing Program (ACT), 29 (administered prior to October 1989)</span>
+                  <span>American College Testing Program (ACT), 32 (administered prior to October 1989)</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mr-2" style={{ color: '#666' }}>›</span>

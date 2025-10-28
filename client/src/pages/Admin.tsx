@@ -395,6 +395,24 @@ export default function Admin() {
     },
   });
 
+  const verifyWithAIMutation = trpc.application.verifyWithAI.useMutation({
+    onSuccess: (data) => {
+      setIsVerifying(false);
+      if (data.approved) {
+        toast.success("AI 검증 완료: 승인됨");
+      } else {
+        toast.warning(`AI 검증 완료: 거부됨 - ${data.reason}`);
+      }
+      refetchApplications();
+      // AI 검증 결과 모달 자동 열기
+      setAiVerificationDialogOpen(true);
+    },
+    onError: (error) => {
+      setIsVerifying(false);
+      toast.error("AI 검증 실패: " + error.message);
+    },
+  });
+
   // AI 설정 초기화
   useEffect(() => {
     if (aiSettings && aiSettings.length > 0) {
@@ -1174,16 +1192,32 @@ export default function Admin() {
                             {app.isOtherTest === 1 ? (
                               <Badge variant="outline">수동 검토</Badge>
                             ) : (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setSelectedApplication(app);
-                                  setAiVerificationDialogOpen(true);
-                                }}
-                              >
-                                결과 보기
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedApplication(app);
+                                    setAiVerificationDialogOpen(true);
+                                  }}
+                                >
+                                  결과 보기
+                                </Button>
+                                {app.status === 'pending' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedApplication(app);
+                                      setIsVerifying(true);
+                                      verifyWithAIMutation.mutate({ applicationId: app.id });
+                                    }}
+                                    disabled={isVerifying}
+                                  >
+                                    {isVerifying ? 'AI 검증 중...' : 'AI 검증 실행'}
+                                  </Button>
+                                )}
+                              </div>
                             )}
                           </TableCell>
                           <TableCell>

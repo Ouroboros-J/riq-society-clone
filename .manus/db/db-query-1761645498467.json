@@ -1,0 +1,32 @@
+{
+  "query": "SELECT * FROM recognizedTests WHERE testName LIKE '%ACT%' ORDER BY displayOrder",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DsBm4SjbxZ8LdH.ae93e0dc1c76 --database 7yk2Cjgf3WcBwNeW2NtrwQ --execute SELECT * FROM recognizedTests WHERE testName LIKE '%ACT%' ORDER BY displayOrder",
+  "rows": [
+    {
+      "id": "90019",
+      "category": "대학 및 대학원 진학 시험",
+      "testName": "American College Testing Program (ACT), 34",
+      "description": "ACT (administered on or after October 1989)",
+      "requiredScore": "34점 이상",
+      "displayOrder": "19",
+      "isActive": "1",
+      "createdAt": "2025-10-28 09:37:04",
+      "updatedAt": "2025-10-28 09:37:04"
+    },
+    {
+      "id": "90020",
+      "category": "대학 및 대학원 진학 시험",
+      "testName": "American College Testing Program (ACT), 32",
+      "description": "ACT (administered prior to October 1989)",
+      "requiredScore": "32점 이상",
+      "displayOrder": "20",
+      "isActive": "1",
+      "createdAt": "2025-10-28 09:37:04",
+      "updatedAt": "2025-10-28 09:37:04"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcategory\ttestName\tdescription\trequiredScore\tdisplayOrder\tisActive\tcreatedAt\tupdatedAt\n90019\t대학 및 대학원 진학 시험\tAmerican College Testing Program (ACT), 34\tACT (administered on or after October 1989)\t34점 이상\t19\t1\t2025-10-28 09:37:04\t2025-10-28 09:37:04\n90020\t대학 및 대학원 진학 시험\tAmerican College Testing Program (ACT), 32\tACT (administered prior to October 1989)\t32점 이상\t20\t1\t2025-10-28 09:37:04\t2025-10-28 09:37:04\n",
+  "stderr": "",
+  "execution_time_ms": 1520
+}

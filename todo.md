@@ -846,3 +846,54 @@
 - [ ] 관리자 페이지에서 수동 실행 버튼 추가 (선택)
 
 
+
+
+### 휴면 계정 자동 삭제 시스템
+- [x] 휴면 계정 조회 함수 구현 (미승인 + 90일 이상 미로그인)
+- [x] 휴면 계정 알림 이메일 템플릿 생성
+- [x] 휴면 계정 알림 발송 함수 구현 (notifyInactiveAccounts)
+- [x] 알림 후 7일 경과 시 계정 자동 삭제 함수 구현 (deleteInactiveAccounts)
+- [x] API 엔드포인트 추가 (admin.getInactiveAccounts, notifyInactiveAccounts, deleteInactiveAccounts)
+- [x] users 테이블에 dormancyNotifiedAt, lastLoginAt 필드 추가
+
+
+
+
+### 입회 신청 폼 유효성 검사 강화
+- [x] Step 1: 모든 필수 입력 (이름, 이메일, 생년월일) 완료 전 다음 버튼 비활성화
+- [x] Step 2: 모든 필수 입력 (시험 종류, 점수) 완료 전 다음 버튼 비활성화
+- [x] Step 3: 서류 업로드 완료 전 제출 버튼 비활성화 (이미 구현됨)
+
+### AI 검증 기능 테스트
+- [ ] 실제 AI API 키를 사용하여 입회 신청 AI 검증 테스트
+- [ ] AI 검증 결과 확인 (관리자 페이지)
+
+
+
+
+### Claude 모델 목록 동적 로딩
+- [ ] Claude 모델 목록 하드코딩 제거
+- [ ] "모델 목록 불러오기" 버튼 클릭 시 API에서 동적으로 모델 목록 불러오기
+
+
+
+
+### AI 설정 개선
+- [x] API 키 저장 전 유효성 검증 (모든 플랫폼: OpenAI, Anthropic, Gemini, Perplexity)
+- [x] Anthropic Models API (GET /v1/models) 서버 엔드포인트 구현 (이미 구현됨)
+- [x] 클라이언트에서 동적으로 Anthropic 모델 목록 불러오기 (이미 구현됨)
+- [x] 필수 헤더 추가: `x-api-key`, `anthropic-version: 2023-06-01` (이미 구현됨)
+
+
+
+
+
+### Phase 9-4: AI 수동 검증 기능 (오토 파일럿 모드 없이도 사용 가능)
+- [x] 관리자 페이지 입회 신청 목록에 "AI 검증 실행" 버튼 추가
+- [x] 오토 파일럿 모드가 꺼져 있어도 수동으로 AI 검증 실행 가능
+- [x] 기존 신청 건(이미 제출된 것)에 대해서도 AI 검증 실행 가능
+- [x] AI 검증 미완료 건은 "AI 검증 실행" 버튼 표시 (pending 상태일 때만)
+- [x] 검증 중 로딩 상태 표시
+- [x] 검증 완료 시 toast 알림 및 결과 자동 새로고침
+- [x] 검증 완료 후 AI 검증 결과 모달 자동 열기
+

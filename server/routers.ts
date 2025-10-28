@@ -17,6 +17,7 @@ import { getEventStats, getPageViewStats, getConversionStats } from "./posthog-a
 import { verifyApplicationWithAI } from "./ai-verification";
 import { getFirstDocumentAsBase64 } from "./s3-helper";
 import { getModelsByPlatform } from "./ai-models";
+import { validateApiKey } from "./ai-key-validation";
 import { createApplicationReview, getApplicationReviewsByApplicationId, getAllPendingReviews, updateApplicationReviewStatus, incrementReviewRequestCount } from "./db-application-reviews";
 import { getDb } from "./db";
 import { applications, users, applicationReviews } from "../drizzle/schema";
@@ -27,6 +28,7 @@ import { validateFileUpload } from "./file-validation";
 import { sendEmail } from "./_core/email";
 import { sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendReviewApprovedEmail, sendReviewRejectedEmail, sendPaymentConfirmedEmail } from "./email";
 import { cleanupUnpaidDocuments } from "./cleanup-documents";
+import { notifyInactiveAccounts, deleteInactiveAccounts, getInactiveAccounts } from "./cleanup-inactive-accounts";
 
 export const appRouter = router({
   system: systemRouter,
@@ -306,6 +308,26 @@ export const appRouter = router({
         const daysThreshold = input?.daysThreshold || 30;
         return await cleanupUnpaidDocuments(daysThreshold);
       }),
+
+    // 휴면 계정 관리
+    getInactiveAccounts: adminProcedure
+      .input(z.object({ inactiveDays: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        const inactiveDays = input?.inactiveDays || 90;
+        return await getInactiveAccounts(inactiveDays);
+      }),
+
+    notifyInactiveAccounts: adminProcedure
+      .input(z.object({ inactiveDays: z.number().optional() }).optional())
+      .mutation(async ({ input }) => {
+        const inactiveDays = input?.inactiveDays || 90;
+        return await notifyInactiveAccounts(inactiveDays);
+      }),
+
+    deleteInactiveAccounts: adminProcedure
+      .mutation(async () => {
+        return await deleteInactiveAccounts();
+      }),
   }),
 
   faq: router({
@@ -454,6 +476,14 @@ export const appRouter = router({
         isEnabled: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
+        // API 키가 제공된 경우 유효성 검증
+        if (input.apiKey) {
+          const validation = await validateApiKey(input.platform, input.apiKey);
+          if (!validation.valid) {
+            throw new Error(`Invalid API key: ${validation.error}`);
+          }
+        }
+        
         return await upsertAiSetting(input);
       }),
 
@@ -760,6 +790,105 @@ export const appRouter = router({
         }).where(eq(applications.id, application.id));
         
         return { success: true };
+      }),
+
+    // 수동 AI 검증 실행 (오토 파일럿 모드와 무관)
+    verifyWithAI: adminProcedure
+      .input(z.object({ applicationId: z.number() }))
+      .mutation(async ({ input }) => {
+        try {
+          console.log('[verifyWithAI] Starting manual AI verification for application:', input.applicationId);
+          
+          const db = await getDb();
+          if (!db) throw new Error("Database connection failed");
+        
+        // 신청 정보 조회
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, input.applicationId));
+        
+        if (!application) {
+          throw new Error("신청을 찾을 수 없습니다");
+        }
+        
+        // "기타 시험"은 AI 검증 불가
+        if (application.isOtherTest === 1) {
+          throw new Error("기타 시험은 AI 검증을 지원하지 않습니다");
+        }
+        
+        // testType이 null인 경우 처리
+        if (!application.testType) {
+          throw new Error("시험 종류가 지정되지 않았습니다");
+        }
+        
+        // 시험 카테고리 결정 (testType은 시험 이름 문자열)
+        // 기본값은 "표준 지능 검사"
+        const testCategory = "표준 지능 검사";
+        
+        // documentUrls null 체크
+        if (!application.documentUrls) {
+          throw new Error("업로드된 서류가 없습니다");
+        }
+        
+        // S3에서 서류 다운로드 후 Base64 변환
+        const documentBase64 = await getFirstDocumentAsBase64(application.documentUrls);
+        
+        if (!documentBase64) {
+          throw new Error("서류를 불러올 수 없습니다");
+        }
+        
+        // AI 검증 실행
+        const verificationResult = await verifyApplicationWithAI(
+          application.testType,
+          application.testScore,
+          testCategory,
+          documentBase64,
+          application.id
+        );
+        
+        // 검증 결과 저장
+        const verificationsToSave = verificationResult.verifications.map((v) => ({
+          applicationId: application.id,
+          platform: v.platform,
+          model: v.model,
+          result: (v.result.approved ? 'approved' : 'rejected') as 'approved' | 'rejected' | 'uncertain',
+          confidence: v.result.confidence,
+          reasoning: v.result.reason,
+          rawResponse: v.rawResponse,
+        }));
+        
+        await saveMultipleAiVerifications(verificationsToSave);
+        
+        // 모든 AI가 승인하면 자동 승인
+        if (verificationResult.approved) {
+          await updateApplicationStatus(application.id, 'approved', 'AI 수동 검증 통과');
+        } else {
+          // 거절 시 거절 사유 저장 및 이메일 발송
+          await updateApplicationStatus(application.id, 'rejected', verificationResult.reason);
+          
+          // 신청자에게 거절 사유 이메일 발송
+          try {
+            await sendApplicationRejectedEmail(
+              application.email,
+              application.fullName,
+              verificationResult.reason
+            );
+          } catch (emailError) {
+            console.error('Failed to send rejection email:', emailError);
+          }
+        }
+        
+          return {
+            success: true,
+            approved: verificationResult.approved,
+            reason: verificationResult.reason,
+          };
+        } catch (error: any) {
+          console.error('[verifyWithAI] Error:', error);
+          console.error('[verifyWithAI] Stack:', error.stack);
+          throw new Error(`AI 검증 실패: ${error.message}`);
+        }
       }),
   }),
 

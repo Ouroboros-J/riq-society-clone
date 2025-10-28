@@ -155,6 +155,20 @@
       "when": 1761631626060,
       "tag": "0021_orange_demogoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1761644861442,
+      "tag": "0022_friendly_stepford_cuckoos",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1761647923528,
+      "tag": "0023_safe_barracuda",
+      "breakpoints": true
     }
   ]
 }

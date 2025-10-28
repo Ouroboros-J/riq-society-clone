@@ -327,7 +327,12 @@ export default function Application() {
               </div>
 
               <div className="flex justify-end">
-                <Button type="submit">다음</Button>
+                <Button 
+                  type="submit" 
+                  disabled={!step1Form.formState.isValid || !step1Form.watch("fullName") || !step1Form.watch("email") || !step1Form.watch("dateOfBirth")}
+                >
+                  다음
+                </Button>
               </div>
             </form>
           )}
@@ -457,7 +462,12 @@ export default function Application() {
                 <Button type="button" variant="outline" onClick={() => setCurrentStep(1)}>
                   이전
                 </Button>
-                <Button type="submit">다음</Button>
+                <Button 
+                  type="submit"
+                  disabled={!step2Form.formState.isValid || !step2Form.watch("testType") || !step2Form.watch("testScore")}
+                >
+                  다음
+                </Button>
               </div>
             </form>
           )}
