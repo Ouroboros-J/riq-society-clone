@@ -67,6 +67,12 @@ export default function Header() {
                   )}
                 </Button>
               </Link>
+
+              <a href="https://community.riqsociety.org/" target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
+                  커뮤니티
+                </Button>
+              </a>
             </>
           )}
 
@@ -137,15 +143,15 @@ export default function Header() {
                 </Button>
               </Link>
 
-              <Link href="/mypage">
-                <Button variant="ghost" className="w-full justify-start" size="lg">
-                  <User className="mr-2 h-5 w-5" />
-                  회원
-                </Button>
-              </Link>
-
               {isAuthenticated && (
                 <>
+                  <Link href="/mypage">
+                    <Button variant="ghost" className="w-full justify-start" size="lg">
+                      <User className="mr-2 h-5 w-5" />
+                      회원
+                    </Button>
+                  </Link>
+
                   <Link href="/resources">
                     <Button variant="ghost" className="w-full justify-start" size="lg">
                       <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,6 +175,13 @@ export default function Header() {
                       )}
                     </Button>
                   </Link>
+
+                  <a href="https://community.riqsociety.org/" target="_blank" rel="noopener noreferrer">
+                    <Button variant="ghost" className="w-full justify-start" size="lg">
+                      <Users className="mr-2 h-5 w-5" />
+                      커뮤니티
+                    </Button>
+                  </a>
                 </>
               )}
 
@@ -187,13 +200,6 @@ export default function Header() {
                   </Button>
                 </Link>
               )}
-
-              <a href="https://community.riqsociety.org/" target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" className="w-full justify-start" size="lg">
-                  <Users className="mr-2 h-5 w-5" />
-                  커뮤니티
-                </Button>
-              </a>
 
               {isAuthenticated ? (
                 <Button
