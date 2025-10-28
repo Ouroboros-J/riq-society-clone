@@ -597,3 +597,14 @@
 
 - [x] Three.js 파티클 배경의 스크롤 유도 화살표 제거 (원본에 없음)
 
+
+
+
+## Phase 13: 코드 정리 및 최적화
+
+- [x] 불필요한 데이터베이스 테이블 삭제 (certificates 테이블 삭제)
+- [x] 불필요한 이미지 파일 삭제 (r-icon.png, r-icon.webp 삭제)
+- [x] 사용하지 않는 코드 및 주석 삭제 (generateCertificateApprovedEmail, generateCertificateRejectedEmail 삭제)
+- [x] TODO 주석 정리 (email.ts의 TODO 주석 삭제)
+- [x] 데이터베이스 스키마 변경 적용 (pnpm db:push)
+
