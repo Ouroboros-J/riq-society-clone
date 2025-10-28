@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { posthog } from "@/lib/posthog";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
@@ -28,6 +29,10 @@ const step1Schema = z.object({
   email: z.string().email("유효한 이메일 주소를 입력해주세요"),
   dateOfBirth: z.string().min(1, "생년월일을 입력해주세요"),
   phone: z.string().optional(),
+  postalCode: z.string().optional(),
+  address: z.string().optional(),
+  detailAddress: z.string().optional(),
+  deliveryMemo: z.string().optional(),
 });
 
 // Step 2: Test Scores Schema
@@ -261,6 +266,10 @@ export default function Application() {
         email: formData.email!,
         dateOfBirth: formData.dateOfBirth!,
         phone: formData.phone,
+        postalCode: formData.postalCode,
+        address: formData.address,
+        detailAddress: formData.detailAddress,
+        deliveryMemo: formData.deliveryMemo,
         testType: formData.testType!,
         testScore: formData.testScore!,
         testDate: formData.testDate,
@@ -370,6 +379,51 @@ export default function Application() {
                       {...step1Form.register("phone")}
                       placeholder="010-1234-5678"
                     />
+                  </div>
+
+                  <div className="border-t border-border pt-4 mt-4">
+                    <h3 className="text-lg font-semibold mb-4">배송 주소 (선택)</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      입회 승인 후 회원증 및 환영 키트를 받을 주소를 입력해주세요.
+                    </p>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="postalCode">우편번호</Label>
+                        <Input
+                          id="postalCode"
+                          {...step1Form.register("postalCode")}
+                          placeholder="12345"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="address">주소</Label>
+                        <Input
+                          id="address"
+                          {...step1Form.register("address")}
+                          placeholder="서울특별시 강남구 테헤란로 123"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="detailAddress">상세주소</Label>
+                        <Input
+                          id="detailAddress"
+                          {...step1Form.register("detailAddress")}
+                          placeholder="101동 1001호"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="deliveryMemo">배송 메모</Label>
+                        <Input
+                          id="deliveryMemo"
+                          {...step1Form.register("deliveryMemo")}
+                          placeholder="문 앞에 놓아주세요"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -616,6 +670,7 @@ export default function Application() {
           )}
         </div>
       </div>
+      <Footer />
     </>
   );
 }

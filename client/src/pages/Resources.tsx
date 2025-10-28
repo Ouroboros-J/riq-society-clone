@@ -3,6 +3,7 @@ import { trpc } from '../lib/trpc';
 import { useAuth } from '../_core/hooks/useAuth';
 import { useLocation } from 'wouter';
 import Header from '../components/Header';
+import Footer from "@/components/Footer";
 import SEO from '../components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -41,7 +42,8 @@ export default function Resources() {
             </div>
           </div>
         </div>
-      </>
+        <Footer />
+    </>
     );
   }
   
@@ -82,7 +84,7 @@ export default function Resources() {
             </div>
           </div>
         </div>
-      </>
+    </>
     );
   }
   const incrementDownloadMutation = trpc.resource.incrementDownload.useMutation();

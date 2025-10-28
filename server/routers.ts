@@ -639,6 +639,10 @@ export const appRouter = router({
         email: z.string().email(),
         dateOfBirth: z.string(),
         phone: z.string().optional(),
+        postalCode: z.string().optional(),
+        address: z.string().optional(),
+        detailAddress: z.string().optional(),
+        deliveryMemo: z.string().optional(),
         testType: z.string(),
         testScore: z.string(),
         testDate: z.string().optional(),
@@ -742,6 +746,44 @@ export const appRouter = router({
             updatedAt: new Date()
           })
           .where(eq(applications.id, input.applicationId));
+        
+        return { success: true };
+      }),
+
+    updateAddress: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        postalCode: z.string().optional(),
+        address: z.string().optional(),
+        detailAddress: z.string().optional(),
+        deliveryMemo: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new Error("User not authenticated");
+        
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        // 사용자의 신청인지 확인
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, input.id));
+        
+        if (!application) {
+          throw new Error("신청을 찾을 수 없습니다");
+        }
+        
+        if (application.userId !== ctx.user.id) {
+          throw new Error("권한이 없습니다");
+        }
+        
+        // 주소 업데이트
+        const { id, ...addressData } = input;
+        await db
+          .update(applications)
+          .set(addressData)
+          .where(eq(applications.id, id));
         
         return { success: true };
       }),

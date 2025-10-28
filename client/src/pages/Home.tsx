@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import GalaxyBackground from "@/components/GalaxyBackground";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
@@ -307,12 +308,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative py-8 px-4 bg-black border-t border-border">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>© 2025 RIQ Society. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
       </main>
     </>
   );

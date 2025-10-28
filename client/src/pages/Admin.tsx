@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import Header from "../components/Header";
+import Footer from "@/components/Footer";
 import { AIVerificationResults } from "../components/AIVerificationResults";
 import { AISettingsTab } from "../components/AISettingsTab";
 import { Button } from "@/components/ui/button";
@@ -1106,7 +1107,8 @@ export default function Admin() {
                     )}
                   </CardContent>
                 </Card>
-              </>
+                <Footer />
+    </>
             )}
           </TabsContent>
 
@@ -1404,7 +1406,7 @@ export default function Admin() {
                                   >
                                     반려
                                   </Button>
-                                </>
+    </>
                               )}
                               {app.status === 'approved' && app.paymentStatus === 'deposit_requested' && (
                                 <Button
@@ -1701,6 +1703,39 @@ export default function Admin() {
                   <div>
                     <Label className="text-muted-foreground">관리자 메모</Label>
                     <p className="text-destructive font-medium">{selectedApplication.adminNotes}</p>
+                  </div>
+                )}
+                
+                {/* 배송 주소 */}
+                {(selectedApplication.postalCode || selectedApplication.address) && (
+                  <div className="border-t border-border pt-4">
+                    <Label className="text-muted-foreground font-semibold">배송 주소</Label>
+                    <div className="mt-2 space-y-2">
+                      {selectedApplication.postalCode && (
+                        <div>
+                          <Label className="text-sm text-muted-foreground">우편번호</Label>
+                          <p className="font-medium">{selectedApplication.postalCode}</p>
+                        </div>
+                      )}
+                      {selectedApplication.address && (
+                        <div>
+                          <Label className="text-sm text-muted-foreground">주소</Label>
+                          <p className="font-medium">{selectedApplication.address}</p>
+                        </div>
+                      )}
+                      {selectedApplication.detailAddress && (
+                        <div>
+                          <Label className="text-sm text-muted-foreground">상세주소</Label>
+                          <p className="font-medium">{selectedApplication.detailAddress}</p>
+                        </div>
+                      )}
+                      {selectedApplication.deliveryMemo && (
+                        <div>
+                          <Label className="text-sm text-muted-foreground">배송 메모</Label>
+                          <p className="font-medium">{selectedApplication.deliveryMemo}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 
@@ -2247,7 +2282,7 @@ export default function Admin() {
                               <SelectItem value="gpt-4o">GPT-4o</SelectItem>
                               <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
                               <SelectItem value="gpt-4-vision-preview">GPT-4 Vision Preview</SelectItem>
-                            </>
+    </>
                           )}
                         </SelectContent>
                       </Select>
@@ -2333,7 +2368,7 @@ export default function Admin() {
                               <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
                               <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet</SelectItem>
                               <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku</SelectItem>
-                            </>
+    </>
                           )}
                         </SelectContent>
                       </Select>
@@ -2418,7 +2453,7 @@ export default function Admin() {
                               <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
                               <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
                               <SelectItem value="gemini-pro-vision">Gemini Pro Vision</SelectItem>
-                            </>
+    </>
                           )}
                         </SelectContent>
                       </Select>
@@ -2503,7 +2538,7 @@ export default function Admin() {
                               <SelectItem value="sonar-pro">Sonar Pro</SelectItem>
                               <SelectItem value="sonar">Sonar</SelectItem>
                               <SelectItem value="sonar-reasoning">Sonar Reasoning</SelectItem>
-                            </>
+    </>
                           )}
                         </SelectContent>
                       </Select>

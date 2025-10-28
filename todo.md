@@ -1523,3 +1523,46 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] 카테고0리를 "저널" 또는 "잡지"로 설정하면 자동으로 /journal 페이지에 표시
 - [x] description 필드에 호수, 발행 정보 등 입력 가능
 
+
+
+
+## Phase 22: Menu Structure Simplification (TNS Style - No Dropdowns)
+- [x] Update Header.tsx to remove all dropdowns
+- [x] Flatten menu structure to top-level items only
+- [x] Menu order: 홈, 입회, 회원, 리소스, 저널, 가게
+- [x] Keep mobile hamburger menu
+- [x] Update responsive design (desktop vs mobile)
+- [x] Test all menu links
+
+## Phase 23: Footer Implementation
+- [x] Create Footer.tsx component
+- [x] Add footer links: 블로그, FAQ, 이용약관, 개인정보처리방침, 문의
+- [x] Add Footer to App.tsx layout (all pages)
+- [x] Style Footer with consistent design (dark theme)
+- [x] Add copyright and social media links (optional)
+- [x] Test footer navigation
+
+## Phase 24: Shop Page (Coming Soon)
+- [x] Create Shop.tsx page component
+- [x] Add /shop route to App.tsx
+- [x] Design "Coming Soon" UI:
+  - [x] Title: "가게 (준비 중)"
+  - [x] Description: "곷 오픈 예정입니다"
+  - [x] Optional: Email notification signup
+- [x] Add SEO component to Shop page
+- [x] Test shop page navigation
+
+## Phase 25: Shipping Address Management
+- [x] Add address fields to applications table:
+  - [x] postalCode (우편번호)
+  - [x] address (주소)
+  - [x] detailAddress (상세주소)
+  - [x] deliveryMemo (배송 메모)
+- [x] Create migration file for address fields
+- [x] Update ApplicationForm.tsx Step 1 with address input
+- [x] Add address validation (Zod schema)
+- [x] Display address in Admin application detail modal
+- [x] Add updateAddress mutation to routers.ts
+- [x] Add address edit section to MyPage.tsx
+- [x] Test address input and update flow
+

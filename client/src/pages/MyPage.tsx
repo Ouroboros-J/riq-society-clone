@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,23 @@ export default function MyPage() {
   const [depositDate, setDepositDate] = useState("");
   const [reviewRequestReason, setReviewRequestReason] = useState("");
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+  
+  // 주소 수정 관련 상태
+  const [showAddressEdit, setShowAddressEdit] = useState(false);
+  const [editPostalCode, setEditPostalCode] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editDetailAddress, setEditDetailAddress] = useState("");
+  const [editDeliveryMemo, setEditDeliveryMemo] = useState("");
+  
+  // 주소 초기화
+  useEffect(() => {
+    if (application) {
+      setEditPostalCode(application.postalCode || "");
+      setEditAddress(application.address || "");
+      setEditDetailAddress(application.detailAddress || "");
+      setEditDeliveryMemo(application.deliveryMemo || "");
+    }
+  }, [application]);
 
   const requestPaymentMutation = trpc.application.requestPayment.useMutation({
     onSuccess: () => {
@@ -76,6 +94,17 @@ export default function MyPage() {
       toast.error("이메일 재발송에 실패했습니다: " + error.message);
     },
   });
+  
+  const updateAddressMutation = trpc.application.updateAddress.useMutation({
+    onSuccess: () => {
+      toast.success("배송 주소가 업데이트되었습니다.");
+      setShowAddressEdit(false);
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast.error("주소 업데이트에 실패했습니다: " + error.message);
+    },
+  });
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -91,6 +120,21 @@ export default function MyPage() {
       return;
     }
     requestPaymentMutation.mutate({ depositorName, depositDate });
+  };
+  
+  const handleUpdateAddress = () => {
+    if (!application?.id) {
+      toast.error("입회 신청 정보를 찾을 수 없습니다.");
+      return;
+    }
+    
+    updateAddressMutation.mutate({
+      id: application.id,
+      postalCode: editPostalCode,
+      address: editAddress,
+      detailAddress: editDetailAddress,
+      deliveryMemo: editDeliveryMemo,
+    });
   };
 
   if (loading) {
@@ -283,6 +327,115 @@ AI 검증 결과에 오류가 있다고 생각하신다면 재검토를 요청�
                   </div>
                 )}
                 
+                {/* 배송 주소 섹션 */}
+                {application.status === "approved" && (
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-base font-semibold">배송 주소</Label>
+                      {!showAddressEdit && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAddressEdit(true)}
+                        >
+                          수정
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {!showAddressEdit ? (
+                      <div className="space-y-2">
+                        {application.postalCode ? (
+                          <>
+                            <div>
+                              <Label className="text-sm text-muted-foreground">우편번호</Label>
+                              <p className="text-sm">{application.postalCode}</p>
+                            </div>
+                            <div>
+                              <Label className="text-sm text-muted-foreground">주소</Label>
+                              <p className="text-sm">{application.address}</p>
+                            </div>
+                            {application.detailAddress && (
+                              <div>
+                                <Label className="text-sm text-muted-foreground">상세주소</Label>
+                                <p className="text-sm">{application.detailAddress}</p>
+                              </div>
+                            )}
+                            {application.deliveryMemo && (
+                              <div>
+                                <Label className="text-sm text-muted-foreground">배송 메모</Label>
+                                <p className="text-sm">{application.deliveryMemo}</p>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">배송 주소가 등록되지 않았습니다.</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="edit-postal-code">우편번호</Label>
+                          <Input
+                            id="edit-postal-code"
+                            value={editPostalCode}
+                            onChange={(e) => setEditPostalCode(e.target.value)}
+                            placeholder="12345"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-address">주소</Label>
+                          <Input
+                            id="edit-address"
+                            value={editAddress}
+                            onChange={(e) => setEditAddress(e.target.value)}
+                            placeholder="서울특별시 강남구 테헤란로 123"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-detail-address">상세주소</Label>
+                          <Input
+                            id="edit-detail-address"
+                            value={editDetailAddress}
+                            onChange={(e) => setEditDetailAddress(e.target.value)}
+                            placeholder="101동 1001호"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-delivery-memo">배송 메모</Label>
+                          <Input
+                            id="edit-delivery-memo"
+                            value={editDeliveryMemo}
+                            onChange={(e) => setEditDeliveryMemo(e.target.value)}
+                            placeholder="문 앞에 놓아주세요"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={handleUpdateAddress}
+                            disabled={updateAddressMutation.isPending}
+                          >
+                            {updateAddressMutation.isPending ? "저장 중..." : "저장"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowAddressEdit(false);
+                              // 원래 값으로 복원
+                              setEditPostalCode(application.postalCode || "");
+                              setEditAddress(application.address || "");
+                              setEditDetailAddress(application.detailAddress || "");
+                              setEditDeliveryMemo(application.deliveryMemo || "");
+                            }}
+                          >
+                            취소
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
                 {/* Payment Section */}
                 {application.status === "approved" && (
                   <>
@@ -328,7 +481,8 @@ AI 검증 결과에 오류가 있다고 생각하신다면 재검토를 요청�
                         결제가 확인되었습니다. 정회원 승인을 기다려주세요.
                       </div>
                     )}
-                  </>
+                    <Footer />
+    </>
                 )}
               </CardContent>
             </Card>
@@ -403,7 +557,7 @@ AI 검증 결과에 오류가 있다고 생각하신다면 재검토를 요청�
                         <p className="text-muted-foreground">-</p>
                       )}
                     </div>
-                  </>
+    </>
                 )}
               </CardContent>
             </Card>

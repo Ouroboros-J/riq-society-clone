@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Header from '../components/Header';
+import Footer from "@/components/Footer";
 import SEO from '../components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -34,7 +35,8 @@ export default function Journal() {
             </div>
           </div>
         </div>
-      </>
+        <Footer />
+    </>
     );
   }
 
@@ -80,7 +82,7 @@ export default function Journal() {
             </div>
           </div>
         </div>
-      </>
+    </>
     );
   }
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { trpc } from '../lib/trpc';
 import Header from '../components/Header';
+import Footer from "@/components/Footer";
 import SEO from '../components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -113,6 +114,7 @@ export default function FAQ() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }

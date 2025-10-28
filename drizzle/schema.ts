@@ -50,6 +50,12 @@ export const applications = mysqlTable("applications", {
   dateOfBirth: varchar("dateOfBirth", { length: 50 }).notNull(),
   phone: varchar("phone", { length: 50 }),
   
+  // Shipping Address
+  postalCode: varchar("postalCode", { length: 20 }),
+  address: varchar("address", { length: 500 }),
+  detailAddress: varchar("detailAddress", { length: 500 }),
+  deliveryMemo: text("deliveryMemo"),
+  
   // Step 2: Test Scores
   testType: varchar("testType", { length: 255 }).notNull(),
   testScore: varchar("testScore", { length: 100 }).notNull(),
