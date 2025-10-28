@@ -1658,3 +1658,11 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Check Home.tsx for high z-index elements
 - [ ] Test on actual mobile device (user to confirm)
 
+
+
+
+## Bug Fix: Admin Badge Color
+- [x] Change admin badge from destructive (red) to neutral color (zinc)
+- [x] Update Header.tsx admin badge variant
+- [x] Test admin badge appearance
+
