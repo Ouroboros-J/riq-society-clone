@@ -631,8 +631,19 @@ export const appRouter = router({
               if (verificationResult.approved) {
                 await updateApplicationStatus(application.id, 'approved', 'AI 자동 검증 통과');
               } else {
-                // 거절 시 거절 사유 저장
+                // 거절 시 거절 사유 저장 및 이메일 발송
                 await updateApplicationStatus(application.id, 'rejected', verificationResult.reason);
+                
+                // 신청자에게 거절 사유 이메일 발송
+                try {
+                  await sendApplicationRejectedEmail(
+                    input.email,
+                    input.fullName,
+                    verificationResult.reason
+                  );
+                } catch (emailError) {
+                  console.error('Failed to send rejection email:', emailError);
+                }
               }
             }
           } catch (error: any) {

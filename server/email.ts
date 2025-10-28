@@ -81,7 +81,7 @@ export async function sendApplicationRejectedEmail(
       <p>안녕하세요, ${fullName}님</p>
       <p>안타깝게도 RIQ Society 입회 신청이 승인되지 않았습니다.</p>
       <p><strong>거부 사유:</strong></p>
-      <p style="background-color: #fee2e2; padding: 15px; border-radius: 5px;">${reason}</p>
+      <div style="background-color: #fee2e2; padding: 15px; border-radius: 5px; white-space: pre-wrap;">${reason}</div>
       <p>재검토를 원하시면 마이페이지에서 재검토 요청을 하실 수 있습니다.</p>
       <br/>
       <p>감사합니다.</p>

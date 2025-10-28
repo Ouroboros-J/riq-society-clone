@@ -607,3 +607,11 @@
   - [ ] AI 자동 검증 테스트
   - [ ] 재검토 요청 테스트
 
+
+
+- [x] AI 거절 사유 자동 통합 전달
+  - [x] 여러 AI의 거절 사유를 통합하는 로직 구현 (ai-verification.ts)
+  - [x] 통합된 거절 사유를 신청 상태 업데이트 시 저장 (adminNotes)
+  - [x] 신청자에게 이메일 발송 시 통합된 거절 사유 포함 (sendApplicationRejectedEmail)
+
+

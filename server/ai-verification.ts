@@ -390,14 +390,25 @@ export async function verifyApplicationWithAI(
 
   if (allApproved) {
     finalApproved = true;
-    finalReason = '모든 AI가 승인했습니다. ' + verifications.map((v) => `[${v.platform}] ${v.result.reason}`).join(' ');
+    finalReason = '모든 AI 검증을 통과했습니다.';
   } else if (allRejected) {
     finalApproved = false;
-    finalReason = '모든 AI가 거절했습니다. ' + verifications.map((v) => `[${v.platform}] ${v.result.reason}`).join(' ');
+    // 모든 AI가 거절한 경우, 거절 사유를 통합하여 전달
+    const rejectionReasons = verifications
+      .filter((v) => !v.result.approved)
+      .map((v) => `• ${v.platform.toUpperCase()}: ${v.result.reason}`)
+      .join('\n');
+    
+    finalReason = `AI 검증 결과 입회 신청이 거부되었습니다.\n\n[거절 사유]\n${rejectionReasons}`;
   } else {
-    // 일치하지 않으면 거절
+    // 일부 AI만 승인한 경우, 거절한 AI의 사유를 통합
     finalApproved = false;
-    finalReason = `AI 검증 결과가 일치하지 않습니다. (승인: ${approvedCount}/${verifications.length}) 관리자의 수동 검토가 필요합니다.`;
+    const rejectionReasons = verifications
+      .filter((v) => !v.result.approved)
+      .map((v) => `• ${v.platform.toUpperCase()}: ${v.result.reason}`)
+      .join('\n');
+    
+    finalReason = `AI 검증 결과가 일치하지 않아 거부되었습니다. (승인: ${approvedCount}/${verifications.length})\n\n[거절 사유]\n${rejectionReasons}\n\n※ 보다 정확한 검토를 위해 관리자가 직접 확인할 예정입니다.`;
   }
 
   return {
