@@ -398,9 +398,13 @@ export default function Admin() {
   };
 
   const loadAnthropicModels = async () => {
+    if (!anthropicApiKey) {
+      toast.error('Claude API 키를 먼저 입력하세요.');
+      return;
+    }
     setAnthropicModelsLoading(true);
     try {
-      const models = await utils.client.aiSettings.getAvailableModels.query({ platform: 'claude' });
+      const models = await utils.client.aiSettings.getAvailableModels.query({ platform: 'claude', apiKey: anthropicApiKey });
       setAnthropicModels(models);
       toast.success(`${models.length}개의 Claude 모델을 불러왔습니다.`);
     } catch (error: any) {
@@ -1817,7 +1821,7 @@ export default function Admin() {
                           variant="outline"
                           size="sm"
                           onClick={loadAnthropicModels}
-                          disabled={anthropicModelsLoading}
+                          disabled={anthropicModelsLoading || !anthropicApiKey}
                         >
                           {anthropicModelsLoading ? '로드 중...' : '모델 목록 불러오기'}
                         </Button>

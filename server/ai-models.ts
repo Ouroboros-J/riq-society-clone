@@ -52,16 +52,43 @@ export async function getOpenAIModels(apiKey: string): Promise<ModelInfo[]> {
 
 /**
  * Claude 모델 목록 조회
- * Anthropic API는 모델 목록 조회 엔드포인트를 제공하지 않으므로 정적 목록 반환
  */
-export async function getClaudeModels(apiKey?: string): Promise<ModelInfo[]> {
-  return [
-    { id: 'claude-3-5-sonnet-20241022', name: 'claude-3-5-sonnet-20241022', description: 'Claude 3.5 Sonnet (Latest)' },
-    { id: 'claude-3-5-sonnet-20240620', name: 'claude-3-5-sonnet-20240620', description: 'Claude 3.5 Sonnet' },
-    { id: 'claude-3-opus-20240229', name: 'claude-3-opus-20240229', description: 'Claude 3 Opus' },
-    { id: 'claude-3-sonnet-20240229', name: 'claude-3-sonnet-20240229', description: 'Claude 3 Sonnet' },
-    { id: 'claude-3-haiku-20240307', name: 'claude-3-haiku-20240307', description: 'Claude 3 Haiku' },
-  ];
+export async function getClaudeModels(apiKey: string): Promise<ModelInfo[]> {
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/models', {
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Claude API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Claude 3 모델만 필터링 (문서 검증용)
+    const claudeModels = data.data
+      .filter((model: any) => model.id.includes('claude'))
+      .map((model: any) => ({
+        id: model.id,
+        name: model.display_name || model.id,
+        description: `Anthropic ${model.display_name || model.id}`,
+      }));
+
+    return claudeModels;
+  } catch (error) {
+    console.error('Failed to fetch Claude models:', error);
+    // API 호출 실패 시 기본 모델 목록 반환
+    return [
+      { id: 'claude-3-5-sonnet-20241022', name: 'claude-3-5-sonnet-20241022', description: 'Claude 3.5 Sonnet (Latest)' },
+      { id: 'claude-3-5-sonnet-20240620', name: 'claude-3-5-sonnet-20240620', description: 'Claude 3.5 Sonnet' },
+      { id: 'claude-3-opus-20240229', name: 'claude-3-opus-20240229', description: 'Claude 3 Opus' },
+      { id: 'claude-3-sonnet-20240229', name: 'claude-3-sonnet-20240229', description: 'Claude 3 Sonnet' },
+      { id: 'claude-3-haiku-20240307', name: 'claude-3-haiku-20240307', description: 'Claude 3 Haiku' },
+    ];
+  }
 }
 
 /**
@@ -104,12 +131,18 @@ export async function getGeminiModels(apiKey: string): Promise<ModelInfo[]> {
 /**
  * Perplexity 모델 목록 조회
  * Perplexity API는 모델 목록 조회 엔드포인트를 제공하지 않으므로 정적 목록 반환
+ * 출처: https://docs.perplexity.ai/getting-started/models
  */
 export async function getPerplexityModels(apiKey?: string): Promise<ModelInfo[]> {
   return [
-    { id: 'sonar-pro', name: 'sonar-pro', description: 'Perplexity Sonar Pro' },
-    { id: 'sonar', name: 'sonar', description: 'Perplexity Sonar' },
-    { id: 'sonar-reasoning', name: 'sonar-reasoning', description: 'Perplexity Sonar Reasoning' },
+    // Sonar Models (Online)
+    { id: 'sonar', name: 'Sonar', description: 'Perplexity Sonar - Online LLM' },
+    { id: 'sonar-pro', name: 'Sonar Pro', description: 'Perplexity Sonar Pro - Advanced Online LLM' },
+    
+    // Chat Models (Offline)
+    { id: 'llama-3.1-sonar-small-128k-chat', name: 'Llama 3.1 Sonar Small 128k Chat', description: 'Small offline chat model' },
+    { id: 'llama-3.1-sonar-large-128k-chat', name: 'Llama 3.1 Sonar Large 128k Chat', description: 'Large offline chat model' },
+    { id: 'llama-3.1-sonar-huge-128k-chat', name: 'Llama 3.1 Sonar Huge 128k Chat', description: 'Huge offline chat model' },
   ];
 }
 
@@ -121,7 +154,7 @@ export async function getModelsByPlatform(platform: string, apiKey?: string): Pr
     case 'openai':
       return apiKey ? await getOpenAIModels(apiKey) : [];
     case 'claude':
-      return await getClaudeModels(apiKey);
+      return apiKey ? await getClaudeModels(apiKey) : [];
     case 'gemini':
       return apiKey ? await getGeminiModels(apiKey) : [];
     case 'perplexity':
