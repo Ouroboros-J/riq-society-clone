@@ -680,15 +680,14 @@ export const appRouter = router({
             const testInfo = await getRecognizedTestById(parseInt(input.testType));
             const testCategory = testInfo?.category || "표준 지능 검사";
             
-            // S3에서 서류 다운로드 후 Base64 변환
-            const documentBase64 = await getFirstDocumentAsBase64(input.documentUrls);
-            
-            if (documentBase64) {
+            // 신원 증명 서류와 시험 결과지 URL 확인
+            if (input.identityDocumentUrl && input.testResultUrl) {
               const verificationResult = await verifyApplicationWithAI(
                 input.testType,
                 input.testScore,
                 testCategory,
-                documentBase64,
+                input.identityDocumentUrl,
+                input.testResultUrl,
                 application.id
               );
               
@@ -834,16 +833,9 @@ export const appRouter = router({
         // 기본값은 "표준 지능 검사"
         const testCategory = "표준 지능 검사";
         
-        // documentUrls null 체크
-        if (!application.documentUrls) {
+        // 신원 증명 서류와 시험 결과지 URL 확인
+        if (!application.identityDocumentUrl || !application.testResultUrl) {
           throw new Error("업로드된 서류가 없습니다");
-        }
-        
-        // S3에서 서류 다운로드 후 Base64 변환
-        const documentBase64 = await getFirstDocumentAsBase64(application.documentUrls);
-        
-        if (!documentBase64) {
-          throw new Error("서류를 불러올 수 없습니다");
         }
         
         // AI 검증 실행
@@ -851,7 +843,8 @@ export const appRouter = router({
           application.testType,
           application.testScore,
           testCategory,
-          documentBase64,
+          application.identityDocumentUrl,
+          application.testResultUrl,
           application.id
         );
         

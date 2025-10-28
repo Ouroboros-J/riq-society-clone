@@ -1,5 +1,6 @@
-import { getEnabledAiSettings } from "./db-ai-settings";
+import { getEnabledAiSettings } from './db-ai-settings.js';
 import { broadcastVerificationProgress } from "./websocket.js";
+import { downloadFileAsBase64 } from './s3-helper.js';
 
 // AI 검증 프롬프트 템플릿 (시험 유형별)
 const STANDARD_IQ_TEST_PROMPT = `당신은 고지능 단체(High IQ Society) 입회 심사 전문가입니다.
@@ -170,6 +171,8 @@ interface AiVerificationResponse {
 
 /**
  * OpenAI API를 사용한 서류 검증
+ * @param identityDocumentUrl 신원 증명 서류 URL
+ * @param testResultUrl 시험 결과지 URL
  */
 async function verifyWithOpenAI(
   apiKey: string,
@@ -177,11 +180,50 @@ async function verifyWithOpenAI(
   testName: string,
   testScore: string,
   testCategory: string,
-  documentBase64: string
+  identityDocumentUrl: string,
+  testResultUrl: string
 ): Promise<VerificationResult> {
+  // S3에서 파일 다운로드 및 Base64 변환
+  const identityBase64 = await downloadFileAsBase64(identityDocumentUrl);
+  const testResultBase64 = await downloadFileAsBase64(testResultUrl);
+  
+  // 파일 타입 확인 (PDF vs 이미지)
+  const identityIsPdf = identityDocumentUrl.toLowerCase().endsWith('.pdf');
+  const testResultIsPdf = testResultUrl.toLowerCase().endsWith('.pdf');
+  
   const prompt = getVerificationPrompt(testCategory)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
+
+  const content: any[] = [
+    { type: 'text', text: `${prompt}\n\n**첫 번째 파일: 신원 증명 서류**\n**두 번째 파일: 시험 결과지**` },
+  ];
+  
+  // 신원 증명 서류 추가
+  if (identityIsPdf) {
+    content.push({
+      type: 'image_url',
+      image_url: { url: `data:application/pdf;base64,${identityBase64}` },
+    });
+  } else {
+    content.push({
+      type: 'image_url',
+      image_url: { url: `data:image/jpeg;base64,${identityBase64}` },
+    });
+  }
+  
+  // 시험 결과지 추가
+  if (testResultIsPdf) {
+    content.push({
+      type: 'image_url',
+      image_url: { url: `data:application/pdf;base64,${testResultBase64}` },
+    });
+  } else {
+    content.push({
+      type: 'image_url',
+      image_url: { url: `data:image/jpeg;base64,${testResultBase64}` },
+    });
+  }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -191,20 +233,7 @@ async function verifyWithOpenAI(
     },
     body: JSON.stringify({
       model: model,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${documentBase64}`,
-              },
-            },
-          ],
-        },
-      ],
+      messages: [{ role: 'user', content }],
       max_tokens: 1000,
     }),
   });
@@ -214,10 +243,10 @@ async function verifyWithOpenAI(
   }
 
   const data = await response.json();
-  const content = data.choices[0].message.content;
+  const responseContent = data.choices[0].message.content;
 
   // JSON 파싱
-  const jsonMatch = content.match(/```json\n([\s\S]+?)\n```/) || content.match(/{[\s\S]+}/);
+  const jsonMatch = responseContent.match(/```json\n([\s\S]+?)\n```/) || responseContent.match(/{[\s\S]+}/);
   if (!jsonMatch) {
     throw new Error('Invalid response format from OpenAI');
   }
@@ -228,6 +257,8 @@ async function verifyWithOpenAI(
 
 /**
  * Anthropic (Claude) API를 사용한 서류 검증
+ * @param identityDocumentUrl 신원 증명 서류 URL
+ * @param testResultUrl 시험 결과지 URL
  */
 async function verifyWithAnthropic(
   apiKey: string,
@@ -235,11 +266,48 @@ async function verifyWithAnthropic(
   testName: string,
   testScore: string,
   testCategory: string,
-  documentBase64: string
+  identityDocumentUrl: string,
+  testResultUrl: string
 ): Promise<VerificationResult> {
+  // S3에서 파일 다운로드 및 Base64 변환
+  const identityBase64 = await downloadFileAsBase64(identityDocumentUrl);
+  const testResultBase64 = await downloadFileAsBase64(testResultUrl);
+  
+  // 파일 타입 확인 (PDF vs 이미지)
+  const identityIsPdf = identityDocumentUrl.toLowerCase().endsWith('.pdf');
+  const testResultIsPdf = testResultUrl.toLowerCase().endsWith('.pdf');
+  
   const prompt = getVerificationPrompt(testCategory)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
+
+  const messageContent: any[] = [];
+  
+  // 신원 증명 서류 추가
+  messageContent.push({
+    type: 'image',
+    source: {
+      type: 'base64',
+      media_type: identityIsPdf ? 'application/pdf' : 'image/jpeg',
+      data: identityBase64,
+    },
+  });
+  
+  // 시험 결과지 추가
+  messageContent.push({
+    type: 'image',
+    source: {
+      type: 'base64',
+      media_type: testResultIsPdf ? 'application/pdf' : 'image/jpeg',
+      data: testResultBase64,
+    },
+  });
+  
+  // 프롬프트 추가
+  messageContent.push({
+    type: 'text',
+    text: `${prompt}\n\n**첫 번째 파일: 신원 증명 서류**\n**두 번째 파일: 시험 결과지**`,
+  });
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -254,20 +322,7 @@ async function verifyWithAnthropic(
       messages: [
         {
           role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: 'image/jpeg',
-                data: documentBase64,
-              },
-            },
-            {
-              type: 'text',
-              text: prompt,
-            },
-          ],
+          content: messageContent,
         },
       ],
     }),
@@ -278,10 +333,10 @@ async function verifyWithAnthropic(
   }
 
   const data = await response.json();
-  const content = data.content[0].text;
+  const responseText = data.content[0].text;
 
   // JSON 파싱
-  const jsonMatch = content.match(/```json\n([\s\S]+?)\n```/) || content.match(/{[\s\S]+}/);
+  const jsonMatch = responseText.match(/```json\n([\s\S]+?)\n```/) || responseText.match(/{[\s\S]+}/);
   if (!jsonMatch) {
     throw new Error('Invalid response format from Anthropic');
   }
@@ -292,6 +347,8 @@ async function verifyWithAnthropic(
 
 /**
  * Google Gemini API를 사용한 서류 검증
+ * @param identityDocumentUrl 신원 증명 서류 URL
+ * @param testResultUrl 시험 결과지 URL
  */
 async function verifyWithGemini(
   apiKey: string,
@@ -299,11 +356,40 @@ async function verifyWithGemini(
   testName: string,
   testScore: string,
   testCategory: string,
-  documentBase64: string
+  identityDocumentUrl: string,
+  testResultUrl: string
 ): Promise<VerificationResult> {
+  // S3에서 파일 다운로드 및 Base64 변환
+  const identityBase64 = await downloadFileAsBase64(identityDocumentUrl);
+  const testResultBase64 = await downloadFileAsBase64(testResultUrl);
+  
+  // 파일 타입 확인 (PDF vs 이미지)
+  const identityIsPdf = identityDocumentUrl.toLowerCase().endsWith('.pdf');
+  const testResultIsPdf = testResultUrl.toLowerCase().endsWith('.pdf');
+  
   const prompt = getVerificationPrompt(testCategory)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
+
+  const parts: any[] = [
+    { text: `${prompt}\n\n**첫 번째 파일: 신원 증명 서류**\n**두 번째 파일: 시험 결과지**` },
+  ];
+  
+  // 신원 증명 서류 추가
+  parts.push({
+    inline_data: {
+      mime_type: identityIsPdf ? 'application/pdf' : 'image/jpeg',
+      data: identityBase64,
+    },
+  });
+  
+  // 시험 결과지 추가
+  parts.push({
+    inline_data: {
+      mime_type: testResultIsPdf ? 'application/pdf' : 'image/jpeg',
+      data: testResultBase64,
+    },
+  });
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -313,19 +399,7 @@ async function verifyWithGemini(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              {
-                inline_data: {
-                  mime_type: 'image/jpeg',
-                  data: documentBase64,
-                },
-              },
-            ],
-          },
-        ],
+        contents: [{ parts }],
       }),
     }
   );
@@ -335,10 +409,10 @@ async function verifyWithGemini(
   }
 
   const data = await response.json();
-  const content = data.candidates[0].content.parts[0].text;
+  const geminiContent = data.candidates[0].content.parts[0].text;
 
   // JSON 파싱
-  const jsonMatch = content.match(/```json\n([\s\S]+?)\n```/) || content.match(/{[\s\S]+}/);
+  const jsonMatch = geminiContent.match(/```json\n([\s\S]+?)\n```/) || geminiContent.match(/{[\s\S]+}/);
   if (!jsonMatch) {
     throw new Error('Invalid response format from Gemini');
   }
@@ -350,6 +424,8 @@ async function verifyWithGemini(
 /**
  * Perplexity API를 사용한 서류 검증
  * Sonar 모델은 이미지 분석을 지원합니다.
+ * @param identityDocumentUrl 신원 증명 서류 URL
+ * @param testResultUrl 시험 결과지 URL
  */
 async function verifyWithPerplexity(
   apiKey: string,
@@ -357,11 +433,60 @@ async function verifyWithPerplexity(
   testName: string,
   testScore: string,
   testCategory: string,
-  documentBase64: string
+  identityDocumentUrl: string,
+  testResultUrl: string
 ): Promise<VerificationResult> {
+  // 모델 제한 확인: sonar, sonar-pro만 이미지/파일 지원
+  const supportedModels = ['sonar', 'sonar-pro'];
+  if (!supportedModels.includes(model)) {
+    throw new Error(`Perplexity 모델 '${model}'은(는) 이미지/파일 분석을 지원하지 않습니다. sonar 또는 sonar-pro 모델을 사용하세요.`);
+  }
+  
+  // S3에서 파일 다운로드 및 Base64 변환
+  const identityBase64 = await downloadFileAsBase64(identityDocumentUrl);
+  const testResultBase64 = await downloadFileAsBase64(testResultUrl);
+  
+  // 파일 타입 확인 (PDF vs 이미지)
+  const identityIsPdf = identityDocumentUrl.toLowerCase().endsWith('.pdf');
+  const testResultIsPdf = testResultUrl.toLowerCase().endsWith('.pdf');
+  
   const prompt = getVerificationPrompt(testCategory)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
+
+  const messageContent: any[] = [
+    { type: 'text', text: `${prompt}\n\n**첫 번째 파일: 신원 증명 서류**\n**두 번째 파일: 시험 결과지**` },
+  ];
+  
+  // 신원 증명 서류 추가
+  if (identityIsPdf) {
+    // PDF는 file_url 형식 사용 (base64 without data URI prefix)
+    messageContent.push({
+      type: 'file_url',
+      file_url: { url: identityBase64 },
+      file_name: 'identity.pdf',
+    });
+  } else {
+    // 이미지는 image_url 형식 사용 (data URI)
+    messageContent.push({
+      type: 'image_url',
+      image_url: { url: `data:image/jpeg;base64,${identityBase64}` },
+    });
+  }
+  
+  // 시험 결과지 추가
+  if (testResultIsPdf) {
+    messageContent.push({
+      type: 'file_url',
+      file_url: { url: testResultBase64 },
+      file_name: 'test_result.pdf',
+    });
+  } else {
+    messageContent.push({
+      type: 'image_url',
+      image_url: { url: `data:image/jpeg;base64,${testResultBase64}` },
+    });
+  }
 
   const response = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
@@ -374,15 +499,7 @@ async function verifyWithPerplexity(
       messages: [
         {
           role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${documentBase64}`,
-              },
-            },
-          ],
+          content: messageContent,
         },
       ],
     }),
@@ -393,10 +510,10 @@ async function verifyWithPerplexity(
   }
 
   const data = await response.json();
-  const content = data.choices[0].message.content;
+  const perplexityContent = data.choices[0].message.content;
 
   // JSON 파싱
-  const jsonMatch = content.match(/```json\n([\s\S]+?)\n```/) || content.match(/{[\s\S]+}/);
+  const jsonMatch = perplexityContent.match(/```json\n([\s\S]+?)\n```/) || perplexityContent.match(/{[\s\S]+}/);
   if (!jsonMatch) {
     throw new Error('Invalid response format from Perplexity');
   }
@@ -427,6 +544,11 @@ export async function verifyApplicationWithAI(
     throw new Error('최소 2개 이상의 AI 모델이 활성화되어야 합니다.');
   }
 
+  // 파일 URL 유효성 검사
+  if (!identityDocumentUrl || !testResultUrl) {
+    throw new Error('신원 증명 서류와 시험 결과지 URL이 필요합니다.');
+  }
+
   const verifications: AiVerificationResponse[] = [];
 
   // 각 AI로 검증 수행
@@ -447,7 +569,8 @@ export async function verifyApplicationWithAI(
             testName,
             testScore,
             testCategory,
-            documentBase64
+            identityDocumentUrl,
+            testResultUrl
           );
           break;
         case 'anthropic':
@@ -457,7 +580,8 @@ export async function verifyApplicationWithAI(
             testName,
             testScore,
             testCategory,
-            documentBase64
+            identityDocumentUrl,
+            testResultUrl
           );
           break;
         case 'google':
@@ -467,7 +591,8 @@ export async function verifyApplicationWithAI(
             testName,
             testScore,
             testCategory,
-            documentBase64
+            identityDocumentUrl,
+            testResultUrl
           );
           break;
         case 'perplexity':
@@ -477,7 +602,8 @@ export async function verifyApplicationWithAI(
             testName,
             testScore,
             testCategory,
-            documentBase64
+            identityDocumentUrl,
+            testResultUrl
           );
           break;
         default:

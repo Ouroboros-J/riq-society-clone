@@ -968,21 +968,37 @@
 
 
 
-### Phase 9-8: PDF 파일 처리 (모든 플랫폼 PDF 지원)
+### Phase 9-8: PDF 파일 처리 (모든 플랫폼 PDF 직접 지원)
 - [x] PDF → 이미지 변환 함수 구현 (사용 안 함)
 - [x] verifyApplicationWithAI 함수 시그니처 수정
   - [x] identityDocumentUrl, testResultUrl 파라미터로 변경
-- [ ] AI 검증 함수 내부 로직 수정
-  - [ ] OpenAI: PDF/이미지 원본 Base64로 전달
-  - [ ] Claude: PDF/이미지 원본 Base64로 전달
-  - [ ] Gemini: PDF/이미지 원본 Base64로 전달
-  - [ ] Perplexity: 이미지는 image_url (data URI), PDF는 file_url (base64)
-  - [ ] 2개 파일(신원 증명 + 시험 결과지) 모두 전달
-  - [ ] 프롬프트에 파일 순서 명시
-- [ ] Perplexity 모델 제한 추가
-  - [ ] sonar, sonar-pro만 이미지/파일 지원
-  - [ ] reasoning 계열, deep-research는 미지원
-  - [ ] AI 검증 시 sonar/sonar-pro 아닌 모델 선택 시 경고 또는 건너뛰기
-- [ ] routers.ts에서 verifyApplicationWithAI 호출 부분 수정
-  - [ ] identityDocumentUrl과 testResultUrl을 그대로 전달
+  - [x] 파일 URL 유효성 검사 추가
+- [x] AI 검증 함수 내부 로직 수정
+  - [x] OpenAI: PDF/이미지 원본 Base64로 전달 (data URI 형식)
+  - [x] Claude: PDF/이미지 원본 Base64로 전달 (base64 source 형식)
+  - [x] Gemini: PDF/이미지 원본 Base64로 전달 (inline_data 형식)
+  - [x] Perplexity: 이미지는 image_url (data URI), PDF는 file_url (base64 only)
+  - [x] 2개 파일(신원 증명 + 시험 결과지) 모두 전달
+  - [x] 프롬프트에 파일 순서 명시
+  - [x] S3에서 파일 다운로드 및 Base64 변환 (downloadFileAsBase64 함수 사용)
+  - [x] 파일 타입 확인 (PDF vs 이미지)
+  - [x] 변수명 충돌 해결 (content → responseContent, responseText, geminiContent, perplexityContent)
+- [x] Perplexity 모델 제한 추가
+  - [x] sonar, sonar-pro만 이미지/파일 지원
+  - [x] reasoning 계열, deep-research는 미지원
+  - [x] AI 검증 시 sonar/sonar-pro 아닌 모델 선택 시 에러 발생으로 처리
+- [x] routers.ts에서 verifyApplicationWithAI 호출 부분 수정
+  - [x] identityDocumentUrl과 testResultUrl을 그대로 전달
+  - [x] 자동 검증 (submit mutation)
+  - [x] 수동 검증 (verifyWithAI mutation)
+
+
+
+### Phase 9-9: 관리자 페이지 수정
+- [x] 상세 보기 모달에서 2개 파일 별도 표시
+  - [x] "신원 증명 서류" 섹션
+  - [x] "시험 결과지" 섹션
+  - [x] 각 파일에 대한 별도 링크
+  - [x] 기존 documentUrls 호환성 유지
+
 

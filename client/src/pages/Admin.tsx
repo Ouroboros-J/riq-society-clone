@@ -1686,24 +1686,66 @@ export default function Admin() {
                 
                 <div>
                   <Label className="text-muted-foreground">증빙 서류</Label>
-                  {selectedApplication.documentUrls ? (
-                    <div className="mt-2 space-y-2">
-                      {selectedApplication.documentUrls.split(',').map((url: string, index: number) => (
-                        <div key={index}>
+                  <div className="mt-2 space-y-3">
+                    {/* 신원 증명 서류 */}
+                    <div>
+                      <Label className="text-sm font-medium">신원 증명 서류</Label>
+                      {selectedApplication.identityDocumentUrl ? (
+                        <div className="mt-1">
                           <a 
-                            href={url.trim()} 
+                            href={selectedApplication.identityDocumentUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-primary hover:underline"
                           >
-                            서류 {index + 1} 보기
+                            신원 증명 서류 보기
                           </a>
                         </div>
-                      ))}
+                      ) : (
+                        <p className="text-muted-foreground text-sm">업로드되지 않음</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-muted-foreground">업로드된 서류가 없습니다.</p>
-                  )}
+                    
+                    {/* 시험 결과지 */}
+                    <div>
+                      <Label className="text-sm font-medium">시험 결과지</Label>
+                      {selectedApplication.testResultUrl ? (
+                        <div className="mt-1">
+                          <a 
+                            href={selectedApplication.testResultUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            시험 결과지 보기
+                          </a>
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground text-sm">업로드되지 않음</p>
+                      )}
+                    </div>
+                    
+                    {/* 기존 documentUrls 호환성 유지 */}
+                    {selectedApplication.documentUrls && !selectedApplication.identityDocumentUrl && !selectedApplication.testResultUrl && (
+                      <div>
+                        <Label className="text-sm font-medium">기타 서류</Label>
+                        <div className="mt-1 space-y-1">
+                          {selectedApplication.documentUrls.split(',').map((url: string, index: number) => (
+                            <div key={index}>
+                              <a 
+                                href={url.trim()} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                서류 {index + 1} 보기
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
