@@ -1,25 +1,86 @@
 import { getEnabledAiSettings } from "./db-ai-settings";
 import { broadcastVerificationProgress } from "./websocket.js";
 
-// AI 검증 프롬프트 템플릿
-const VERIFICATION_PROMPT = `당신은 고지능 단체(High IQ Society) 입회 심사 전문가입니다.
+// AI 검증 프롬프트 템플릿 (시험 유형별)
+const STANDARD_IQ_TEST_PROMPT = `당신은 고지능 단체(High IQ Society) 입회 심사 전문가입니다.
 
-제출된 서류를 검토하여 다음을 확인해주세요:
+**제출된 서류: 신원 증명 + 표준 지능 검사 결과지**
 
-1. **시험 정보 확인**
+다음 항목을 철저히 확인해주세요:
+
+1. **신원 증명 확인**
+   - 신원 증명 서류(주민등록증, 운전면허증, 여권, 학생증, 국가 자격증 등)에 본인 이름이 명확히 표시되어 있는가?
+   - 신원 증명 서류가 유효하고 위조 흔적이 없는가?
+
+2. **시험 정보 확인**
    - 신청자가 선택한 시험: {testName}
-   - 제출된 서류에 해당 시험 이름이 명확히 표시되어 있는가?
+   - 결과지에 해당 시험 이름이 명확히 표시되어 있는가?
 
-2. **점수 확인**
+3. **결과지 필수 항목 확인 (표준 지능 검사)**
+   - ✅ 본인 이름 (신원 증명 서류와 일치하는가?)
+   - ✅ 전체 점수 (신청자 입력: {testScore})
+   - ✅ 응시 장소
+   - ✅ 응시 날짜
+   - ✅ 담당 심리학자의 면허 번호
+   - ✅ 담당 심리학자의 연락처
+   - ✅ 담당 심리학자의 날인 또는 서명
+
+4. **점수 확인**
    - 신청자가 입력한 점수: {testScore}
-   - 서류에 표시된 점수와 일치하는가?
+   - 결과지에 표시된 점수와 일치하는가?
 
-3. **입회 자격 기준**
+5. **입회 자격 기준**
    - RIQ Society는 상위 1% 고지능자만 입회 가능합니다.
    - 제출된 점수가 해당 시험의 상위 1% 기준을 충족하는가?
 
-4. **서류 진위성**
-   - 서류가 공식 기관에서 발급한 것으로 보이는가?
+6. **서류 진위성**
+   - 결과지가 공식 심리학 기관에서 발급한 것으로 보이는가?
+   - 위조 또는 변조 흔적이 있는가?
+
+**응답 형식 (JSON):**
+\`\`\`json
+{
+  "approved": true 또는 false,
+  "reason": "승인/거절 사유를 한국어로 상세히 작성 (누락된 항목이 있으면 명시)",
+  "confidence": 0.0 ~ 1.0 (확신도)
+}
+\`\`\`
+
+**중요:** 
+- 필수 항목이 하나라도 누락되면 반드시 거절하세요.
+- 신원 증명 서류와 결과지의 이름이 일치하지 않으면 거절하세요.
+- 점수가 상위 1% 기준에 미달하면 거절하세요.
+- 서류가 불명확하거나 위조 의심이 있으면 거절하세요.`;
+
+const ACADEMIC_TEST_PROMPT = `당신은 고지능 단체(High IQ Society) 입회 심사 전문가입니다.
+
+**제출된 서류: 신원 증명 + 학업 및 인지 능력 검사 결과지**
+
+다음 항목을 철저히 확인해주세요:
+
+1. **신원 증명 확인**
+   - 신원 증명 서류에 본인 이름이 명확히 표시되어 있는가?
+   - 신원 증명 서류가 유효하고 위조 흔적이 없는가?
+
+2. **시험 정보 확인**
+   - 신청자가 선택한 시험: {testName}
+   - 결과지에 해당 시험 이름이 명확히 표시되어 있는가?
+
+3. **결과지 필수 항목 확인**
+   - ✅ 본인 이름 (신원 증명 서류와 일치하는가?)
+   - ✅ 전체 점수 (신청자 입력: {testScore})
+   - ✅ 응시 날짜
+
+4. **점수 확인**
+   - 신청자가 입력한 점수: {testScore}
+   - 결과지에 표시된 점수와 일치하는가?
+
+5. **입회 자격 기준**
+   - RIQ Society는 상위 1% 고지능자만 입회 가능합니다.
+   - 제출된 점수가 해당 시험의 상위 1% 기준을 충족하는가?
+
+6. **서류 진위성**
+   - 결과지가 공식 기관에서 발급한 것으로 보이는가?
    - 위조 또는 변조 흔적이 있는가?
 
 **응답 형식 (JSON):**
@@ -32,9 +93,67 @@ const VERIFICATION_PROMPT = `당신은 고지능 단체(High IQ Society) 입회 
 \`\`\`
 
 **중요:** 
-- 의심스러운 경우 반드시 거절하세요.
+- 신원 증명 서류와 결과지의 이름이 일치하지 않으면 거절하세요.
 - 점수가 상위 1% 기준에 미달하면 거절하세요.
 - 서류가 불명확하거나 위조 의심이 있으면 거절하세요.`;
+
+const COLLEGE_TEST_PROMPT = `당신은 고지능 단체(High IQ Society) 입회 심사 전문가입니다.
+
+**제출된 서류: 신원 증명 + 대학/대학원 진학 시험 성적표**
+
+다음 항목을 철저히 확인해주세요:
+
+1. **신원 증명 확인**
+   - 신원 증명 서류에 본인 이름이 명확히 표시되어 있는가?
+   - 신원 증명 서류가 유효하고 위조 흔적이 없는가?
+
+2. **시험 정보 확인**
+   - 신청자가 선택한 시험: {testName}
+   - 성적표에 해당 시험 이름이 명확히 표시되어 있는가?
+
+3. **성적표 필수 항목 확인**
+   - ✅ 본인 이름 (신원 증명 서류와 일치하는가?)
+   - ✅ 전체 점수 (신청자 입력: {testScore})
+   - ✅ 응시 날짜
+
+4. **점수 확인**
+   - 신청자가 입력한 점수: {testScore}
+   - 성적표에 표시된 점수와 일치하는가?
+
+5. **입회 자격 기준**
+   - RIQ Society는 상위 1% 고지능자만 입회 가능합니다.
+   - 제출된 점수가 해당 시험의 상위 1% 기준을 충족하는가?
+
+6. **서류 진위성**
+   - 성적표가 공식 시험 기관에서 발급한 것으로 보이는가?
+   - 위조 또는 변조 흔적이 있는가?
+
+**응답 형식 (JSON):**
+\`\`\`json
+{
+  "approved": true 또는 false,
+  "reason": "승인/거절 사유를 한국어로 상세히 작성",
+  "confidence": 0.0 ~ 1.0 (확신도)
+}
+\`\`\`
+
+**중요:** 
+- 신원 증명 서류와 성적표의 이름이 일치하지 않으면 거절하세요.
+- 점수가 상위 1% 기준에 미달하면 거절하세요.
+- 서류가 불명확하거나 위조 의심이 있으면 거절하세요.`;
+
+// 시험 유형에 따라 적절한 프롬프트 선택
+function getVerificationPrompt(testCategory: string): string {
+  if (testCategory === "표준 지능 검사") {
+    return STANDARD_IQ_TEST_PROMPT;
+  } else if (testCategory === "학업 및 인지 능력 검사") {
+    return ACADEMIC_TEST_PROMPT;
+  } else if (testCategory === "대학 및 대학원 진학 시험") {
+    return COLLEGE_TEST_PROMPT;
+  }
+  // 기본값: 표준 지능 검사 프롬프트
+  return STANDARD_IQ_TEST_PROMPT;
+}
 
 interface VerificationResult {
   approved: boolean;
@@ -57,9 +176,10 @@ async function verifyWithOpenAI(
   model: string,
   testName: string,
   testScore: string,
+  testCategory: string,
   documentBase64: string
 ): Promise<VerificationResult> {
-  const prompt = VERIFICATION_PROMPT
+  const prompt = getVerificationPrompt(testCategory)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
 
@@ -114,9 +234,10 @@ async function verifyWithAnthropic(
   model: string,
   testName: string,
   testScore: string,
+  testCategory: string,
   documentBase64: string
 ): Promise<VerificationResult> {
-  const prompt = VERIFICATION_PROMPT
+  const prompt = getVerificationPrompt(testCategory)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
 
@@ -177,9 +298,10 @@ async function verifyWithGemini(
   model: string,
   testName: string,
   testScore: string,
+  testCategory: string,
   documentBase64: string
 ): Promise<VerificationResult> {
-  const prompt = VERIFICATION_PROMPT
+  const prompt = getVerificationPrompt(testCategory)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
 
@@ -234,9 +356,10 @@ async function verifyWithPerplexity(
   model: string,
   testName: string,
   testScore: string,
+  testCategory: string,
   documentBase64: string
 ): Promise<VerificationResult> {
-  const prompt = VERIFICATION_PROMPT
+  const prompt = getVerificationPrompt(testCategory)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
 
@@ -281,6 +404,7 @@ async function verifyWithPerplexity(
 export async function verifyApplicationWithAI(
   testName: string,
   testScore: string,
+  testCategory: string,
   documentBase64: string,
   applicationId?: number
 ): Promise<{
@@ -313,6 +437,7 @@ export async function verifyApplicationWithAI(
             setting.selectedModel!,
             testName,
             testScore,
+            testCategory,
             documentBase64
           );
           break;
@@ -322,6 +447,7 @@ export async function verifyApplicationWithAI(
             setting.selectedModel!,
             testName,
             testScore,
+            testCategory,
             documentBase64
           );
           break;
@@ -331,6 +457,7 @@ export async function verifyApplicationWithAI(
             setting.selectedModel!,
             testName,
             testScore,
+            testCategory,
             documentBase64
           );
           break;
@@ -340,6 +467,7 @@ export async function verifyApplicationWithAI(
             setting.selectedModel!,
             testName,
             testScore,
+            testCategory,
             documentBase64
           );
           break;

@@ -26,6 +26,7 @@ import { storagePut } from "./storage";
 import { validateFileUpload } from "./file-validation";
 import { sendEmail } from "./_core/email";
 import { sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendReviewApprovedEmail, sendReviewRejectedEmail, sendPaymentConfirmedEmail } from "./email";
+import { cleanupUnpaidDocuments } from "./cleanup-documents";
 
 export const appRouter = router({
   system: systemRouter,
@@ -285,16 +286,25 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await updateEmailTemplate(input.templateKey, input.subject, input.body);
       }),
-
     createEmailTemplate: adminProcedure
-      .input(z.object({ 
-        templateKey: z.string(),
-        subject: z.string(),
-        body: z.string(),
-        description: z.string().optional()
-      }))
+      .input(
+        z.object({
+          templateKey: z.string(),
+          subject: z.string(),
+          body: z.string(),
+          description: z.string().optional(),
+        })
+      )
       .mutation(async ({ input }) => {
         return await createEmailTemplate(input.templateKey, input.subject, input.body, input.description);
+      }),
+
+    // 서류 자동 파기
+    cleanupUnpaidDocuments: adminProcedure
+      .input(z.object({ daysThreshold: z.number().optional() }).optional())
+      .mutation(async ({ input }) => {
+        const daysThreshold = input?.daysThreshold || 30;
+        return await cleanupUnpaidDocuments(daysThreshold);
       }),
   }),
 
@@ -628,6 +638,10 @@ export const appRouter = router({
         // "기타 시험"은 AI 검증 건너뛰기
         if (autopilotEnabled && !isOtherTest) {
           try {
+            // 시험 카테고리 조회
+            const testInfo = await getRecognizedTestById(parseInt(input.testType));
+            const testCategory = testInfo?.category || "표준 지능 검사";
+            
             // S3에서 서류 다운로드 후 Base64 변환
             const documentBase64 = await getFirstDocumentAsBase64(input.documentUrls);
             
@@ -635,6 +649,7 @@ export const appRouter = router({
               const verificationResult = await verifyApplicationWithAI(
                 input.testType,
                 input.testScore,
+                testCategory,
                 documentBase64,
                 application.id
               );

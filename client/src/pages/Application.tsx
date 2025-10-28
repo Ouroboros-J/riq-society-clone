@@ -45,6 +45,7 @@ export default function Application() {
   const [formData, setFormData] = useState<Partial<Step1Data & Step2Data>>({});
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
+  const [testCategory, setTestCategory] = useState<string>("");
   const [selectedTest, setSelectedTest] = useState<string>("");
   const [otherTestName, setOtherTestName] = useState<string>("");
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -338,6 +339,34 @@ export default function Application() {
                 <h2 className="text-2xl font-semibold mb-6">시험 점수</h2>
                 
                 <div className="space-y-4">
+                  {/* Step 1: 시험 유형 선택 (필터) */}
+                  <div>
+                    <Label htmlFor="testCategory">시험 유형 (선택 사항)</Label>
+                    <Select
+                      onValueChange={(value) => {
+                        setTestCategory(value);
+                        setSelectedTest("");
+                        setOtherTestName("");
+                        step2Form.setValue("testType", "");
+                      }}
+                      value={testCategory}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="모든 시험 보기" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">모든 시험</SelectItem>
+                        <SelectItem value="표준 지능 검사">표준 지능 검사</SelectItem>
+                        <SelectItem value="학업 및 인지 능력 검사">학업 및 인지 능력 검사</SelectItem>
+                        <SelectItem value="대학 및 대학원 진학 시험">대학 및 대학원 진학 시험</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      시험 유형을 선택하면 해당 카테고리의 시험만 표시됩니다.
+                    </p>
+                  </div>
+
+                  {/* Step 2: 시험 선택 (항상 표시) */}
                   <div>
                     <Label htmlFor="testType">시험 종류 *</Label>
                     {recognizedTestsQuery.isLoading ? (
@@ -349,25 +378,28 @@ export default function Application() {
                       <Select
                         onValueChange={(value) => {
                           setSelectedTest(value);
-                          if (value === "OTHER") {
+                          if (value === "기타 시험") {
                             step2Form.setValue("testType", "");
                           } else {
                             step2Form.setValue("testType", value);
                             setOtherTestName("");
                           }
                         }}
-                        defaultValue={formData.testType}
+                        value={selectedTest}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="시험을 선택하세요" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
-                          {recognizedTestsQuery.data?.map((test: any) => (
-                            <SelectItem key={test.id} value={test.testName}>
-                              {test.testName}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="OTHER">기타 시험</SelectItem>
+                          {recognizedTestsQuery.data
+                            ?.filter((test: any) => 
+                              !testCategory || testCategory === "ALL" || test.category === testCategory
+                            )
+                            .map((test: any) => (
+                              <SelectItem key={test.id} value={test.testName}>
+                                {test.testName}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     )}
@@ -378,7 +410,7 @@ export default function Application() {
                     )}
                   </div>
 
-                  {selectedTest === "OTHER" && (
+                  {selectedTest === "기타 시험" && (
                     <div>
                       <Label htmlFor="otherTestName">기타 시험 이름 *</Label>
                       <Input
@@ -439,6 +471,14 @@ export default function Application() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="documents">서류 업로드 *</Label>
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-semibold text-yellow-200 mb-2">
+                        모든 절차에는 신원 증명이 필요합니다.
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        본인의 신원을 증명하는 방법은 여러 가지가 있습니다. 일반적으로 <strong>주민등록증, 운전면허증, 여권, 학생증, 국가 자격증</strong> 등을 사용합니다.
+                      </p>
+                    </div>
                     <Input
                       id="documents"
                       type="file"
@@ -448,7 +488,7 @@ export default function Application() {
                       className="cursor-pointer"
                     />
                     <p className="text-sm text-muted-foreground mt-2">
-                      PDF, JPG, PNG 파일만 업로드 가능합니다
+                      PDF, JPG, PNG 파일만 업로드 가능합니다. 시험 성적표 및 신원 증명 서류를 함께 업로드해주세요.
                     </p>
                   </div>
 
