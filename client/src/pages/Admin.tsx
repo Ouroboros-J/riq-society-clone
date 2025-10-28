@@ -103,7 +103,15 @@ export default function Admin() {
   const [perplexityModel, setPerplexityModel] = useState<string>('');
   const [perplexityEnabled, setPerplexityEnabled] = useState<boolean>(false);
   const [perplexityModels, setPerplexityModels] = useState<Array<{id: string, name: string, description?: string}>>([]);
-  const [perplexityModelsLoading, setPerplexityModelsLoading] = useState(false);  const [autopilotEnabled, setAutopilotEnabled] = useState(false);
+  const [perplexityModelsLoading, setPerplexityModelsLoading] = useState(false);
+  
+  // API 키 검증 상태
+  const [openaiKeyValidation, setOpenaiKeyValidation] = useState<{validating: boolean, valid: boolean | null, error: string | null}>({validating: false, valid: null, error: null});
+  const [anthropicKeyValidation, setAnthropicKeyValidation] = useState<{validating: boolean, valid: boolean | null, error: string | null}>({validating: false, valid: null, error: null});
+  const [googleKeyValidation, setGoogleKeyValidation] = useState<{validating: boolean, valid: boolean | null, error: string | null}>({validating: false, valid: null, error: null});
+  const [perplexityKeyValidation, setPerplexityKeyValidation] = useState<{validating: boolean, valid: boolean | null, error: string | null}>({validating: false, valid: null, error: null});
+  
+  const [autopilotEnabled, setAutopilotEnabled] = useState(false);
   
   // 통계 날짜 범위
   const [startDate, setStartDate] = useState(() => {
@@ -502,6 +510,91 @@ export default function Admin() {
       toast.error('Perplexity 모델 목록 로드 실패: ' + error.message);
     } finally {
       setPerplexityModelsLoading(false);
+    }
+  };
+
+  // API 키 검증 함수 (서버 API 호출)
+  const validateOpenAIKey = async (apiKey: string) => {
+    if (!apiKey || apiKey.trim() === '') {
+      setOpenaiKeyValidation({validating: false, valid: null, error: null});
+      return;
+    }
+    setOpenaiKeyValidation({validating: true, valid: null, error: null});
+    try {
+      const result = await utils.client.aiSettings.validateKey.query({
+        platform: 'openai',
+        apiKey: apiKey,
+      });
+      if (result.valid) {
+        setOpenaiKeyValidation({validating: false, valid: true, error: null});
+      } else {
+        setOpenaiKeyValidation({validating: false, valid: false, error: result.error || 'Invalid API key'});
+      }
+    } catch (error: any) {
+      setOpenaiKeyValidation({validating: false, valid: false, error: error.message});
+    }
+  };
+
+  const validateAnthropicKey = async (apiKey: string) => {
+    if (!apiKey || apiKey.trim() === '') {
+      setAnthropicKeyValidation({validating: false, valid: null, error: null});
+      return;
+    }
+    setAnthropicKeyValidation({validating: true, valid: null, error: null});
+    try {
+      const result = await utils.client.aiSettings.validateKey.query({
+        platform: 'anthropic',
+        apiKey: apiKey,
+      });
+      if (result.valid) {
+        setAnthropicKeyValidation({validating: false, valid: true, error: null});
+      } else {
+        setAnthropicKeyValidation({validating: false, valid: false, error: result.error || 'Invalid API key'});
+      }
+    } catch (error: any) {
+      setAnthropicKeyValidation({validating: false, valid: false, error: error.message});
+    }
+  };
+
+  const validateGoogleKey = async (apiKey: string) => {
+    if (!apiKey || apiKey.trim() === '') {
+      setGoogleKeyValidation({validating: false, valid: null, error: null});
+      return;
+    }
+    setGoogleKeyValidation({validating: true, valid: null, error: null});
+    try {
+      const result = await utils.client.aiSettings.validateKey.query({
+        platform: 'google',
+        apiKey: apiKey,
+      });
+      if (result.valid) {
+        setGoogleKeyValidation({validating: false, valid: true, error: null});
+      } else {
+        setGoogleKeyValidation({validating: false, valid: false, error: result.error || 'Invalid API key'});
+      }
+    } catch (error: any) {
+      setGoogleKeyValidation({validating: false, valid: false, error: error.message});
+    }
+  };
+
+  const validatePerplexityKey = async (apiKey: string) => {
+    if (!apiKey || apiKey.trim() === '') {
+      setPerplexityKeyValidation({validating: false, valid: null, error: null});
+      return;
+    }
+    setPerplexityKeyValidation({validating: true, valid: null, error: null});
+    try {
+      const result = await utils.client.aiSettings.validateKey.query({
+        platform: 'perplexity',
+        apiKey: apiKey,
+      });
+      if (result.valid) {
+        setPerplexityKeyValidation({validating: false, valid: true, error: null});
+      } else {
+        setPerplexityKeyValidation({validating: false, valid: false, error: result.error || 'Invalid API key'});
+      }
+    } catch (error: any) {
+      setPerplexityKeyValidation({validating: false, valid: false, error: error.message});
     }
   };
 
@@ -2023,7 +2116,17 @@ export default function Admin() {
                         placeholder="sk-..."
                         value={openaiApiKey}
                         onChange={(e) => setOpenaiApiKey(e.target.value)}
+                        onBlur={(e) => validateOpenAIKey(e.target.value)}
                       />
+                      {openaiKeyValidation.validating && (
+                        <p className="text-sm text-muted-foreground mt-1">검증 중...</p>
+                      )}
+                      {openaiKeyValidation.valid === true && (
+                        <p className="text-sm text-green-600 mt-1">✅ 유효한 API 키입니다.</p>
+                      )}
+                      {openaiKeyValidation.valid === false && (
+                        <p className="text-sm text-red-600 mt-1">❌ {openaiKeyValidation.error}</p>
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -2079,6 +2182,7 @@ export default function Admin() {
                           isEnabled: openaiEnabled ? 1 : 0,
                         });
                       }}
+                      disabled={openaiApiKey && openaiKeyValidation.valid === false}
                     >
                       저장
                     </Button>
@@ -2100,7 +2204,17 @@ export default function Admin() {
                         placeholder="sk-ant-..."
                         value={anthropicApiKey}
                         onChange={(e) => setAnthropicApiKey(e.target.value)}
+                        onBlur={(e) => validateAnthropicKey(e.target.value)}
                       />
+                      {anthropicKeyValidation.validating && (
+                        <p className="text-sm text-muted-foreground mt-1">검증 중...</p>
+                      )}
+                      {anthropicKeyValidation.valid === true && (
+                        <p className="text-sm text-green-600 mt-1">✅ 유효한 API 키입니다.</p>
+                      )}
+                      {anthropicKeyValidation.valid === false && (
+                        <p className="text-sm text-red-600 mt-1">❌ {anthropicKeyValidation.error}</p>
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -2154,6 +2268,7 @@ export default function Admin() {
                           isEnabled: anthropicEnabled ? 1 : 0,
                         });
                       }}
+                      disabled={anthropicApiKey && anthropicKeyValidation.valid === false}
                     >
                       저장
                     </Button>
@@ -2175,7 +2290,17 @@ export default function Admin() {
                         placeholder="AIza..."
                         value={googleApiKey}
                         onChange={(e) => setGoogleApiKey(e.target.value)}
+                        onBlur={(e) => validateGoogleKey(e.target.value)}
                       />
+                      {googleKeyValidation.validating && (
+                        <p className="text-sm text-muted-foreground mt-1">검증 중...</p>
+                      )}
+                      {googleKeyValidation.valid === true && (
+                        <p className="text-sm text-green-600 mt-1">✅ 유효한 API 키입니다.</p>
+                      )}
+                      {googleKeyValidation.valid === false && (
+                        <p className="text-sm text-red-600 mt-1">❌ {googleKeyValidation.error}</p>
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -2228,6 +2353,7 @@ export default function Admin() {
                           isEnabled: googleEnabled ? 1 : 0,
                         });
                       }}
+                      disabled={googleApiKey && googleKeyValidation.valid === false}
                     >
                       저장
                     </Button>
@@ -2249,7 +2375,17 @@ export default function Admin() {
                         placeholder="pplx-..."
                         value={perplexityApiKey}
                         onChange={(e) => setPerplexityApiKey(e.target.value)}
+                        onBlur={(e) => validatePerplexityKey(e.target.value)}
                       />
+                      {perplexityKeyValidation.validating && (
+                        <p className="text-sm text-muted-foreground mt-1">검증 중...</p>
+                      )}
+                      {perplexityKeyValidation.valid === true && (
+                        <p className="text-sm text-green-600 mt-1">✅ 유효한 API 키입니다.</p>
+                      )}
+                      {perplexityKeyValidation.valid === false && (
+                        <p className="text-sm text-red-600 mt-1">❌ {perplexityKeyValidation.error}</p>
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -2302,6 +2438,7 @@ export default function Admin() {
                           isEnabled: perplexityEnabled ? 1 : 0,
                         });
                       }}
+                      disabled={perplexityApiKey && perplexityKeyValidation.valid === false}
                     >
                       저장
                     </Button>

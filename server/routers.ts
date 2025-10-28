@@ -500,6 +500,12 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await getModelsByPlatform(input.platform, input.apiKey);
       }),
+
+    validateKey: adminProcedure
+      .input(z.object({ platform: z.string(), apiKey: z.string() }))
+      .query(async ({ input }) => {
+        return await validateApiKey(input.platform, input.apiKey);
+      }),
   }),
 
   recognizedTest: router({
