@@ -20,7 +20,7 @@ export default function MyPage() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, setLocation] = useLocation();
 
-  const { data: application, isLoading: applicationLoading } = trpc.application.getMyApplication.useQuery(undefined, {
+  const { data: application, isLoading: applicationLoading } = trpc.application.getUserApplication.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
@@ -62,6 +62,18 @@ export default function MyPage() {
     },
     onError: (error) => {
       toast.error("재검토 요청에 실패했습니다: " + error.message);
+    },
+  });
+
+  const resendEmailMutation = trpc.application.resendRejectionEmail.useMutation({
+    onSuccess: () => {
+      // PostHog 이벤트 추적
+      posthog.capture('rejection_email_resent');
+      
+      toast.success("거부 사유 이메일이 재발송되었습니다.");
+    },
+    onError: (error) => {
+      toast.error("이메일 재발송에 실패했습니다: " + error.message);
     },
   });
 
@@ -229,12 +241,10 @@ export default function MyPage() {
                         variant="outline"
                         size="sm"
                         className="mt-3"
-                        onClick={() => {
-                          // TODO: 이메일 재발송 API 호출
-                          toast.info('이메일 재발송 기능은 공사 중입니다.');
-                        }}
+                        onClick={() => resendEmailMutation.mutate()}
+                        disabled={resendEmailMutation.isPending}
                       >
-                        이메일 재발송
+                        {resendEmailMutation.isPending ? '발송 중...' : '이메일 재발송'}
                       </Button>
                     </div>
                     {(application.reviewRequestCount || 0) < 1 && (

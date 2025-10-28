@@ -677,6 +677,41 @@ export const appRouter = router({
         
         return { success: true };
       }),
+
+    resendRejectionEmail: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        if (!ctx.user) throw new Error("User not authenticated");
+        
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        // 사용자의 신청 정보 조회
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.userId, ctx.user.id));
+        
+        if (!application) {
+          throw new Error("신청 내역을 찾을 수 없습니다");
+        }
+        
+        if (application.status !== 'rejected') {
+          throw new Error("거부된 신청에만 이메일을 재발송할 수 있습니다");
+        }
+        
+        if (!application.adminNotes) {
+          throw new Error("거부 사유가 없습니다");
+        }
+        
+        // 거부 이메일 재발송
+        await sendApplicationRejectedEmail(
+          application.email,
+          application.fullName,
+          application.adminNotes
+        );
+        
+        return { success: true };
+      }),
   }),
 
   systemSettings: router({
