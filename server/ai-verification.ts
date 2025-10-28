@@ -1,4 +1,5 @@
 import { getEnabledAiSettings } from "./db-ai-settings";
+import { broadcastVerificationProgress } from "./websocket.js";
 
 // AI 검증 프롬프트 템플릿
 const VERIFICATION_PROMPT = `당신은 고지능 단체(High IQ Society) 입회 심사 전문가입니다.
@@ -280,7 +281,8 @@ async function verifyWithPerplexity(
 export async function verifyApplicationWithAI(
   testName: string,
   testScore: string,
-  documentBase64: string
+  documentBase64: string,
+  applicationId?: number
 ): Promise<{
   approved: boolean;
   reason: string;
@@ -296,6 +298,11 @@ export async function verifyApplicationWithAI(
 
   // 각 AI로 검증 수행
   for (const setting of enabledSettings) {
+    // WebSocket으로 진행 상태 전송: running
+    if (applicationId) {
+      broadcastVerificationProgress(applicationId, setting.platform, 'running');
+    }
+
     try {
       let result: VerificationResult;
 
@@ -346,8 +353,19 @@ export async function verifyApplicationWithAI(
         result,
         rawResponse: JSON.stringify(result),
       });
+
+      // WebSocket으로 진행 상태 전송: completed
+      if (applicationId) {
+        broadcastVerificationProgress(applicationId, setting.platform, 'completed');
+      }
     } catch (error: any) {
       console.error(`AI verification failed for ${setting.platform}:`, error);
+      
+      // WebSocket으로 진행 상태 전송: error
+      if (applicationId) {
+        broadcastVerificationProgress(applicationId, setting.platform, 'error', error.message);
+      }
+
       // 실패한 AI는 거절로 간주
       verifications.push({
         platform: setting.platform,

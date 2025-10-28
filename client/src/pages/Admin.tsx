@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import Header from "../components/Header";
 import { AIVerificationResults } from "../components/AIVerificationResults";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,12 @@ export default function Admin() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
   const [aiVerificationDialogOpen, setAiVerificationDialogOpen] = useState(false);
+  
+  // AI 검증 진행 상태 (WebSocket)
+  const { progress: wsProgress, isConnected: wsConnected } = useWebSocket(
+    aiVerificationDialogOpen ? selectedApplication?.id : undefined
+  );
+  const [isVerifying, setIsVerifying] = useState(false);
   
   // 이메일 템플릿 편집
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
@@ -2498,7 +2505,11 @@ AI 검증에서 거부된 신청자가 재검토를 요청한 목록입니다.
                 {selectedApplication?.fullName}님의 입회 신청에 대한 AI 검증 결과입니다.
               </DialogDescription>
             </DialogHeader>
-            <AIVerificationResults applicationId={selectedApplication?.id} />
+            <AIVerificationResults 
+              applicationId={selectedApplication?.id}
+              verificationProgress={wsProgress}
+              isVerifying={isVerifying}
+            />
           </DialogContent>
         </Dialog>
 

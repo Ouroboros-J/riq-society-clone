@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { setupWebSocket } from "./websocket.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,10 +24,15 @@ async function startServer() {
     res.sendFile(path.join(staticPath, "index.html"));
   });
 
+  // Setup WebSocket
+  setupWebSocket(server);
+  console.log('[WebSocket] WebSocket server initialized');
+
   const port = process.env.PORT || 3000;
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    console.log(`WebSocket available at ws://localhost:${port}/ws`);
   });
 }
 

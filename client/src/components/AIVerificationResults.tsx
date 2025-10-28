@@ -5,18 +5,55 @@ import { Loader2 } from "lucide-react";
 
 interface AIVerificationResultsProps {
   applicationId?: number;
+  verificationProgress?: {
+    [platform: string]: 'pending' | 'running' | 'completed' | 'error';
+  };
+  isVerifying?: boolean;
 }
 
-export function AIVerificationResults({ applicationId }: AIVerificationResultsProps) {
+export function AIVerificationResults({ applicationId, verificationProgress, isVerifying }: AIVerificationResultsProps) {
   const { data: verifications, isLoading } = trpc.aiVerification.getByApplicationId.useQuery(
     { applicationId: applicationId! },
     { enabled: !!applicationId }
   );
 
-  if (isLoading) {
+  if (isLoading || isVerifying) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-4">
+        {isVerifying && verificationProgress && Object.keys(verificationProgress).length > 0 ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground text-center mb-4">
+              AI 검증을 진행 중입니다...
+            </p>
+            {Object.entries(verificationProgress).map(([platform, status]) => (
+              <Card key={platform}>
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="font-semibold">{platform.toUpperCase()}</div>
+                      {status === 'running' && <Loader2 className="h-4 w-4 animate-spin" />}
+                    </div>
+                    <Badge variant={
+                      status === 'completed' ? 'default' :
+                      status === 'running' ? 'secondary' :
+                      status === 'error' ? 'destructive' :
+                      'outline'
+                    }>
+                      {status === 'pending' ? '대기 중' :
+                       status === 'running' ? '실행 중' :
+                       status === 'completed' ? '완료' :
+                       '오류'}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
       </div>
     );
   }

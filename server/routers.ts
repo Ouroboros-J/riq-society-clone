@@ -599,7 +599,8 @@ export const appRouter = router({
               const verificationResult = await verifyApplicationWithAI(
                 input.testType,
                 input.testScore,
-                documentBase64
+                documentBase64,
+                application.id
               );
               
               // 검증 결과 저장
