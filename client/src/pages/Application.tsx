@@ -104,12 +104,16 @@ export default function Application() {
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
     defaultValues: formData,
+    mode: "onChange", // 실시간 유효성 검사
+    reValidateMode: "onChange",
   });
 
   // Step 2 Form
   const step2Form = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
     defaultValues: formData,
+    mode: "onChange", // 실시간 유효성 검사
+    reValidateMode: "onChange",
   });
 
   const handleStep1Submit = (data: Step1Data) => {

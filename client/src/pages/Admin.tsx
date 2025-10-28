@@ -101,6 +101,7 @@ export default function Admin() {
     return date.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
 
 
   const { data: users, isLoading: usersLoading, refetch: refetchUsers } = trpc.admin.listUsers.useQuery(undefined, {
@@ -116,7 +117,7 @@ export default function Admin() {
   });
   
   const { data: statistics, isLoading: statisticsLoading } = trpc.admin.getStatistics.useQuery(
-    { startDate, endDate },
+    { startDate, endDate, groupBy },
     { enabled: isAuthenticated && user?.role === 'admin' }
   );
   
@@ -401,8 +402,8 @@ export default function Admin() {
                 <CardDescription>통계 데이터를 볼 기간을 선택하세요</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-4 items-end">
-                  <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
                     <Label htmlFor="startDate">시작일</Label>
                     <Input
                       id="startDate"
@@ -411,7 +412,7 @@ export default function Admin() {
                       onChange={(e) => setStartDate(e.target.value)}
                     />
                   </div>
-                  <div className="flex-1">
+                  <div>
                     <Label htmlFor="endDate">종료일</Label>
                     <Input
                       id="endDate"
@@ -419,6 +420,19 @@ export default function Admin() {
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="groupBy">그룹화</Label>
+                    <Select value={groupBy} onValueChange={(value: 'day' | 'week' | 'month') => setGroupBy(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="day">일별</SelectItem>
+                        <SelectItem value="week">주별</SelectItem>
+                        <SelectItem value="month">월별</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>
@@ -431,11 +445,45 @@ export default function Admin() {
               </div>
             ) : (
               <>
+                {/* 전환율 통계 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>입회 신청 전환율</CardTitle>
+                      <CardDescription>회원 가입 대비 입회 신청 비율</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-4xl font-bold text-primary">
+                        {statistics?.conversionRate?.applicationRate}%
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        회원 가입 후 입회 신청을 제출하는 비율
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>신청 승인율</CardTitle>
+                      <CardDescription>입회 신청 대비 승인 비율</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-4xl font-bold text-green-600">
+                        {statistics?.conversionRate?.approvalRate}%
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        입회 신청 후 승인되는 비율
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
                 {/* 회원 가입 추이 */}
                 <Card className="mb-6">
                   <CardHeader>
                     <CardTitle>회원 가입 추이</CardTitle>
-                    <CardDescription>일별 회원 가입 현황</CardDescription>
+                    <CardDescription>
+                      {groupBy === 'day' ? '일별' : groupBy === 'week' ? '주별' : '월별'} 회원 가입 현황
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -467,7 +515,9 @@ export default function Admin() {
                 <Card className="mb-6">
                   <CardHeader>
                     <CardTitle>입회 신청 추이</CardTitle>
-                    <CardDescription>일별 입회 신청 현황</CardDescription>
+                    <CardDescription>
+                      {groupBy === 'day' ? '일별' : groupBy === 'week' ? '주별' : '월별'} 입회 신청 현황
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>

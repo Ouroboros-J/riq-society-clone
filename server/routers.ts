@@ -145,7 +145,8 @@ export const appRouter = router({
     getStatistics: adminProcedure
       .input(z.object({ 
         startDate: z.string().optional(),
-        endDate: z.string().optional()
+        endDate: z.string().optional(),
+        groupBy: z.enum(['day', 'week', 'month']).optional().default('day')
       }))
       .query(async ({ input }) => {
         const db = await getDb();
@@ -154,9 +155,20 @@ export const appRouter = router({
         const startDate = input.startDate ? new Date(input.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         const endDate = input.endDate ? new Date(input.endDate) : new Date();
         
+        // 그룹화 형식 결정
+        const dateFormat = 
+          input.groupBy === 'month' ? sql<string>`DATE_FORMAT(${users.createdAt}, '%Y-%m')` :
+          input.groupBy === 'week' ? sql<string>`DATE_FORMAT(${users.createdAt}, '%Y-%u')` :
+          sql<string>`DATE(${users.createdAt})`;
+        
+        const appDateFormat = 
+          input.groupBy === 'month' ? sql<string>`DATE_FORMAT(${applications.createdAt}, '%Y-%m')` :
+          input.groupBy === 'week' ? sql<string>`DATE_FORMAT(${applications.createdAt}, '%Y-%u')` :
+          sql<string>`DATE(${applications.createdAt})`;
+        
         // 회원 가입 추이
         const userRegistrations = await db.select({
-          date: sql<string>`DATE(${users.createdAt})`,
+          date: dateFormat,
           count: sql<number>`COUNT(*)`
         })
         .from(users)
@@ -164,12 +176,12 @@ export const appRouter = router({
           gte(users.createdAt, startDate),
           sql`${users.createdAt} <= ${endDate}`
         ))
-        .groupBy(sql`DATE(${users.createdAt})`)
-        .orderBy(sql`DATE(${users.createdAt})`);
+        .groupBy(dateFormat)
+        .orderBy(dateFormat);
         
         // 입회 신청 추이
         const applicationSubmissions = await db.select({
-          date: sql<string>`DATE(${applications.createdAt})`,
+          date: appDateFormat,
           count: sql<number>`COUNT(*)`
         })
         .from(applications)
@@ -177,8 +189,8 @@ export const appRouter = router({
           gte(applications.createdAt, startDate),
           sql`${applications.createdAt} <= ${endDate}`
         ))
-        .groupBy(sql`DATE(${applications.createdAt})`)
-        .orderBy(sql`DATE(${applications.createdAt})`);
+        .groupBy(appDateFormat)
+        .orderBy(appDateFormat);
         
         // 상태별 통계
         const statusStats = await db.select({
@@ -197,11 +209,32 @@ export const appRouter = router({
         .where(eq(applications.status, "approved"))
         .groupBy(applications.paymentStatus);
         
+        // 전환율 계산
+        const totalUsers = await db.select({ count: sql<number>`COUNT(*)` }).from(users).where(and(
+          gte(users.createdAt, startDate),
+          sql`${users.createdAt} <= ${endDate}`
+        ));
+        const totalApplications = await db.select({ count: sql<number>`COUNT(*)` }).from(applications).where(and(
+          gte(applications.createdAt, startDate),
+          sql`${applications.createdAt} <= ${endDate}`
+        ));
+        const approvedApplications = await db.select({ count: sql<number>`COUNT(*)` }).from(applications).where(and(
+          eq(applications.status, 'approved'),
+          gte(applications.createdAt, startDate),
+          sql`${applications.createdAt} <= ${endDate}`
+        ));
+        
+        const conversionRate = {
+          applicationRate: totalUsers[0]?.count > 0 ? (totalApplications[0]?.count / totalUsers[0]?.count * 100).toFixed(2) : '0',
+          approvalRate: totalApplications[0]?.count > 0 ? (approvedApplications[0]?.count / totalApplications[0]?.count * 100).toFixed(2) : '0',
+        };
+        
         return {
           userRegistrations,
           applicationSubmissions,
           statusStats,
-          paymentStats
+          paymentStats,
+          conversionRate
         };
       }),
 
