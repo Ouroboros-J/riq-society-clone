@@ -757,3 +757,18 @@
 - [ ] PostHog API 통계 조회 실패 (개발 환경 설정 문제, 배포 후 해결됨)
 
 
+
+
+## 개선 사항
+
+- [x] AI 모델 리스트 하드코딩 제거
+  - [x] OpenAI 모델 하드코딩 제거 (API로만 동적 로딩)
+  - [x] Gemini 모델 하드코딩 제거 (API로만 동적 로딩)
+  - [x] Claude 모델 하드코딩 제거 (API 동적 로딩)
+  - [x] Perplexity 모델 하드코딩 유지 (정적 목록, API 없음)
+  - [x] 모델 필터링 제거
+    - OpenAI: 모든 모델 반환
+    - Claude: 모든 모델 반환
+    - Gemini: generateContent 지원 모델만 반환 (채팅 가능한 모델)
+
+

@@ -26,27 +26,17 @@ export async function getOpenAIModels(apiKey: string): Promise<ModelInfo[]> {
 
     const data = await response.json();
     
-    // GPT-4 Vision 모델만 필터링 (문서 검증용)
-    const visionModels = data.data
-      .filter((model: any) => 
-        model.id.includes('gpt-4') && 
-        (model.id.includes('vision') || model.id.includes('turbo'))
-      )
-      .map((model: any) => ({
-        id: model.id,
-        name: model.id,
-        description: `OpenAI ${model.id}`,
-      }));
+    // 모든 모델 반환
+    const models = data.data.map((model: any) => ({
+      id: model.id,
+      name: model.id,
+      description: `OpenAI ${model.id}`,
+    }));
 
-    return visionModels;
+    return models;
   } catch (error) {
     console.error('Failed to fetch OpenAI models:', error);
-    // API 호출 실패 시 기본 모델 목록 반환
-    return [
-      { id: 'gpt-4-vision-preview', name: 'gpt-4-vision-preview', description: 'OpenAI GPT-4 Vision (Preview)' },
-      { id: 'gpt-4-turbo', name: 'gpt-4-turbo', description: 'OpenAI GPT-4 Turbo' },
-      { id: 'gpt-4o', name: 'gpt-4o', description: 'OpenAI GPT-4o' },
-    ];
+    return [];
   }
 }
 
@@ -68,26 +58,17 @@ export async function getClaudeModels(apiKey: string): Promise<ModelInfo[]> {
 
     const data = await response.json();
     
-    // Claude 3 모델만 필터링 (문서 검증용)
-    const claudeModels = data.data
-      .filter((model: any) => model.id.includes('claude'))
-      .map((model: any) => ({
-        id: model.id,
-        name: model.display_name || model.id,
-        description: `Anthropic ${model.display_name || model.id}`,
-      }));
+    // 모든 모델 반환
+    const models = data.data.map((model: any) => ({
+      id: model.id,
+      name: model.display_name || model.id,
+      description: `Anthropic ${model.display_name || model.id}`,
+    }));
 
-    return claudeModels;
+    return models;
   } catch (error) {
     console.error('Failed to fetch Claude models:', error);
-    // API 호출 실패 시 기본 모델 목록 반환
-    return [
-      { id: 'claude-3-5-sonnet-20241022', name: 'claude-3-5-sonnet-20241022', description: 'Claude 3.5 Sonnet (Latest)' },
-      { id: 'claude-3-5-sonnet-20240620', name: 'claude-3-5-sonnet-20240620', description: 'Claude 3.5 Sonnet' },
-      { id: 'claude-3-opus-20240229', name: 'claude-3-opus-20240229', description: 'Claude 3 Opus' },
-      { id: 'claude-3-sonnet-20240229', name: 'claude-3-sonnet-20240229', description: 'Claude 3 Sonnet' },
-      { id: 'claude-3-haiku-20240307', name: 'claude-3-haiku-20240307', description: 'Claude 3 Haiku' },
-    ];
+    return [];
   }
 }
 
@@ -104,27 +85,19 @@ export async function getGeminiModels(apiKey: string): Promise<ModelInfo[]> {
 
     const data = await response.json();
     
-    // Vision 지원 모델만 필터링
-    const visionModels = data.models
-      .filter((model: any) => 
-        model.supportedGenerationMethods?.includes('generateContent') &&
-        (model.name.includes('gemini-pro-vision') || model.name.includes('gemini-1.5'))
-      )
+    // generateContent 지원 모델만 필터링 (채팅 가능한 모델)
+    const models = data.models
+      .filter((model: any) => model.supportedGenerationMethods?.includes('generateContent'))
       .map((model: any) => ({
         id: model.name.replace('models/', ''),
         name: model.displayName || model.name.replace('models/', ''),
         description: model.description || `Google ${model.displayName}`,
       }));
 
-    return visionModels;
+    return models;
   } catch (error) {
     console.error('Failed to fetch Gemini models:', error);
-    // API 호출 실패 시 기본 모델 목록 반환
-    return [
-      { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Google Gemini 1.5 Pro' },
-      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Google Gemini 1.5 Flash' },
-      { id: 'gemini-pro-vision', name: 'Gemini Pro Vision', description: 'Google Gemini Pro Vision' },
-    ];
+    return [];
   }
 }
 
