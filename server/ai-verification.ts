@@ -288,7 +288,7 @@ async function verifyWithAnthropic(
     type: 'image',
     source: {
       type: 'base64',
-      media_type: identityIsPdf ? 'application/pdf' : 'image/jpeg',
+      media_type: identityIsPdf ? 'application/pdf' : (identityDocumentUrl.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg'),
       data: identityBase64,
     },
   });
@@ -298,7 +298,7 @@ async function verifyWithAnthropic(
     type: 'image',
     source: {
       type: 'base64',
-      media_type: testResultIsPdf ? 'application/pdf' : 'image/jpeg',
+      media_type: testResultIsPdf ? 'application/pdf' : (testResultUrl.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg'),
       data: testResultBase64,
     },
   });
@@ -329,7 +329,9 @@ async function verifyWithAnthropic(
   });
 
   if (!response.ok) {
-    throw new Error(`Anthropic API error: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('Anthropic API error response:', errorText);
+    throw new Error(`Anthropic API error: ${response.statusText} - ${errorText}`);
   }
 
   const data = await response.json();
