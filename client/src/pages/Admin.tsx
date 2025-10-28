@@ -366,14 +366,14 @@ export default function Admin() {
   });
 
   const handleReject = () => {
-    if (rejectApplicationId && rejectReason.trim()) {
+    if (rejectApplicationId) {
       updateApplicationStatusMutation.mutate({
         applicationId: rejectApplicationId,
         status: 'rejected',
-        adminNotes: rejectReason
+        adminNotes: rejectReason.trim() || '관리자가 거부했습니다.'
       });
     } else {
-      toast.error("거부 사유를 입력해주세요.");
+      toast.error("신청을 선택해주세요.");
     }
   };
 
@@ -2626,7 +2626,7 @@ AI 검증에서 거부된 신청자가 재검토를 요청한 목록입니다.
             <DialogHeader>
               <DialogTitle>입회 신청 거부</DialogTitle>
               <DialogDescription>
-                거부 사유를 입력해주세요. 신청자가 마이페이지에서 확인할 수 있습니다.
+                거부 사유를 입력하면 신청자가 마이페이지에서 확인할 수 있습니다. (선택 사항)
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -2634,7 +2634,7 @@ AI 검증에서 거부된 신청자가 재검토를 요청한 목록입니다.
                 <Label htmlFor="rejectReason">거부 사유</Label>
                 <Textarea
                   id="rejectReason"
-                  placeholder="예: 제출하신 시험 점수가 입회 기준에 미달합니다."
+                  placeholder="예: 제출하신 시험 점수가 입회 기준에 미달합니다. (선택 사항)"
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   rows={4}
