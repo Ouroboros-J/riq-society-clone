@@ -975,6 +975,7 @@ export default function Admin() {
                         {Object.keys(posthogStats.pageViewStats).length > 0 && (
                           <div>
                             <h4 className="text-lg font-semibold mb-4">페이지별 방문 통계</h4>
+                            <div className="overflow-x-auto">
                             <Table>
                               <TableHeader>
                                 <TableRow>
@@ -994,6 +995,7 @@ export default function Admin() {
                                   ))}
                               </TableBody>
                             </Table>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1061,6 +1063,7 @@ export default function Admin() {
                         {aiAccuracyStats && aiAccuracyStats.length > 0 && (
                           <div>
                             <h4 className="text-lg font-semibold mb-4">플랫폼별 정확도</h4>
+                            <div className="overflow-x-auto">
                             <Table>
                               <TableHeader>
                                 <TableRow>
@@ -1095,6 +1098,7 @@ export default function Admin() {
                                 ))}
                               </TableBody>
                             </Table>
+                            </div>
                           </div>
                         )}
 
@@ -1441,6 +1445,7 @@ export default function Admin() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -1498,6 +1503,7 @@ export default function Admin() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1516,6 +1522,7 @@ export default function Admin() {
                 {paymentsLoading ? (
                   <div className="text-center py-4">로딩 중...</div>
                 ) : pendingPayments && pendingPayments.length > 0 ? (
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1548,6 +1555,7 @@ export default function Admin() {
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     입금 확인 대기 중인 회원이 없습니다.
@@ -1899,6 +1907,7 @@ export default function Admin() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                   </div>
                 ) : (
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1971,6 +1980,7 @@ export default function Admin() {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -2007,6 +2017,7 @@ export default function Admin() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                   </div>
                 ) : (
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -2087,6 +2098,7 @@ export default function Admin() {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -2124,6 +2136,7 @@ export default function Admin() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                   </div>
                 ) : (
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -2208,6 +2221,7 @@ export default function Admin() {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -2627,6 +2641,7 @@ AI 검증에서 반려된 신청자가 재검토를 요청한 목록입니다.
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -2700,6 +2715,7 @@ AI 검증에서 반려된 신청자가 재검토를 요청한 목록입니다.
                     )}
                   </TableBody>
                 </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
