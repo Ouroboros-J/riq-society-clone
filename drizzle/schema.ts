@@ -93,8 +93,6 @@ export const applicationReviews = mysqlTable("applicationReviews", {
 export type ApplicationReview = typeof applicationReviews.$inferSelect;
 export type InsertApplicationReview = typeof applicationReviews.$inferInsert;
 
-// TODO: Add your tables here
-
 export const emailTemplates = mysqlTable("emailTemplates", {
   id: int("id").autoincrement().primaryKey(),
   templateKey: varchar("templateKey", { length: 100 }).notNull().unique(), // e.g., "application_approved", "application_rejected"
