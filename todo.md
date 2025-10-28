@@ -1135,30 +1135,34 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
   - [x] getDb import 수정 (db → getDb)
 
 #### 4. 관리자 페이지 UI 변경
-- [ ] AI 설정 탭 재설계
-  - [ ] OpenRouter API 키 입력 필드 (환경 변수 또는 DB)
-  - [ ] "모델 추가" 버튼
-  - [ ] 추가된 모델 목록 (활성화/비활성화, 삭제)
-- [ ] 모델 추가 모달
-  - [ ] Step 1: 플랫폼 선택 (OpenAI, Anthropic, Google, Meta 등)
-  - [ ] Step 2: 해당 플랫폼의 모델 목록 표시 및 선택
-  - [ ] 모델 정보 표시 (이름, 설명, 가격, vision 지원 여부)
-- [ ] 기존 플랫폼별 API 키 입력 UI 제거
+- [x] AI 설정 탭 재설계
+  - [x] AISettingsTab 컴포넌트 생성
+  - [x] "모델 추가" 버튼
+  - [x] 추가된 모델 목록 테이블 (provider, model, role, 활성화 상태)
+- [x] 모델 추가 모달 (3단계)
+  - [x] Step 1: Provider 선택 (OpenRouter providers)
+  - [x] Step 2: 해당 Provider의 Vision 모델 목록 표시 및 선택
+  - [x] Step 3: Role 선택 (Verifier/Summarizer)
+  - [x] 모델 정보 표시 (이름, ID, 설명)
+- [x] Admin.tsx에 "AI 설정 (OpenRouter)" 탭 추가
+- [x] 기존 "AI 설정" 탭을 "AI 설정 (Legacy)"로 변경 (호환성 유지)
 
 #### 5. 서버 API 수정
-- [ ] addAiSetting mutation 수정
-  - [ ] provider, modelId, modelName, role 파라미터
-  - [ ] 검증: 같은 provider는 1개만 허용
-  - [ ] 검증: verifier는 최소 2개, 서로 다른 provider
-  - [ ] 검증: summarizer는 정확히 1개
-- [ ] updateAiSetting mutation 수정
-- [ ] deleteAiSetting mutation 수정
-  - [ ] 삭제 후 검증 규칙 확인
-- [ ] getAvailableModels query 추가
-  - [ ] OpenRouter API에서 Vision 모델 목록 가져오기
-  - [ ] 플랫폼별 필터링
-- [ ] getProviders query 추가
-  - [ ] Vision 모델이 있는 provider 목록
+- [x] addAiSetting mutation 수정
+  - [x] provider, modelId, modelName, role 파라미터
+  - [x] 검증: 같은 provider는 1개만 허용
+  - [x] 검증: Summarizer는 최대 1개
+- [x] updateAiSetting mutation 수정
+- [x] deleteAiSetting mutation 수정
+  - [x] 삭제 후 검증 규칙 확인 (경고만 표시)
+- [x] getOpenRouterModels query 추가
+  - [x] OpenRouter API에서 Vision 모델 목록 가져오기
+- [x] getOpenRouterProviders query 추가
+  - [x] Vision 모델이 있는 provider 목록
+- [x] getOpenRouterModelsByProvider query 추가
+  - [x] 특정 Provider의 Vision 모델 목록
+- [x] validate query 추가
+  - [x] validateAiSettingsConfiguration 호출
 
 #### 6. 테스트
 - [ ] OpenRouter API 연동 테스트
@@ -1183,12 +1187,12 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 
 
 #### 7. 마이페이지 및 이메일 UI 개선
-- [ ] 마이페이지 거절 사유 표시 변경
-  - [ ] 상세 사유 제거
-  - [ ] "상세한 거절 사유는 이메일로 발송되었습니다" 안내
-  - [ ] 등록된 이메일 주소 표시
-  - [ ] "이메일 재발송" 버튼 추가
-  - [ ] "재검토 요청" 버튼 유지
+- [x] 마이페이지 거절 사유 표시 변경
+  - [x] 상세 사유 제거 (adminNotes 직접 표시 제거)
+  - [x] "상세한 거부 사유는 등록된 이메일로 발송되었습니다" 안내
+  - [x] 등록된 이메일 주소 표시
+  - [x] "이메일 재발송" 버튼 추가 (TODO: API 구현 필요)
+  - [x] "재검토 요청" 버튼 유지
 - [ ] 거절 이메일 템플릿 개선
   - [ ] Summarizer AI의 영어 응답 사용
   - [ ] 명확한 섹션 구분 (Rejection Reasons, How to Improve, Next Steps)

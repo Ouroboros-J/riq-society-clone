@@ -9,7 +9,7 @@ import { getAllBlogs, getAllBlogsAdmin, getBlogBySlug, getBlogById, createBlog, 
 import { getAllResources, getAllResourcesAdmin, getResourceById, createResource, updateResource, deleteResource, incrementDownloadCount } from "./db-resources";
 import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
 import { getAllRecognizedTests, getRecognizedTestById, createRecognizedTest, updateRecognizedTest, deleteRecognizedTest } from "./db-recognized-tests";
-import { getAllAiSettings, getAiSettingByPlatform, upsertAiSetting, getEnabledAiSettings, countEnabledAiSettings } from "./db-ai-settings";
+import { getAllAiSettings, getAiSettingById, getAiSettingByProvider, addAiSetting, updateAiSetting, deleteAiSetting, getEnabledAiSettings, countEnabledAiSettings, validateAiSettingsConfiguration } from "./db-ai-settings";
 import { isAutopilotEnabled, getSystemSetting, setSystemSetting } from "./db-system-settings";
 import { saveMultipleAiVerifications, getAiVerificationsByApplicationId } from "./db-ai-verifications";
 import { getAiAccuracyStats, getOverallAiAccuracy } from "./db-ai-accuracy";
@@ -29,6 +29,7 @@ import { sendEmail } from "./_core/email";
 import { sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendReviewApprovedEmail, sendReviewRejectedEmail, sendPaymentConfirmedEmail } from "./email";
 import { cleanupUnpaidDocuments } from "./cleanup-documents";
 import { notifyInactiveAccounts, deleteInactiveAccounts, getInactiveAccounts } from "./cleanup-inactive-accounts";
+import { getAllModels, filterVisionModels, getProvidersWithVision, getVisionModelsByProvider } from "./openrouter-helper";
 
 export const appRouter = router({
   system: systemRouter,
@@ -99,16 +100,21 @@ export const appRouter = router({
           })
           .where(eq(applications.id, input.applicationId));
         
+        // 사용자 정보 조회
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, application.userId));
+        
+        if (!user) {
+          throw new Error("사용자를 찾을 수 없습니다");
+        }
+        
         // 이메일 발송
-        try {
-          if (input.status === "approved") {
-            await sendApplicationApprovedEmail(application.email, application.fullName);
-          } else if (input.status === "rejected" && input.adminNotes) {
-            await sendApplicationRejectedEmail(application.email, application.fullName, input.adminNotes);
-          }
-        } catch (error) {
-          console.error('Failed to send email:', error);
-          // 이메일 발송 실패해도 상태 업데이트는 성공
+        if (input.status === "approved") {
+          await sendApplicationApprovedEmail(user.email!, application.fullName);
+        } else if (input.status === "rejected") {
+          await sendApplicationRejectedEmail(user.email!, application.fullName, input.adminNotes || "");
         }
         
         return { success: true };
@@ -130,6 +136,7 @@ export const appRouter = router({
           throw new Error("신청을 찾을 수 없습니다");
         }
         
+        // 결제 확인
         await db.update(applications)
           .set({ 
             paymentStatus: "confirmed",
@@ -138,195 +145,259 @@ export const appRouter = router({
           })
           .where(eq(applications.id, input.applicationId));
         
-        // 이메일 발송
-        try {
-          await sendPaymentConfirmedEmail(application.email, application.fullName);
-        } catch (error) {
-          console.error('Failed to send email:', error);
+        // 사용자 role을 member로 변경
+        await db.update(users)
+          .set({ 
+            role: "member",
+            updatedAt: new Date()
+          })
+          .where(eq(users.id, application.userId));
+        
+        // 사용자 정보 조회
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, application.userId));
+        
+        if (!user) {
+          throw new Error("사용자를 찾을 수 없습니다");
         }
+        
+        // 이메일 발송
+        await sendPaymentConfirmedEmail(user.email!, application.fullName);
         
         return { success: true };
       }),
 
-    // 통계 데이터
-    getStatistics: adminProcedure
-      .input(z.object({ 
-        startDate: z.string().optional(),
-        endDate: z.string().optional(),
-        groupBy: z.enum(['day', 'week', 'month']).optional().default('day')
+    // 통계 API
+    getUserStats: adminProcedure
+      .input(z.object({
+        startDate: z.string(),
+        endDate: z.string(),
       }))
       .query(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database connection failed");
         
-        const startDate = input.startDate ? new Date(input.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        const endDate = input.endDate ? new Date(input.endDate) : new Date();
+        const start = new Date(input.startDate);
+        const end = new Date(input.endDate);
         
-        // 그룹화 형식 결정
-        const dateFormat = 
-          input.groupBy === 'month' ? sql<string>`DATE_FORMAT(${users.createdAt}, '%Y-%m')` :
-          input.groupBy === 'week' ? sql<string>`DATE_FORMAT(${users.createdAt}, '%Y-%u')` :
-          sql<string>`DATE(${users.createdAt})`;
+        // 일별 회원 가입 수
+        const dailySignups = await db
+          .select({
+            date: sql<string>`DATE(${users.createdAt})`,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(users)
+          .where(
+            and(
+              gte(users.createdAt, start),
+              sql`${users.createdAt} <= ${end}`
+            )
+          )
+          .groupBy(sql`DATE(${users.createdAt})`)
+          .orderBy(sql`DATE(${users.createdAt})`);
         
-        const appDateFormat = 
-          input.groupBy === 'month' ? sql<string>`DATE_FORMAT(${applications.createdAt}, '%Y-%m')` :
-          input.groupBy === 'week' ? sql<string>`DATE_FORMAT(${applications.createdAt}, '%Y-%u')` :
-          sql<string>`DATE(${applications.createdAt})`;
-        
-        // 회원 가입 추이
-        const userRegistrations = await db.select({
-          date: dateFormat,
-          count: sql<number>`COUNT(*)`
-        })
-        .from(users)
-        .where(and(
-          gte(users.createdAt, startDate),
-          sql`${users.createdAt} <= ${endDate}`
-        ))
-        .groupBy(dateFormat)
-        .orderBy(dateFormat);
-        
-        // 입회 신청 추이
-        const applicationSubmissions = await db.select({
-          date: appDateFormat,
-          count: sql<number>`COUNT(*)`
-        })
-        .from(applications)
-        .where(and(
-          gte(applications.createdAt, startDate),
-          sql`${applications.createdAt} <= ${endDate}`
-        ))
-        .groupBy(appDateFormat)
-        .orderBy(appDateFormat);
-        
-        // 상태별 통계
-        const statusStats = await db.select({
-          status: applications.status,
-          count: sql<number>`COUNT(*)`
-        })
-        .from(applications)
-        .groupBy(applications.status);
-        
-        // 결제 상태별 통계
-        const paymentStats = await db.select({
-          paymentStatus: applications.paymentStatus,
-          count: sql<number>`COUNT(*)`
-        })
-        .from(applications)
-        .where(eq(applications.status, "approved"))
-        .groupBy(applications.paymentStatus);
-        
-        // 전환율 계산
-        const totalUsers = await db.select({ count: sql<number>`COUNT(*)` }).from(users).where(and(
-          gte(users.createdAt, startDate),
-          sql`${users.createdAt} <= ${endDate}`
-        ));
-        const totalApplications = await db.select({ count: sql<number>`COUNT(*)` }).from(applications).where(and(
-          gte(applications.createdAt, startDate),
-          sql`${applications.createdAt} <= ${endDate}`
-        ));
-        const approvedApplications = await db.select({ count: sql<number>`COUNT(*)` }).from(applications).where(and(
-          eq(applications.status, 'approved'),
-          gte(applications.createdAt, startDate),
-          sql`${applications.createdAt} <= ${endDate}`
-        ));
-        
-        const conversionRate = {
-          applicationRate: totalUsers[0]?.count > 0 ? (totalApplications[0]?.count / totalUsers[0]?.count * 100).toFixed(2) : '0',
-          approvalRate: totalApplications[0]?.count > 0 ? (approvedApplications[0]?.count / totalApplications[0]?.count * 100).toFixed(2) : '0',
-        };
-        
-        return {
-          userRegistrations,
-          applicationSubmissions,
-          statusStats,
-          paymentStats,
-          conversionRate
-        };
+        return dailySignups;
       }),
 
-    // PostHog 통계
-    getPostHogStats: adminProcedure
-      .input(z.object({ 
-        startDate: z.string().optional(),
-        endDate: z.string().optional()
+    getApplicationStats: adminProcedure
+      .input(z.object({
+        startDate: z.string(),
+        endDate: z.string(),
       }))
       .query(async ({ input }) => {
-        const dateFrom = input.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        const dateTo = input.endDate || new Date().toISOString().split('T')[0];
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
         
-        const [eventStats, pageViewStats, conversionStats] = await Promise.all([
-          getEventStats(dateFrom, dateTo),
-          getPageViewStats(dateFrom, dateTo),
-          getConversionStats(dateFrom, dateTo),
-        ]);
+        const start = new Date(input.startDate);
+        const end = new Date(input.endDate);
         
-        return {
-          eventStats,
-          pageViewStats,
-          conversionStats,
-        };
+        // 일별 입회 신청 수
+        const dailyApplications = await db
+          .select({
+            date: sql<string>`DATE(${applications.createdAt})`,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(applications)
+          .where(
+            and(
+              gte(applications.createdAt, start),
+              sql`${applications.createdAt} <= ${end}`
+            )
+          )
+          .groupBy(sql`DATE(${applications.createdAt})`)
+          .orderBy(sql`DATE(${applications.createdAt})`);
+        
+        return dailyApplications;
       }),
 
-    // 이메일 템플릿 관리
-    listEmailTemplates: adminProcedure.query(async () => {
+    getApprovalStats: adminProcedure
+      .input(z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        const start = new Date(input.startDate);
+        const end = new Date(input.endDate);
+        
+        // 상태별 신청 수
+        const statusCounts = await db
+          .select({
+            status: applications.status,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(applications)
+          .where(
+            and(
+              gte(applications.createdAt, start),
+              sql`${applications.createdAt} <= ${end}`
+            )
+          )
+          .groupBy(applications.status);
+        
+        return statusCounts;
+      }),
+
+    getPaymentStats: adminProcedure
+      .input(z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        const start = new Date(input.startDate);
+        const end = new Date(input.endDate);
+        
+        // 결제 상태별 신청 수
+        const paymentCounts = await db
+          .select({
+            paymentStatus: applications.paymentStatus,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(applications)
+          .where(
+            and(
+              gte(applications.createdAt, start),
+              sql`${applications.createdAt} <= ${end}`
+            )
+          )
+          .groupBy(applications.paymentStatus);
+        
+        return paymentCounts;
+      }),
+
+    // AI 검증
+    verifyApplication: adminProcedure
+      .input(z.object({ applicationId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        // AI 설정 검증
+        const validation = await validateAiSettingsConfiguration();
+        if (!validation.valid) {
+          throw new Error(validation.error || 'Invalid AI settings configuration');
+        }
+        
+        const result = await verifyApplicationWithAI(input.applicationId);
+        return result;
+      }),
+
+    getAiVerifications: adminProcedure
+      .input(z.object({ applicationId: z.number() }))
+      .query(async ({ input }) => {
+        return await getAiVerificationsByApplicationId(input.applicationId);
+      }),
+
+    getAiAccuracyStats: adminProcedure.query(async () => {
+      return await getAiAccuracyStats();
+    }),
+
+    getOverallAiAccuracy: adminProcedure.query(async () => {
+      return await getOverallAiAccuracy();
+    }),
+
+    // PostHog 분석
+    getEventStats: adminProcedure
+      .input(z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      }))
+      .query(async ({ input }) => {
+        return await getEventStats(input.startDate, input.endDate);
+      }),
+
+    getPageViewStats: adminProcedure
+      .input(z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      }))
+      .query(async ({ input }) => {
+        return await getPageViewStats(input.startDate, input.endDate);
+      }),
+
+    getConversionStats: adminProcedure
+      .input(z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      }))
+      .query(async ({ input }) => {
+        return await getConversionStats(input.startDate, input.endDate);
+      }),
+
+    // 정리 작업
+    cleanupUnpaidDocuments: adminProcedure.mutation(async () => {
+      return await cleanupUnpaidDocuments();
+    }),
+
+    notifyInactiveAccounts: adminProcedure.mutation(async () => {
+      return await notifyInactiveAccounts();
+    }),
+
+    deleteInactiveAccounts: adminProcedure.mutation(async () => {
+      return await deleteInactiveAccounts();
+    }),
+
+    getInactiveAccounts: adminProcedure.query(async () => {
+      return await getInactiveAccounts();
+    }),
+  }),
+
+  emailTemplate: router({
+    list: adminProcedure.query(async () => {
       return await getAllEmailTemplates();
     }),
 
-    getEmailTemplate: adminProcedure
-      .input(z.object({ templateKey: z.string() }))
+    getByType: adminProcedure
+      .input(z.object({ type: z.string() }))
       .query(async ({ input }) => {
-        return await getEmailTemplate(input.templateKey);
+        return await getEmailTemplate(input.type);
       }),
 
-    updateEmailTemplate: adminProcedure
-      .input(z.object({ 
-        templateKey: z.string(),
+    update: adminProcedure
+      .input(z.object({
+        type: z.string(),
         subject: z.string(),
-        body: z.string()
+        body: z.string(),
       }))
       .mutation(async ({ input }) => {
-        return await updateEmailTemplate(input.templateKey, input.subject, input.body);
+        return await updateEmailTemplate(input.type, input.subject, input.body);
       }),
-    createEmailTemplate: adminProcedure
-      .input(
-        z.object({
-          templateKey: z.string(),
-          subject: z.string(),
-          body: z.string(),
-          description: z.string().optional(),
-        })
-      )
+
+    create: adminProcedure
+      .input(z.object({
+        type: z.string(),
+        subject: z.string(),
+        body: z.string(),
+      }))
       .mutation(async ({ input }) => {
-        return await createEmailTemplate(input.templateKey, input.subject, input.body, input.description);
-      }),
-
-    // 서류 자동 파기
-    cleanupUnpaidDocuments: adminProcedure
-      .input(z.object({ daysThreshold: z.number().optional() }).optional())
-      .mutation(async ({ input }) => {
-        const daysThreshold = input?.daysThreshold || 30;
-        return await cleanupUnpaidDocuments(daysThreshold);
-      }),
-
-    // 휴면 계정 관리
-    getInactiveAccounts: adminProcedure
-      .input(z.object({ inactiveDays: z.number().optional() }).optional())
-      .query(async ({ input }) => {
-        const inactiveDays = input?.inactiveDays || 90;
-        return await getInactiveAccounts(inactiveDays);
-      }),
-
-    notifyInactiveAccounts: adminProcedure
-      .input(z.object({ inactiveDays: z.number().optional() }).optional())
-      .mutation(async ({ input }) => {
-        const inactiveDays = input?.inactiveDays || 90;
-        return await notifyInactiveAccounts(inactiveDays);
-      }),
-
-    deleteInactiveAccounts: adminProcedure
-      .mutation(async () => {
-        return await deleteInactiveAccounts();
+        return await createEmailTemplate(input.type, input.subject, input.body);
       }),
   }),
 
@@ -363,7 +434,7 @@ export const appRouter = router({
         answer: z.string().optional(),
         category: z.string().optional(),
         displayOrder: z.number().optional(),
-        isPublished: z.number().optional(),
+        isActive: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
@@ -392,7 +463,7 @@ export const appRouter = router({
         return await getBlogBySlug(input.slug);
       }),
 
-    getById: adminProcedure
+    getById: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return await getBlogById(input.id);
@@ -407,8 +478,8 @@ export const appRouter = router({
         thumbnailUrl: z.string().optional(),
         category: z.string().optional(),
       }))
-      .mutation(async ({ ctx, input }) => {
-        return await createBlog({ ...input, authorId: ctx.user.id });
+      .mutation(async ({ input }) => {
+        return await createBlog(input);
       }),
 
     update: adminProcedure
@@ -421,7 +492,6 @@ export const appRouter = router({
         thumbnailUrl: z.string().optional(),
         category: z.string().optional(),
         isPublished: z.number().optional(),
-        publishedAt: z.date().optional(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
@@ -435,6 +505,180 @@ export const appRouter = router({
       }),
   }),
 
+  resource: router({
+    list: memberProcedure.query(async () => {
+      return await getAllResources();
+    }),
+
+    listAdmin: adminProcedure.query(async () => {
+      return await getAllResourcesAdmin();
+    }),
+
+    getById: memberProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await getResourceById(input.id);
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        fileUrl: z.string(),
+        fileName: z.string(),
+        fileType: z.string(),
+        fileSize: z.number(),
+        category: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await createResource(input);
+      }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        fileUrl: z.string().optional(),
+        fileName: z.string().optional(),
+        fileType: z.string().optional(),
+        fileSize: z.number().optional(),
+        category: z.string().optional(),
+        isActive: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await updateResource(id, data);
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await deleteResource(input.id);
+      }),
+
+    incrementDownload: memberProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await incrementDownloadCount(input.id);
+      }),
+  }),
+
+  application: router({
+    submit: protectedProcedure
+      .input(z.object({
+        fullName: z.string(),
+        email: z.string().email(),
+        dateOfBirth: z.string(),
+        phone: z.string().optional(),
+        testType: z.string(),
+        testScore: z.string(),
+        testDate: z.string().optional(),
+        isOtherTest: z.number().optional(),
+        otherTestName: z.string().optional(),
+        documents: z.array(z.string()),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new Error("User not authenticated");
+        
+        return await createApplication({
+          userId: ctx.user.id,
+          ...input,
+        });
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        fullName: z.string().optional(),
+        email: z.string().email().optional(),
+        dateOfBirth: z.string().optional(),
+        phone: z.string().optional(),
+        testType: z.string().optional(),
+        testScore: z.string().optional(),
+        testDate: z.string().optional(),
+        isOtherTest: z.number().optional(),
+        otherTestName: z.string().optional(),
+        documents: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await updateApplication(id, data);
+      }),
+
+    getUserApplication: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) throw new Error("User not authenticated");
+      return await getUserApplication(ctx.user.id);
+    }),
+
+    uploadDocument: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileType: z.string(),
+        fileData: z.string(), // Base64
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new Error("User not authenticated");
+        
+        // 파일 유효성 검사
+        const validation = validateFileUpload(input.fileName, input.fileType);
+        if (!validation.valid) {
+          throw new Error(validation.error);
+        }
+        
+        // Base64 디코딩
+        const buffer = Buffer.from(input.fileData, 'base64');
+        
+        // S3 업로드
+        const key = `applications/${ctx.user.id}/${Date.now()}-${input.fileName}`;
+        const result = await storagePut(key, buffer, input.fileType);
+        
+        return {
+          url: result.url,
+          key: result.key,
+        };
+      }),
+
+    requestPayment: protectedProcedure
+      .input(z.object({
+        applicationId: z.number(),
+        depositorName: z.string(),
+        depositDate: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new Error("User not authenticated");
+        
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        
+        // 신청 정보 조회
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, input.applicationId));
+        
+        if (!application) {
+          throw new Error("신청을 찾을 수 없습니다");
+        }
+        
+        if (application.userId !== ctx.user.id) {
+          throw new Error("권한이 없습니다");
+        }
+        
+        // 입금 확인 요청
+        await db.update(applications)
+          .set({
+            paymentStatus: "deposit_requested",
+            depositorName: input.depositorName,
+            depositDate: input.depositDate,
+            updatedAt: new Date()
+          })
+          .where(eq(applications.id, input.applicationId));
+        
+        return { success: true };
+      }),
+  }),
+
   systemSettings: router({
     get: adminProcedure
       .input(z.object({ key: z.string() }))
@@ -443,13 +687,9 @@ export const appRouter = router({
       }),
 
     set: adminProcedure
-      .input(z.object({
-        key: z.string(),
-        value: z.string(),
-      }))
+      .input(z.object({ key: z.string(), value: z.string() }))
       .mutation(async ({ input }) => {
-        await setSystemSetting(input.key, input.value);
-        return { success: true };
+        return await setSystemSetting(input.key, input.value);
       }),
 
     isAutopilotEnabled: adminProcedure.query(async () => {
@@ -462,29 +702,85 @@ export const appRouter = router({
       return await getAllAiSettings();
     }),
 
-    getByPlatform: adminProcedure
-      .input(z.object({ platform: z.string() }))
+    getById: adminProcedure
+      .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
-        return await getAiSettingByPlatform(input.platform);
+        return await getAiSettingById(input.id);
       }),
 
-    upsert: adminProcedure
+    getByProvider: adminProcedure
+      .input(z.object({ provider: z.string() }))
+      .query(async ({ input }) => {
+        return await getAiSettingByProvider(input.provider);
+      }),
+
+    add: adminProcedure
       .input(z.object({
-        platform: z.string(),
-        apiKey: z.string().optional(),
-        selectedModel: z.string().optional(),
+        provider: z.string(),
+        modelId: z.string(),
+        modelName: z.string(),
+        role: z.enum(['verifier', 'summarizer']),
         isEnabled: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
-        // API 키가 제공된 경우 유효성 검증
-        if (input.apiKey) {
-          const validation = await validateApiKey(input.platform, input.apiKey);
-          if (!validation.valid) {
-            throw new Error(`Invalid API key: ${validation.error}`);
-          }
+        // 검증 규칙 체크 (추가 후)
+        const allSettings = await getAllAiSettings();
+        const afterAdd = [...allSettings, input as any];
+        
+        const verifiers = afterAdd.filter(s => s.role === 'verifier' && s.isEnabled === 1);
+        const summarizers = afterAdd.filter(s => s.role === 'summarizer' && s.isEnabled === 1);
+        
+        // Summarizer는 최대 1개
+        if (input.role === 'summarizer' && input.isEnabled === 1 && summarizers.length > 1) {
+          throw new Error('Only 1 Summarizer model can be enabled at a time.');
         }
         
-        return await upsertAiSetting(input);
+        return await addAiSetting(input);
+      }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        provider: z.string().optional(),
+        modelId: z.string().optional(),
+        modelName: z.string().optional(),
+        role: z.enum(['verifier', 'summarizer']).optional(),
+        isEnabled: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        
+        // 검증 규칙 체크 (업데이트 후)
+        const allSettings = await getAllAiSettings();
+        const current = await getAiSettingById(id);
+        if (!current) throw new Error('AI setting not found');
+        
+        const updated = { ...current, ...data };
+        const afterUpdate = allSettings.map(s => s.id === id ? updated : s);
+        
+        const summarizers = afterUpdate.filter(s => s.role === 'summarizer' && s.isEnabled === 1);
+        
+        // Summarizer는 최대 1개
+        if (updated.role === 'summarizer' && updated.isEnabled === 1 && summarizers.length > 1) {
+          throw new Error('Only 1 Summarizer model can be enabled at a time.');
+        }
+        
+        return await updateAiSetting(id, data);
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteAiSetting(input.id);
+        
+        // 삭제 후 검증 규칙 체크
+        const validation = await validateAiSettingsConfiguration();
+        if (!validation.valid) {
+          // 경고만 표시, 삭제는 허용
+          console.warn('AI settings configuration warning:', validation.error);
+        }
+        
+        return { success: true };
       }),
 
     getEnabled: adminProcedure.query(async () => {
@@ -495,16 +791,25 @@ export const appRouter = router({
       return await countEnabledAiSettings();
     }),
 
-    getAvailableModels: adminProcedure
-      .input(z.object({ platform: z.string(), apiKey: z.string().optional() }))
-      .query(async ({ input }) => {
-        return await getModelsByPlatform(input.platform, input.apiKey);
-      }),
+    validate: adminProcedure.query(async () => {
+      return await validateAiSettingsConfiguration();
+    }),
 
-    validateKey: adminProcedure
-      .input(z.object({ platform: z.string(), apiKey: z.string() }))
+    // OpenRouter 모델 목록 조회
+    getOpenRouterModels: adminProcedure.query(async () => {
+      const allModels = await getAllModels();
+      const visionModels = filterVisionModels(allModels);
+      return visionModels;
+    }),
+
+    getOpenRouterProviders: adminProcedure.query(async () => {
+      return await getProvidersWithVision();
+    }),
+
+    getOpenRouterModelsByProvider: adminProcedure
+      .input(z.object({ provider: z.string() }))
       .query(async ({ input }) => {
-        return await validateApiKey(input.platform, input.apiKey);
+        return await getVisionModelsByProvider(input.provider);
       }),
   }),
 
@@ -553,263 +858,17 @@ export const appRouter = router({
       }),
   }),
 
-  resource: router({
-    list: memberProcedure.query(async () => {
-      return await getAllResources();
-    }),
-
-    listAdmin: adminProcedure.query(async () => {
-      return await getAllResourcesAdmin();
-    }),
-
-    getById: memberProcedure
-      .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        return await getResourceById(input.id);
-      }),
-
-    create: adminProcedure
+  applicationReview: router({
+    create: protectedProcedure
       .input(z.object({
-        title: z.string(),
-        description: z.string().optional(),
-        fileUrl: z.string(),
-        fileName: z.string().optional(),
-        fileType: z.string().optional(),
-        fileSize: z.number().optional(),
-        category: z.string().optional(),
+        applicationId: z.number(),
+        message: z.string(),
       }))
-      .mutation(async ({ input }) => {
-        return await createResource(input);
-      }),
-
-    update: adminProcedure
-      .input(z.object({
-        id: z.number(),
-        title: z.string().optional(),
-        description: z.string().optional(),
-        fileUrl: z.string().optional(),
-        fileName: z.string().optional(),
-        fileType: z.string().optional(),
-        fileSize: z.number().optional(),
-        category: z.string().optional(),
-        isPublished: z.number().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        const { id, ...data } = input;
-        return await updateResource(id, data);
-      }),
-
-    delete: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        return await deleteResource(input.id);
-      }),
-
-    incrementDownload: publicProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        return await incrementDownloadCount(input.id);
-      }),
-  }),
-
-  aiVerification: router({
-    getByApplicationId: adminProcedure
-      .input(z.object({ applicationId: z.number() }))
-      .query(async ({ input }) => {
-        return await getAiVerificationsByApplicationId(input.applicationId);
-      }),
-
-    getAccuracyStats: adminProcedure
-      .query(async () => {
-        return await getAiAccuracyStats();
-      }),
-
-    getOverallAccuracy: adminProcedure
-      .query(async () => {
-        return await getOverallAiAccuracy();
-      }),
-  }),
-
-  application: router({
-    getMyApplication: protectedProcedure.query(async ({ ctx }) => {
-      return await getUserApplication(ctx.user.id);
-    }),
-
-    submit: protectedProcedure
-      .input(
-        z.object({
-          fullName: z.string(),
-          email: z.string().email(),
-          dateOfBirth: z.string(),
-          phone: z.string().optional(),
-          testType: z.string(),
-          testScore: z.string(),
-          testDate: z.string().optional(),
-          documentUrls: z.string(), // 호환성 유지
-          identityDocumentUrl: z.string().optional(), // 신원 증명 서류
-          testResultUrl: z.string().optional(), // 시험 결과지
-          isOtherTest: z.number().optional(),
-          otherTestName: z.string().optional(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
-        const existing = await getUserApplication(ctx.user.id);
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new Error("User not authenticated");
         
-        let application;
-        if (existing) {
-          application = await updateApplication(existing.id, {
-            ...input,
-            isDraft: 0,
-          });
-        } else {
-          application = await createApplication({
-            userId: ctx.user.id,
-            ...input,
-            isDraft: 0,
-          });
-        }
-        
-        // AI 자동 검증 (오토 파일럿 모드 활성화 시)
-        const autopilotEnabled = await isAutopilotEnabled();
-        const isOtherTest = input.isOtherTest === 1;
-        
-        // "기타 시험"은 AI 검증 건너뛰기
-        if (autopilotEnabled && !isOtherTest) {
-          try {
-            // 시험 카테고리 조회
-            const testInfo = await getRecognizedTestById(parseInt(input.testType));
-            const testCategory = testInfo?.category || "표준 지능 검사";
-            
-            // 신원 증명 서류와 시험 결과지 URL 확인
-            if (input.identityDocumentUrl && input.testResultUrl) {
-              const verificationResult = await verifyApplicationWithAI(
-                input.name,
-                input.birthDate,
-                input.testType,
-                input.testScore,
-                testCategory,
-                input.identityDocumentUrl,
-                input.testResultUrl,
-                application.id
-              );
-              
-              // 검증 결과 저장
-              const verificationsToSave = verificationResult.verifications.map((v) => ({
-                applicationId: application.id,
-                platform: v.platform,
-                model: v.model,
-                result: (v.result.approved ? 'approved' : 'rejected') as 'approved' | 'rejected' | 'uncertain',
-                confidence: v.result.confidence,
-                reasoning: v.result.reason,
-                rawResponse: v.rawResponse,
-              }));
-              
-              await saveMultipleAiVerifications(verificationsToSave);
-              
-              // 모든 AI가 승인하면 자동 승인
-              if (verificationResult.approved) {
-                await updateApplicationStatus(application.id, 'approved', 'AI 자동 검증 통과');
-              } else {
-                // 거절 시 거절 사유 저장 및 이메일 발송
-                await updateApplicationStatus(application.id, 'rejected', verificationResult.reason);
-                
-                // 신청자에게 거절 사유 이메일 발송
-                try {
-                  await sendApplicationRejectedEmail(
-                    input.email,
-                    input.fullName,
-                    verificationResult.reason
-                  );
-                } catch (emailError) {
-                  console.error('Failed to send rejection email:', emailError);
-                }
-              }
-            }
-          } catch (error: any) {
-            console.error('AI verification failed:', error);
-            // AI 검증 실패 시 관리자 수동 검토로 남겨둔
-          }
-        }
-        
-        return application;
-      }),
-
-    uploadDocument: protectedProcedure
-      .input(
-        z.object({
-          fileName: z.string(),
-          fileType: z.string(),
-          fileData: z.string(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
-        // 파일 업로드 보안 검증
-        const validation = validateFileUpload(input.fileName, input.fileType, input.fileData);
-        if (!validation.valid) {
-          throw new Error(validation.error || '파일 업로드 검증 실패');
-        }
-        
-        const buffer = Buffer.from(input.fileData, "base64");
-        const fileKey = `applications/${ctx.user.id}/${Date.now()}-${validation.sanitizedFileName}`;
-        const { url } = await storagePut(fileKey, buffer, input.fileType);
-        
-        return { url };
-      }),
-
-    listAll: adminProcedure.query(async () => {
-      return await getAllApplications();
-    }),
-
-    updateStatus: adminProcedure
-      .input(
-        z.object({
-          id: z.number(),
-          status: z.enum(["pending", "approved", "rejected"]),
-          adminNotes: z.string().optional(),
-        })
-      )
-      .mutation(async ({ input }) => {
-        return await updateApplicationStatus(input.id, input.status, input.adminNotes);
-      }),
-    requestPayment: protectedProcedure
-      .input(
-        z.object({
-          depositorName: z.string(),
-          depositDate: z.string(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database connection failed");
-        
-        const application = await getUserApplication(ctx.user!.id);
-        
-        if (!application) {
-          throw new Error("신청 내역을 찾을 수 없습니다");
-        }
-        
-        if (application.status !== "approved") {
-          throw new Error("승인된 신청만 결제할 수 있습니다");
-        }
-        
-        await db.update(applications).set({
-          paymentStatus: "deposit_requested",
-          depositorName: input.depositorName,
-          depositDate: input.depositDate,
-        }).where(eq(applications.id, application.id));
-        
-        return { success: true };
-      }),
-
-    // 수동 AI 검증 실행 (오토 파일럿 모드와 무관)
-    verifyWithAI: adminProcedure
-      .input(z.object({ applicationId: z.number() }))
-      .mutation(async ({ input }) => {
-        try {
-          console.log('[verifyWithAI] Starting manual AI verification for application:', input.applicationId);
-          
-          const db = await getDb();
-          if (!db) throw new Error("Database connection failed");
         
         // 신청 정보 조회
         const [application] = await db
@@ -821,144 +880,40 @@ export const appRouter = router({
           throw new Error("신청을 찾을 수 없습니다");
         }
         
-        // "기타 시험"은 AI 검증 불가
-        if (application.isOtherTest === 1) {
-          throw new Error("기타 시험은 AI 검증을 지원하지 않습니다");
+        if (application.userId !== ctx.user.id) {
+          throw new Error("권한이 없습니다");
         }
         
-        // testType이 null인 경우 처리
-        if (!application.testType) {
-          throw new Error("시험 종류가 지정되지 않았습니다");
-        }
+        // 재검토 요청 횟수 증가
+        await incrementReviewRequestCount(input.applicationId);
         
-        // 시험 카테고리 결정 (testType은 시험 이름 문자열)
-        // 기본값은 "표준 지능 검사"
-        const testCategory = "표준 지능 검사";
-        
-        // 신원 증명 서류와 시험 결과지 URL 확인
-        if (!application.identityDocumentUrl || !application.testResultUrl) {
-          throw new Error("업로드된 서류가 없습니다");
-        }
-        
-        // AI 검증 실행
-        const verificationResult = await verifyApplicationWithAI(
-          application.name,
-          application.birthDate,
-          application.testType,
-          application.testScore,
-          testCategory,
-          application.identityDocumentUrl,
-          application.testResultUrl,
-          application.id
-        );
-        
-        // 검증 결과 저장
-        const verificationsToSave = verificationResult.verifications.map((v) => ({
-          applicationId: application.id,
-          platform: v.platform,
-          model: v.model,
-          result: (v.result.approved ? 'approved' : 'rejected') as 'approved' | 'rejected' | 'uncertain',
-          confidence: v.result.confidence,
-          reasoning: v.result.reason,
-          rawResponse: v.rawResponse,
-        }));
-        
-        await saveMultipleAiVerifications(verificationsToSave);
-        
-        // 모든 AI가 승인하면 자동 승인
-        if (verificationResult.approved) {
-          await updateApplicationStatus(application.id, 'approved', 'AI 수동 검증 통과');
-        } else {
-          // 거절 시 거절 사유 저장 및 이메일 발송
-          await updateApplicationStatus(application.id, 'rejected', verificationResult.reason);
-          
-          // 신청자에게 거절 사유 이메일 발송
-          try {
-            await sendApplicationRejectedEmail(
-              application.email,
-              application.fullName,
-              verificationResult.reason
-            );
-          } catch (emailError) {
-            console.error('Failed to send rejection email:', emailError);
-          }
-        }
-        
-          return {
-            success: true,
-            approved: verificationResult.approved,
-            reason: verificationResult.reason,
-          };
-        } catch (error: any) {
-          console.error('[verifyWithAI] Error:', error);
-          console.error('[verifyWithAI] Stack:', error.stack);
-          throw new Error(`AI 검증 실패: ${error.message}`);
-        }
+        // 재검토 요청 생성
+        return await createApplicationReview({
+          applicationId: input.applicationId,
+          userId: ctx.user.id,
+          message: input.message,
+        });
       }),
-  }),
 
-  applicationReview: router({
-    requestReview: protectedProcedure
-      .input(
-        z.object({
-          applicationId: z.number(),
-          requestReason: z.string(),
-          additionalDocuments: z.string().optional(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
+    getByApplicationId: protectedProcedure
+      .input(z.object({ applicationId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        if (!ctx.user) throw new Error("User not authenticated");
+        
         const db = await getDb();
         if (!db) throw new Error("Database connection failed");
         
-        // 신청 확인
+        // 신청 정보 조회
         const [application] = await db
           .select()
           .from(applications)
           .where(eq(applications.id, input.applicationId));
         
         if (!application) {
-          throw new Error("신청 내역을 찾을 수 없습니다");
+          throw new Error("신청을 찾을 수 없습니다");
         }
         
-        if (application.userId !== ctx.user.id) {
-          throw new Error("권한이 없습니다");
-        }
-        
-        if (application.status !== "rejected") {
-          throw new Error("거부된 신청만 재검토를 요청할 수 있습니다");
-        }
-        
-        // 재검토 요청 횟수 확인 (최대 1회)
-        if ((application.reviewRequestCount || 0) >= 1) {
-          throw new Error("재검토는 최대 1회만 요청할 수 있습니다");
-        }
-        
-        // 재검토 요청 생성
-        await createApplicationReview({
-          applicationId: input.applicationId,
-          requestReason: input.requestReason,
-          additionalDocuments: input.additionalDocuments,
-        });
-        
-        // 재검토 요청 횟수 증가
-        await incrementReviewRequestCount(input.applicationId);
-        
-        return { success: true };
-      }),
-
-    getMyReviews: protectedProcedure
-      .input(z.object({ applicationId: z.number() }))
-      .query(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database connection failed");
-        
-        // 신청 확인
-        const [application] = await db
-          .select()
-          .from(applications)
-          .where(eq(applications.id, input.applicationId));
-        
-        if (!application || application.userId !== ctx.user.id) {
+        if (application.userId !== ctx.user.id && ctx.user.role !== 'admin') {
           throw new Error("권한이 없습니다");
         }
         
@@ -970,72 +925,68 @@ export const appRouter = router({
     }),
 
     updateStatus: adminProcedure
-      .input(
-        z.object({
-          reviewId: z.number(),
-          status: z.enum(["approved", "rejected"]),
-          adminNotes: z.string().optional(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
-        await updateApplicationReviewStatus(input.reviewId, input.status, ctx.user!.id);
+      .input(z.object({
+        reviewId: z.number(),
+        status: z.enum(['pending', 'approved', 'rejected']),
+        adminResponse: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
         
-        // 재검토 승인 시 원래 신청도 승인 처리
-        if (input.status === "approved") {
-          const db = await getDb();
-          if (!db) throw new Error("Database connection failed");
-          
-          const [review] = await db
-            .select()
-            .from(applicationReviews)
-            .where(eq(applicationReviews.id, input.reviewId));
-          
-          if (review) {
-            await updateApplicationStatus(review.applicationId, "approved");
-            
-            // 신청 정보 조회
-            const [application] = await db
-              .select()
-              .from(applications)
-              .where(eq(applications.id, review.applicationId));
-            
-            // 이메일 발송
-            if (application) {
-              try {
-                await sendReviewApprovedEmail(application.email, application.fullName);
-              } catch (error) {
-                console.error('Failed to send email:', error);
-              }
-            }
-          }
-        } else if (input.status === "rejected") {
-          // 재검토 거부 시 이메일 발송
-          const db = await getDb();
-          if (!db) throw new Error("Database connection failed");
-          
-          const [review] = await db
-            .select()
-            .from(applicationReviews)
-            .where(eq(applicationReviews.id, input.reviewId));
-          
-          if (review) {
-            const [application] = await db
-              .select()
-              .from(applications)
-              .where(eq(applications.id, review.applicationId));
-            
-            if (application) {
-              try {
-                await sendReviewRejectedEmail(application.email, application.fullName);
-              } catch (error) {
-                console.error('Failed to send email:', error);
-              }
-            }
-          }
+        // 재검토 요청 정보 조회
+        const [review] = await db
+          .select()
+          .from(applicationReviews)
+          .where(eq(applicationReviews.id, input.reviewId));
+        
+        if (!review) {
+          throw new Error("재검토 요청을 찾을 수 없습니다");
         }
         
-        return { success: true };   }),
+        // 재검토 요청 상태 업데이트
+        await updateApplicationReviewStatus(input.reviewId, input.status, input.adminResponse);
+        
+        // 신청 정보 조회
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, review.applicationId));
+        
+        if (!application) {
+          throw new Error("신청을 찾을 수 없습니다");
+        }
+        
+        // 사용자 정보 조회
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, application.userId));
+        
+        if (!user) {
+          throw new Error("사용자를 찾을 수 없습니다");
+        }
+        
+        // 이메일 발송
+        if (input.status === 'approved') {
+          // 재검토 승인 시 신청 상태를 pending으로 변경
+          await db.update(applications)
+            .set({
+              status: 'pending',
+              adminNotes: null,
+              updatedAt: new Date()
+            })
+            .where(eq(applications.id, review.applicationId));
+          
+          await sendReviewApprovedEmail(user.email!, application.fullName, input.adminResponse || '');
+        } else if (input.status === 'rejected') {
+          await sendReviewRejectedEmail(user.email!, application.fullName, input.adminResponse || '');
+        }
+        
+        return { success: true };
+      }),
   }),
 });
 
 export type AppRouter = typeof appRouter;
+

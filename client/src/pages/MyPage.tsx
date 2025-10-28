@@ -215,11 +215,27 @@ export default function MyPage() {
                   <Label>상태</Label>
                   <div className="mt-2">{getStatusBadge(application.status)}</div>
                 </div>
-                {application.status === 'rejected' && application.adminNotes && (
+                {application.status === 'rejected' && (
                   <div className="space-y-4">
                     <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
-                      <Label className="text-destructive">거부 사유</Label>
-                      <p className="text-sm mt-2">{application.adminNotes}</p>
+                      <Label className="text-destructive">입회 신청 거부</Label>
+                      <p className="text-sm mt-2">
+                        입회 신청이 거부되었습니다. 상세한 거부 사유는 <strong>등록된 이메일로 발송</strong>되었습니다.
+                      </p>
+                      <p className="text-sm mt-2 text-muted-foreground">
+                        등록된 이메일: <strong>{user?.email}</strong>
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => {
+                          // TODO: 이메일 재발송 API 호출
+                          toast.info('이메일 재발송 기능은 공사 중입니다.');
+                        }}
+                      >
+                        이메일 재발송
+                      </Button>
                     </div>
                     {(application.reviewRequestCount || 0) < 1 && (
                       <div className="space-y-2">

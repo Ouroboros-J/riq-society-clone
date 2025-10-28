@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import Header from "../components/Header";
 import { AIVerificationResults } from "../components/AIVerificationResults";
+import { AISettingsTab } from "../components/AISettingsTab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -663,7 +664,8 @@ export default function Admin() {
             <TabsTrigger value="faq">FAQ 관리</TabsTrigger>
             <TabsTrigger value="blog">블로그 관리</TabsTrigger>
             <TabsTrigger value="resources">리소스 관리</TabsTrigger>
-            <TabsTrigger value="ai-settings">AI 설정</TabsTrigger>
+            <TabsTrigger value="ai-settings">AI 설정 (Legacy)</TabsTrigger>
+            <TabsTrigger value="ai-settings-openrouter">AI 설정 (OpenRouter)</TabsTrigger>
             <TabsTrigger value="review-requests">재검토 요청</TabsTrigger>
           </TabsList>
 
@@ -2553,6 +2555,11 @@ export default function Admin() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* AI 설정 (OpenRouter) */}
+          <TabsContent value="ai-settings-openrouter">
+            <AISettingsTab />
           </TabsContent>
 
           {/* 재검토 요청 */}
