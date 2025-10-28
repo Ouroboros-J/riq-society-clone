@@ -1059,3 +1059,135 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
   - [ ] 모든 정보 일치 시 승인
 
 
+
+
+## Phase 19: OpenRouter 통합 및 역할 기반 AI 구조
+
+### 목표
+1. 기존 4개 플랫폼을 OpenRouter로 통합하여 단일 API 키로 모든 모델 사용
+2. 역할 기반 AI 구조 도입:
+   - **검증 AI (Verifier)**: 서로 다른 플랫폼 2개 이상, 엄격한 검증
+   - **종합 AI (Summarizer)**: 1개, 사용자 친화적인 결과 요약 및 안내
+
+### 구현 항목
+
+#### 1. OpenRouter API 연동
+- [ ] OpenRouter API 키 환경 변수 추가
+- [ ] OpenRouter 모델 목록 API 호출 함수 구현
+  - [ ] GET https://openrouter.ai/api/v1/models
+  - [ ] 플랫폼별 필터링 (OpenAI, Anthropic, Google, Meta 등)
+- [ ] OpenRouter Chat Completions API 호출 함수 구현
+  - [ ] POST https://openrouter.ai/api/v1/chat/completions
+  - [ ] 이미지/PDF 지원 (vision 모델)
+
+#### 2. 데이터베이스 스키마 변경
+- [x] aiSettings 테이블 마이그레이션
+  - [x] platform → provider 필드로 변경 (rename)
+  - [x] provider 필드에 UNIQUE 제약 유지 (같은 provider는 1개만)
+  - [x] apiKey 필드 제거 (OpenRouter API 키는 환경 변수)
+  - [x] selectedModel 삭제, modelId 필드 생성 (전체 ID 저장, 200자)
+  - [x] modelName 필드 추가 (UI 표시용, 200자)
+  - [x] role 필드 추가: enum('verifier', 'summarizer')
+  - [x] isEnabled 필드 유지
+  - [x] drizzle-kit generate 및 migrate 성공
+- [ ] 검증 규칙 구현
+  - [ ] verifier 역할: 최소 2개, 서로 다른 provider
+  - [ ] summarizer 역할: 정확히 1개
+- [ ] 기존 데이터 마이그레이션 스크립트 (필요시)
+
+#### 3. AI 검증 프롬프트 역할별 분리
+- [ ] Verifier AI 프롬프트 작성
+  - [ ] 역할: 엄격한 서류 검증 전문가
+  - [ ] 상세하고 기술적인 분석
+  - [ ] 3개 시험 유형별 프롬프트
+- [ ] Summarizer AI 프롬프트 작성
+  - [ ] 역할: 친절한 회원 서비스 담당자
+  - [ ] 여러 검증 결과를 종합
+  - [ ] **영어로 응답** (국제 표준 언어, 브라우저 자동 번역 활용)
+  - [ ] 구체적인 개선 방법 제시
+  - [ ] 공감적이고 도움이 되는 톤
+  - [ ] 재검토 요청 안내 (1회 제한)
+
+#### 4. AI 검증 함수 통합
+- [ ] 기존 4개 함수 제거
+  - [ ] verifyWithOpenAI
+  - [ ] verifyWithAnthropic
+  - [ ] verifyWithGemini
+  - [ ] verifyWithPerplexity
+- [ ] 단일 verifyWithOpenRouter 함수 구현
+  - [ ] 모든 모델을 OpenRouter API로 호출
+  - [ ] 이미지/PDF Base64 전달
+  - [ ] 응답 파싱 및 검증 결과 반환
+  - [ ] role에 따라 다른 프롬프트 사용 (verifier vs summarizer)
+- [ ] verifyApplicationWithAI 함수 수정
+  - [ ] 1단계: Verifier AI들로 검증 (서로 다른 provider 2개 이상)
+  - [ ] 2단계: Summarizer AI로 결과 종합
+  - [ ] Summarizer의 출력을 사용자에게 전달
+  - [ ] Verifier 결과는 관리자만 확인 가능
+
+#### 4. 관리자 페이지 UI 변경
+- [ ] AI 설정 탭 재설계
+  - [ ] OpenRouter API 키 입력 필드 (환경 변수 또는 DB)
+  - [ ] "모델 추가" 버튼
+  - [ ] 추가된 모델 목록 (활성화/비활성화, 삭제)
+- [ ] 모델 추가 모달
+  - [ ] Step 1: 플랫폼 선택 (OpenAI, Anthropic, Google, Meta 등)
+  - [ ] Step 2: 해당 플랫폼의 모델 목록 표시 및 선택
+  - [ ] 모델 정보 표시 (이름, 설명, 가격, vision 지원 여부)
+- [ ] 기존 플랫폼별 API 키 입력 UI 제거
+
+#### 5. 서버 API 수정
+- [ ] addAiSetting mutation 수정
+  - [ ] provider, modelId, modelName, role 파라미터
+  - [ ] 검증: 같은 provider는 1개만 허용
+  - [ ] 검증: verifier는 최소 2개, 서로 다른 provider
+  - [ ] 검증: summarizer는 정확히 1개
+- [ ] updateAiSetting mutation 수정
+- [ ] deleteAiSetting mutation 수정
+  - [ ] 삭제 후 검증 규칙 확인
+- [ ] getAvailableModels query 추가
+  - [ ] OpenRouter API에서 Vision 모델 목록 가져오기
+  - [ ] 플랫폼별 필터링
+- [ ] getProviders query 추가
+  - [ ] Vision 모델이 있는 provider 목록
+
+#### 6. 테스트
+- [ ] OpenRouter API 연동 테스트
+- [ ] 모델 추가/삭제 테스트
+  - [ ] Verifier 역할 모델 2개 추가 (서로 다른 provider)
+  - [ ] Summarizer 역할 모델 1개 추가
+  - [ ] 같은 provider 중복 추가 시 에러 확인
+- [ ] AI 검증 테스트
+  - [ ] Verifier AI들의 상세 검증 결과 확인
+  - [ ] Summarizer AI의 사용자 친화적 요약 확인
+  - [ ] 이미지/PDF 업로드 및 검증
+- [ ] 2단계 검증 프로세스 테스트
+  - [ ] Verifier → Summarizer 순차 확인
+  - [ ] 최종 결과가 사용자 친화적인지 확인
+
+### 참고
+- OpenRouter API 문서: https://openrouter.ai/docs
+- OpenRouter 모델 목록: https://openrouter.ai/models
+- Vision 지원 모델 확인 필요
+
+
+
+
+#### 7. 마이페이지 및 이메일 UI 개선
+- [ ] 마이페이지 거절 사유 표시 변경
+  - [ ] 상세 사유 제거
+  - [ ] "상세한 거절 사유는 이메일로 발송되었습니다" 안내
+  - [ ] 등록된 이메일 주소 표시
+  - [ ] "이메일 재발송" 버튼 추가
+  - [ ] "재검토 요청" 버튼 유지
+- [ ] 거절 이메일 템플릿 개선
+  - [ ] Summarizer AI의 영어 응답 사용
+  - [ ] 명확한 섹션 구분 (Rejection Reasons, How to Improve, Next Steps)
+  - [ ] 재검토 요청 링크 포함
+  - [ ] 문의 연락처 포함
+- [ ] 이메일 재발송 기능 구현
+  - [ ] 마이페이지에서 버튼 클릭
+  - [ ] 동일한 거절 사유 이메일 재발송
+  - [ ] 발송 성공 토스트 알림
+
+

@@ -176,6 +176,13 @@
       "when": 1761652314712,
       "tag": "0024_rich_gressill",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1761676519729,
+      "tag": "0025_mighty_magneto",
+      "breakpoints": true
     }
   ]
 }

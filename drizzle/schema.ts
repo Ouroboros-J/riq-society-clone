@@ -193,9 +193,10 @@ export type InsertRecognizedTest = typeof recognizedTests.$inferInsert;
 // AI 모델 설정
 export const aiSettings = mysqlTable("aiSettings", {
   id: int("id").autoincrement().primaryKey(),
-  platform: varchar("platform", { length: 50 }).notNull().unique(), // "openai", "anthropic", "google", "perplexity"
-  apiKey: text("apiKey"), // 암호화 권장
-  selectedModel: varchar("selectedModel", { length: 100 }), // 예: "gpt-4", "claude-3-opus"
+  provider: varchar("provider", { length: 50 }).notNull().unique(), // "openai", "anthropic", "google", "meta-llama" 등 (같은 provider는 1개만)
+  modelId: varchar("modelId", { length: 200 }).notNull(), // OpenRouter 모델 ID 전체 (예: "openai/gpt-4o", "anthropic/claude-3-5-sonnet-20241022")
+  modelName: varchar("modelName", { length: 200 }).notNull(), // UI 표시용 이름 (예: "GPT-4o", "Claude 3.5 Sonnet")
+  role: mysqlEnum("role", ["verifier", "summarizer"]).notNull(), // verifier: 검증자 (2개 이상), summarizer: 종합자 (1개)
   isEnabled: int("isEnabled").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
