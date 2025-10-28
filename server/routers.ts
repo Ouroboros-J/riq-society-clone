@@ -120,6 +120,29 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // 회원 기간 연장
+    renewUserMembership: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        membershipType: z.enum(["annual", "lifetime"]),
+        customExpiryDate: z.string().optional() // ISO 8601 date string
+      }))
+      .mutation(async ({ input }) => {
+        const { renewMembership } = await import("./db-membership");
+        
+        const customDate = input.customExpiryDate 
+          ? new Date(input.customExpiryDate)
+          : undefined;
+        
+        const result = await renewMembership(
+          input.userId,
+          input.membershipType,
+          customDate
+        );
+        
+        return result;
+      }),
+
     confirmApplicationPayment: adminProcedure
       .input(z.object({ 
         applicationId: z.number(),

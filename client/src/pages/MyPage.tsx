@@ -354,6 +354,51 @@ AI 검증 결과에 오류가 있다고 생각하신다면 재검토를 요청�
                   <Label>가입일</Label>
                   <p>{new Date(user?.createdAt || "").toLocaleDateString("ko-KR")}</p>
                 </div>
+                {user?.role === "member" && (
+                  <>
+                    <div className="border-t pt-4 mt-4">
+                      <Label className="text-base font-semibold">회원 기간 정보</Label>
+                    </div>
+                    <div>
+                      <Label>회원 유형</Label>
+                      <div className="mt-2">
+                        {user.membershipType === "lifetime" ? (
+                          <Badge className="bg-purple-500">평생회원</Badge>
+                        ) : (
+                          <Badge className="bg-blue-500">연회원</Badge>
+                        )}
+                      </div>
+                    </div>
+                    {user.membershipStartDate && (
+                      <div>
+                        <Label>회원 시작일</Label>
+                        <p>{new Date(user.membershipStartDate).toLocaleDateString("ko-KR")}</p>
+                      </div>
+                    )}
+                    <div>
+                      <Label>회원 만료일</Label>
+                      {user.membershipType === "lifetime" ? (
+                        <p className="text-lg font-semibold text-purple-600 dark:text-purple-400">평생</p>
+                      ) : user.membershipExpiryDate ? (
+                        <div>
+                          <p>{new Date(user.membershipExpiryDate).toLocaleDateString("ko-KR")}</p>
+                          {(() => {
+                            const daysLeft = Math.ceil((new Date(user.membershipExpiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                            return (
+                              <p className={`text-sm mt-1 ${
+                                daysLeft < 30 ? "text-red-600 dark:text-red-400 font-semibold" : "text-muted-foreground"
+                              }`}>
+                                {daysLeft > 0 ? `${daysLeft}일 남음` : "만료됨"}
+                              </p>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">-</p>
+                      )}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 

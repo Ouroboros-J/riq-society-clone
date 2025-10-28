@@ -114,6 +114,11 @@ export default function Admin() {
   
   const [autopilotEnabled, setAutopilotEnabled] = useState(false);
   
+  // 회원 기간 관리
+  const [paymentConfirmDialogOpen, setPaymentConfirmDialogOpen] = useState(false);
+  const [selectedPaymentApplication, setSelectedPaymentApplication] = useState<any>(null);
+  const [membershipType, setMembershipType] = useState<"annual" | "lifetime">("annual");
+  
   // 통계 날짜 범위
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
@@ -401,12 +406,24 @@ export default function Admin() {
   const confirmApplicationPaymentMutation = trpc.admin.confirmApplicationPayment.useMutation({
     onSuccess: () => {
       toast.success("입금이 확인되었습니다.");
+      setPaymentConfirmDialogOpen(false);
+      setSelectedPaymentApplication(null);
+      setMembershipType("annual");
       refetchApplications();
     },
     onError: (error) => {
       toast.error("입금 확인 실패: " + error.message);
     },
   });
+  
+  const handleConfirmPayment = () => {
+    if (selectedPaymentApplication) {
+      confirmApplicationPaymentMutation.mutate({
+        applicationId: selectedPaymentApplication.id,
+        membershipType
+      });
+    }
+  };
 
   const verifyWithAIMutation = trpc.application.verifyWithAI.useMutation({
     onSuccess: (data) => {
@@ -1392,9 +1409,10 @@ export default function Admin() {
                               {app.status === 'approved' && app.paymentStatus === 'deposit_requested' && (
                                 <Button
                                   size="sm"
-                                  onClick={() => confirmApplicationPaymentMutation.mutate({
-                                    applicationId: app.id
-                                  })}
+                                  onClick={() => {
+                                    setSelectedPaymentApplication(app);
+                                    setPaymentConfirmDialogOpen(true);
+                                  }}
                                 >
                                   입금 확인
                                 </Button>
@@ -3009,6 +3027,54 @@ AI 검증에서 반려된 신청자가 재검토를 요청한 목록입니다.
               </Button>
               <Button variant="destructive" onClick={handleReject}>
                 반려 확정
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 입금 확인 및 회원 유형 선택 모달 */}
+        <Dialog open={paymentConfirmDialogOpen} onOpenChange={setPaymentConfirmDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>입금 확인 및 회원 유형 선택</DialogTitle>
+              <DialogDescription>
+                {selectedPaymentApplication?.fullName}님의 입금을 확인하고 회원 유형을 선택해주세요.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">회원 유형</label>
+                <select
+                  className="w-full p-2 border rounded-md"
+                  value={membershipType}
+                  onChange={(e) => setMembershipType(e.target.value as "annual" | "lifetime")}
+                >
+                  <option value="annual">연회원 (1년)</option>
+                  <option value="lifetime">평생회원 (무제한)</option>
+                </select>
+                <p className="text-sm text-muted-foreground">
+                  {membershipType === "annual" 
+                    ? "연회원: 입금 확인 시점부터 1년간 회원 자격 유지"
+                    : "평생회원: 영구적으로 회원 자격 유지"}
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPaymentConfirmDialogOpen(false);
+                  setSelectedPaymentApplication(null);
+                  setMembershipType("annual");
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleConfirmPayment}
+                disabled={confirmApplicationPaymentMutation.isPending}
+              >
+                {confirmApplicationPaymentMutation.isPending ? "처리 중..." : "입금 확인"}
               </Button>
             </DialogFooter>
           </DialogContent>
