@@ -1650,3 +1650,11 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Ensure hamburger menu appears above page content
 - [x] Test on mobile devices
 
+
+
+
+## Bug Fix: Sheet Still Overlapping (z-index too low)
+- [x] Increase Sheet z-index to z-[9999]
+- [x] Check Home.tsx for high z-index elements
+- [ ] Test on actual mobile device (user to confirm)
+
