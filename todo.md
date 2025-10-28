@@ -1112,21 +1112,27 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
   - [x] ai-prompts.ts 파일 생성
 
 #### 4. AI 검증 함수 통합
-- [ ] 기존 4개 함수 제거
-  - [ ] verifyWithOpenAI
-  - [ ] verifyWithAnthropic
-  - [ ] verifyWithGemini
-  - [ ] verifyWithPerplexity
-- [ ] 단일 verifyWithOpenRouter 함수 구현
-  - [ ] 모든 모델을 OpenRouter API로 호출
-  - [ ] 이미지/PDF Base64 전달
-  - [ ] 응답 파싱 및 검증 결과 반환
-  - [ ] role에 따라 다른 프롬프트 사용 (verifier vs summarizer)
-- [ ] verifyApplicationWithAI 함수 수정
-  - [ ] 1단계: Verifier AI들로 검증 (서로 다른 provider 2개 이상)
-  - [ ] 2단계: Summarizer AI로 결과 종합
-  - [ ] Summarizer의 출력을 사용자에게 전달
-  - [ ] Verifier 결과는 관리자만 확인 가능
+- [x] 기존 4개 함수 제거 (ai-verification-old.ts로 백업)
+  - [x] verifyWithOpenAI
+  - [x] verifyWithAnthropic
+  - [x] verifyWithGemini
+  - [x] verifyWithPerplexity
+- [x] 단일 verifyWithOpenRouter 함수 구현
+  - [x] 모든 모델을 OpenRouter API로 호출
+  - [x] 이미지/PDF Base64 전달 (Vision 모델 지원)
+  - [x] 응답 파싱 및 검증 결과 반환 (JSON 파싱)
+  - [x] role에 따라 다른 프롬프트 사용 (verifier vs summarizer)
+- [x] verifyApplicationWithAI 함수 수정
+  - [x] 1단계: Verifier AI들로 검증 (서로 다른 provider 2개 이상)
+  - [x] 2단계: Summarizer AI로 결과 종합
+  - [x] Summarizer의 출력을 사용자에게 전달 (reason 필드)
+  - [x] Verifier 결과는 관리자만 확인 가능 (verifierResults 필드)
+  - [x] 검증 규칙 구현 (최소 2개 Verifier, 1개 Summarizer, 서로 다른 provider)
+  - [x] 다수결 기반 최종 결정
+  - [x] WebSocket 진행 상태 브로드캠스트
+- [x] TypeScript export 오류 수정
+  - [x] callOpenRouterChatCompletion import 수정
+  - [x] getDb import 수정 (db → getDb)
 
 #### 4. 관리자 페이지 UI 변경
 - [ ] AI 설정 탭 재설계
