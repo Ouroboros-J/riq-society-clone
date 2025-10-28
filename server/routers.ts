@@ -683,6 +683,8 @@ export const appRouter = router({
             // 신원 증명 서류와 시험 결과지 URL 확인
             if (input.identityDocumentUrl && input.testResultUrl) {
               const verificationResult = await verifyApplicationWithAI(
+                input.name,
+                input.birthDate,
                 input.testType,
                 input.testScore,
                 testCategory,
@@ -840,6 +842,8 @@ export const appRouter = router({
         
         // AI 검증 실행
         const verificationResult = await verifyApplicationWithAI(
+          application.name,
+          application.birthDate,
           application.testType,
           application.testScore,
           testCategory,

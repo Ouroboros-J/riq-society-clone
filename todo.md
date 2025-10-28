@@ -1030,3 +1030,32 @@
   - [ ] 검증 결과 확인
 
 
+
+
+## Phase 18: 신원 정보 교차 검증 기능 추가
+
+### 목표
+AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신원 증명 서류에서 추출한 정보를 교차 검증
+
+### 구현 항목
+- [x] verifyApplicationWithAI 함수에 개인정보 파라미터 추가
+  - [x] applicantName (이름)
+  - [x] applicantBirthDate (생년월일)
+- [x] AI 프롬프트에 개인정보 교차 검증 항목 추가
+  - [x] 신원 증명 서류의 이름과 입력한 이름 일치 확인
+  - [x] 신원 증명 서류의 생년월일과 입력한 생년월일 일치 확인 (가능한 경우)
+  - [x] 3개 시험 유형 모두 적용 (표준 지능 검사, 학업 및 인지 능력 검사, 대학 및 대학원 진학 시험)
+- [x] 4개 AI 플랫폼 검증 함수 모두 수정
+  - [x] verifyWithOpenAI
+  - [x] verifyWithAnthropic (Claude)
+  - [x] verifyWithGemini
+  - [x] verifyWithPerplexity
+- [x] routers.ts에서 AI 검증 호출 시 개인정보 전달
+  - [x] submit mutation (자동 검증)
+  - [x] verifyWithAI mutation (수동 검증)
+- [ ] 테스트
+  - [ ] 이름 불일치 시 거부
+  - [ ] 생년월일 불일치 시 거부
+  - [ ] 모든 정보 일치 시 승인
+
+

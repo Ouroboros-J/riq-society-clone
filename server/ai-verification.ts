@@ -10,7 +10,11 @@ const STANDARD_IQ_TEST_PROMPT = `당신은 고지능 단체(High IQ Society) 입
 다음 항목을 철저히 확인해주세요:
 
 1. **신원 증명 확인**
+   - 신청자가 입력한 이름: {applicantName}
+   - 신청자가 입력한 생년월일: {applicantBirthDate}
    - 신원 증명 서류(주민등록증, 운전면허증, 여권, 학생증, 국가 자격증 등)에 본인 이름이 명확히 표시되어 있는가?
+   - 신원 증명 서류의 이름이 신청자가 입력한 이름({applicantName})과 일치하는가?
+   - 신원 증명 서류에 생년월일이 표시되어 있다면, 신청자가 입력한 생년월일({applicantBirthDate})과 일치하는가?
    - 신원 증명 서류가 유효하고 위조 흔적이 없는가?
 
 2. **시험 정보 확인**
@@ -49,6 +53,8 @@ const STANDARD_IQ_TEST_PROMPT = `당신은 고지능 단체(High IQ Society) 입
 
 **중요:** 
 - 필수 항목이 하나라도 누락되면 반드시 거절하세요.
+- 신원 증명 서류의 이름이 신청자가 입력한 이름({applicantName})과 일치하지 않으면 거절하세요.
+- 신원 증명 서류의 생년월일이 신청자가 입력한 생년월일({applicantBirthDate})과 일치하지 않으면 거절하세요.
 - 신원 증명 서류와 결과지의 이름이 일치하지 않으면 거절하세요.
 - 점수가 상위 1% 기준에 미달하면 거절하세요.
 - 서류가 불명확하거나 위조 의심이 있으면 거절하세요.`;
@@ -60,7 +66,11 @@ const ACADEMIC_TEST_PROMPT = `당신은 고지능 단체(High IQ Society) 입회
 다음 항목을 철저히 확인해주세요:
 
 1. **신원 증명 확인**
+   - 신청자가 입력한 이름: {applicantName}
+   - 신청자가 입력한 생년월일: {applicantBirthDate}
    - 신원 증명 서류에 본인 이름이 명확히 표시되어 있는가?
+   - 신원 증명 서류의 이름이 신청자가 입력한 이름({applicantName})과 일치하는가?
+   - 신원 증명 서류에 생년월일이 표시되어 있다면, 신청자가 입력한 생년월일({applicantBirthDate})과 일치하는가?
    - 신원 증명 서류가 유효하고 위조 흔적이 없는가?
 
 2. **시험 정보 확인**
@@ -94,6 +104,8 @@ const ACADEMIC_TEST_PROMPT = `당신은 고지능 단체(High IQ Society) 입회
 \`\`\`
 
 **중요:** 
+- 신원 증명 서류의 이름이 신청자가 입력한 이름({applicantName})과 일치하지 않으면 거절하세요.
+- 신원 증명 서류의 생년월일이 신청자가 입력한 생년월일({applicantBirthDate})과 일치하지 않으면 거절하세요.
 - 신원 증명 서류와 결과지의 이름이 일치하지 않으면 거절하세요.
 - 점수가 상위 1% 기준에 미달하면 거절하세요.
 - 서류가 불명확하거나 위조 의심이 있으면 거절하세요.`;
@@ -105,7 +117,11 @@ const COLLEGE_TEST_PROMPT = `당신은 고지능 단체(High IQ Society) 입회 
 다음 항목을 철저히 확인해주세요:
 
 1. **신원 증명 확인**
+   - 신청자가 입력한 이름: {applicantName}
+   - 신청자가 입력한 생년월일: {applicantBirthDate}
    - 신원 증명 서류에 본인 이름이 명확히 표시되어 있는가?
+   - 신원 증명 서류의 이름이 신청자가 입력한 이름({applicantName})과 일치하는가?
+   - 신원 증명 서류에 생년월일이 표시되어 있다면, 신청자가 입력한 생년월일({applicantBirthDate})과 일치하는가?
    - 신원 증명 서류가 유효하고 위조 흔적이 없는가?
 
 2. **시험 정보 확인**
@@ -177,6 +193,8 @@ interface AiVerificationResponse {
 async function verifyWithOpenAI(
   apiKey: string,
   model: string,
+  applicantName: string,
+  applicantBirthDate: string,
   testName: string,
   testScore: string,
   testCategory: string,
@@ -192,6 +210,8 @@ async function verifyWithOpenAI(
   const testResultIsPdf = testResultUrl.toLowerCase().endsWith('.pdf');
   
   const prompt = getVerificationPrompt(testCategory)
+    .replace(/{applicantName}/g, applicantName)
+    .replace(/{applicantBirthDate}/g, applicantBirthDate)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
 
@@ -263,6 +283,8 @@ async function verifyWithOpenAI(
 async function verifyWithAnthropic(
   apiKey: string,
   model: string,
+  applicantName: string,
+  applicantBirthDate: string,
   testName: string,
   testScore: string,
   testCategory: string,
@@ -278,6 +300,8 @@ async function verifyWithAnthropic(
   const testResultIsPdf = testResultUrl.toLowerCase().endsWith('.pdf');
   
   const prompt = getVerificationPrompt(testCategory)
+    .replace(/{applicantName}/g, applicantName)
+    .replace(/{applicantBirthDate}/g, applicantBirthDate)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
 
@@ -353,6 +377,8 @@ async function verifyWithAnthropic(
 async function verifyWithGemini(
   apiKey: string,
   model: string,
+  applicantName: string,
+  applicantBirthDate: string,
   testName: string,
   testScore: string,
   testCategory: string,
@@ -368,6 +394,8 @@ async function verifyWithGemini(
   const testResultIsPdf = testResultUrl.toLowerCase().endsWith('.pdf');
   
   const prompt = getVerificationPrompt(testCategory)
+    .replace(/{applicantName}/g, applicantName)
+    .replace(/{applicantBirthDate}/g, applicantBirthDate)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
 
@@ -430,6 +458,8 @@ async function verifyWithGemini(
 async function verifyWithPerplexity(
   apiKey: string,
   model: string,
+  applicantName: string,
+  applicantBirthDate: string,
   testName: string,
   testScore: string,
   testCategory: string,
@@ -451,6 +481,8 @@ async function verifyWithPerplexity(
   const testResultIsPdf = testResultUrl.toLowerCase().endsWith('.pdf');
   
   const prompt = getVerificationPrompt(testCategory)
+    .replace(/{applicantName}/g, applicantName)
+    .replace(/{applicantBirthDate}/g, applicantBirthDate)
     .replace('{testName}', testName)
     .replace('{testScore}', testScore);
 
@@ -527,6 +559,8 @@ async function verifyWithPerplexity(
  * 모든 활성화된 AI가 동일한 결과(승인 또는 거절)를 반환해야 통과
  */
 export async function verifyApplicationWithAI(
+  applicantName: string,
+  applicantBirthDate: string,
   testName: string,
   testScore: string,
   testCategory: string,
@@ -566,6 +600,8 @@ export async function verifyApplicationWithAI(
           result = await verifyWithOpenAI(
             setting.apiKey!,
             setting.selectedModel!,
+            applicantName,
+            applicantBirthDate,
             testName,
             testScore,
             testCategory,
@@ -577,6 +613,8 @@ export async function verifyApplicationWithAI(
           result = await verifyWithAnthropic(
             setting.apiKey!,
             setting.selectedModel!,
+            applicantName,
+            applicantBirthDate,
             testName,
             testScore,
             testCategory,
@@ -588,6 +626,8 @@ export async function verifyApplicationWithAI(
           result = await verifyWithGemini(
             setting.apiKey!,
             setting.selectedModel!,
+            applicantName,
+            applicantBirthDate,
             testName,
             testScore,
             testCategory,
@@ -599,6 +639,8 @@ export async function verifyApplicationWithAI(
           result = await verifyWithPerplexity(
             setting.apiKey!,
             setting.selectedModel!,
+            applicantName,
+            applicantBirthDate,
             testName,
             testScore,
             testCategory,
