@@ -349,7 +349,7 @@ async function verifyWithGemini(
 
 /**
  * Perplexity API를 사용한 서류 검증
- * 주의: Perplexity는 이미지 분석을 지원하지 않을 수 있음
+ * Sonar 모델은 이미지 분석을 지원합니다.
  */
 async function verifyWithPerplexity(
   apiKey: string,
@@ -374,7 +374,15 @@ async function verifyWithPerplexity(
       messages: [
         {
           role: 'user',
-          content: prompt + '\n\n(이미지 분석은 지원되지 않으므로 텍스트 정보만으로 판단)',
+          content: [
+            { type: 'text', text: prompt },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/jpeg;base64,${documentBase64}`,
+              },
+            },
+          ],
         },
       ],
     }),
