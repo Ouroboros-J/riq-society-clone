@@ -622,11 +622,11 @@
 
 
 
-- [ ] PostHog 분석 시스템 연동
+- [x] PostHog 분석 시스템 연동
   - [x] PostHog 프로젝트 정보 확인 (환경변수 설정 완료)
   - [x] PostHog React 라이브러리 설치 및 초기화 (posthog-js 설치, main.tsx에 초기화)
   - [x] 페이지뷰 자동 추적 설정 (capture_pageview: true)
   - [x] 커스텀 이벤트 추적 (application_submitted, payment_request_submitted, review_request_submitted)
-  - [ ] 관리자 대시보드에 PostHog 통계 연동
+  - [x] 관리자 대시보드에 PostHog 통계 연동 (전환율, 이벤트, 페이지뷰 통계)
 
 

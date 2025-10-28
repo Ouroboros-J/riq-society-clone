@@ -227,6 +227,14 @@ export default function Admin() {
   const { data: aiSettings, isLoading: aiSettingsLoading, refetch: refetchAiSettings } = trpc.aiSettings.list.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === 'admin',
   });
+  
+  const { data: posthogStats, isLoading: posthogStatsLoading } = trpc.admin.getPostHogStats.useQuery(
+    { startDate, endDate },
+    {
+      enabled: isAuthenticated && user?.role === 'admin',
+      refetchOnMount: true,
+    }
+  );
 
   // 활성화된 고유 AI 플랫폼 개수 계산
   const enabledPlatforms = new Set(
@@ -732,6 +740,115 @@ export default function Admin() {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* PostHog 통계 */}
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>PostHog 사용자 행동 분석</CardTitle>
+                    <CardDescription>실시간 사용자 행동 추적 및 전환율 분석</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {posthogStatsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : posthogStats ? (
+                      <div className="space-y-6">
+                        {/* 전환율 통계 */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <Card>
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-sm font-medium text-muted-foreground">총 방문자 수</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-3xl font-bold">{posthogStats.conversionStats.totalVisitors.toLocaleString()}</div>
+                              <p className="text-xs text-muted-foreground mt-1">페이지뷰 기준</p>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-sm font-medium text-muted-foreground">입회 신청 전환율</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-3xl font-bold text-primary">{posthogStats.conversionStats.applicationConversionRate.toFixed(2)}%</div>
+                              <p className="text-xs text-muted-foreground mt-1">방문자 대비 신청 비율</p>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-sm font-medium text-muted-foreground">결제 전환율</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-3xl font-bold text-green-600">{posthogStats.conversionStats.paymentConversionRate.toFixed(2)}%</div>
+                              <p className="text-xs text-muted-foreground mt-1">신청 대비 결제 비율</p>
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        {/* 이벤트 통계 */}
+                        <div>
+                          <h4 className="text-lg font-semibold mb-4">주요 이벤트 발생 현황</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Card>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-medium">입회 신청 완료</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-2xl font-bold">{posthogStats.eventStats.application_submitted || 0}</div>
+                              </CardContent>
+                            </Card>
+                            <Card>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-medium">결제 요청</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-2xl font-bold">{posthogStats.eventStats.payment_request_submitted || 0}</div>
+                              </CardContent>
+                            </Card>
+                            <Card>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-medium">재검토 요청</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-2xl font-bold">{posthogStats.eventStats.review_request_submitted || 0}</div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
+
+                        {/* 페이지뷰 통계 */}
+                        {Object.keys(posthogStats.pageViewStats).length > 0 && (
+                          <div>
+                            <h4 className="text-lg font-semibold mb-4">페이지별 방문 통계</h4>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>페이지 URL</TableHead>
+                                  <TableHead className="text-right">방문 횟수</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {Object.entries(posthogStats.pageViewStats)
+                                  .sort(([, a], [, b]) => (b as number) - (a as number))
+                                  .slice(0, 10)
+                                  .map(([url, count]) => (
+                                    <TableRow key={url}>
+                                      <TableCell className="font-mono text-sm">{url}</TableCell>
+                                      <TableCell className="text-right font-semibold">{count as number}</TableCell>
+                                    </TableRow>
+                                  ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        PostHog 통계 데이터를 불러올 수 없습니다.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* AI 정확도 통계 */}
                 <Card className="mt-6">

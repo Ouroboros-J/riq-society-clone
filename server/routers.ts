@@ -13,6 +13,7 @@ import { getAllAiSettings, getAiSettingByPlatform, upsertAiSetting, getEnabledAi
 import { isAutopilotEnabled, getSystemSetting, setSystemSetting } from "./db-system-settings";
 import { saveMultipleAiVerifications, getAiVerificationsByApplicationId } from "./db-ai-verifications";
 import { getAiAccuracyStats, getOverallAiAccuracy } from "./db-ai-accuracy";
+import { getEventStats, getPageViewStats, getConversionStats } from "./posthog-api";
 import { verifyApplicationWithAI } from "./ai-verification";
 import { getFirstDocumentAsBase64 } from "./s3-helper";
 import { getModelsByPlatform } from "./ai-models";
@@ -237,6 +238,29 @@ export const appRouter = router({
           statusStats,
           paymentStats,
           conversionRate
+        };
+      }),
+
+    // PostHog 통계
+    getPostHogStats: adminProcedure
+      .input(z.object({ 
+        startDate: z.string().optional(),
+        endDate: z.string().optional()
+      }))
+      .query(async ({ input }) => {
+        const dateFrom = input.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const dateTo = input.endDate || new Date().toISOString().split('T')[0];
+        
+        const [eventStats, pageViewStats, conversionStats] = await Promise.all([
+          getEventStats(dateFrom, dateTo),
+          getPageViewStats(dateFrom, dateTo),
+          getConversionStats(dateFrom, dateTo),
+        ]);
+        
+        return {
+          eventStats,
+          pageViewStats,
+          conversionStats,
         };
       }),
 
