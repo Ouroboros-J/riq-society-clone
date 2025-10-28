@@ -1002,3 +1002,31 @@
   - [x] 기존 documentUrls 호환성 유지
 
 
+
+
+### Phase 9-10: 테스트
+- [x] 데이터베이스 스키마 확인
+  - [x] identityDocumentUrl, testResultUrl 필드 존재 확인
+  - [x] 기존 documentUrls 필드 유지 확인
+- [x] 입회 신청 폼 코드 확인
+  - [x] 2개 파일 상태 관리 (identityDocument, testResultDocument)
+  - [x] 각 파일을 S3에 별도 업로드
+  - [x] identityDocumentUrl과 testResultUrl을 별도로 전달
+  - [x] documentUrls도 함께 전달하여 호환성 유지
+- [x] AI 검증 함수 코드 확인
+  - [x] verifyApplicationWithAI 함수가 2개 파일 URL을 받음
+  - [x] 각 플랫폼별 함수가 2개 파일 URL을 받음
+  - [x] S3에서 파일 다운로드 및 Base64 변환 로직 포함
+  - [x] 파일 타입(PDF vs 이미지) 확인 로직 포함
+  - [x] Perplexity는 sonar/sonar-pro 모델만 허용
+- [x] 관리자 페이지 코드 확인
+  - [x] 상세 보기 모달에서 2개 파일 별도 표시
+  - [x] 각 파일에 대한 별도 링크
+  - [x] 기존 documentUrls 호환성 유지
+- [ ] 통합 테스트 (실제 사용 테스트)
+  - [ ] AI API 키 설정 (관리자 페이지)
+  - [ ] 입회 신청 폼에서 실제 파일 업로드
+  - [ ] AI 자동 검증 또는 수동 검증 실행
+  - [ ] 검증 결과 확인
+
+

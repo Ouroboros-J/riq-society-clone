@@ -1,0 +1,25 @@
+{
+  "query": "SELECT column_name, data_type, is_nullable \nFROM information_schema.columns \nWHERE table_name = 'applications' \nAND column_name IN ('identityDocumentUrl', 'testResultUrl', 'documentUrls');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DsBm4SjbxZ8LdH.ae93e0dc1c76 --database 7yk2Cjgf3WcBwNeW2NtrwQ --execute SELECT column_name, data_type, is_nullable \nFROM information_schema.columns \nWHERE table_name = 'applications' \nAND column_name IN ('identityDocumentUrl', 'testResultUrl', 'documentUrls');",
+  "rows": [
+    {
+      "column_name": "documentUrls",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "identityDocumentUrl",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "testResultUrl",
+      "data_type": "text",
+      "is_nullable": "YES"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\tdata_type\tis_nullable\ndocumentUrls\ttext\tYES\nidentityDocumentUrl\ttext\tYES\ntestResultUrl\ttext\tYES\n",
+  "stderr": "",
+  "execution_time_ms": 1555
+}

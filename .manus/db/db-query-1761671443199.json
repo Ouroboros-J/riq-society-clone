@@ -1,0 +1,155 @@
+{
+  "query": "SELECT column_name, data_type, is_nullable \nFROM information_schema.columns \nWHERE table_name = 'applications' \nORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DsBm4SjbxZ8LdH.ae93e0dc1c76 --database 7yk2Cjgf3WcBwNeW2NtrwQ --execute SELECT column_name, data_type, is_nullable \nFROM information_schema.columns \nWHERE table_name = 'applications' \nORDER BY ordinal_position;",
+  "rows": [
+    {
+      "column_name": "id",
+      "data_type": "int",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "userId",
+      "data_type": "int",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "fullName",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "email",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "dateOfBirth",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "phone",
+      "data_type": "varchar",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "testType",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "testScore",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "testDate",
+      "data_type": "varchar",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "documentUrls",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "status",
+      "data_type": "enum",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "adminNotes",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "paymentStatus",
+      "data_type": "enum",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "depositorName",
+      "data_type": "varchar",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "depositDate",
+      "data_type": "varchar",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "paymentConfirmedAt",
+      "data_type": "timestamp",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "createdAt",
+      "data_type": "timestamp",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "updatedAt",
+      "data_type": "timestamp",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "submittedAt",
+      "data_type": "timestamp",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "reviewedAt",
+      "data_type": "timestamp",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "isDraft",
+      "data_type": "int",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "isOtherTest",
+      "data_type": "int",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "otherTestName",
+      "data_type": "varchar",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "reviewRequestCount",
+      "data_type": "int",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "aiVerificationResult",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "aiVerificationStatus",
+      "data_type": "enum",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "aiVerifiedAt",
+      "data_type": "timestamp",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "identityDocumentUrl",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "testResultUrl",
+      "data_type": "text",
+      "is_nullable": "YES"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\tdata_type\tis_nullable\nid\tint\tNO\nuserId\tint\tNO\nfullName\tvarchar\tNO\nemail\tvarchar\tNO\ndateOfBirth\tvarchar\tNO\nphone\tvarchar\tYES\ntestType\tvarchar\tNO\ntestScore\tvarchar\tNO\ntestDate\tvarchar\tYES\ndocumentUrls\ttext\tYES\nstatus\tenum\tNO\nadminNotes\ttext\tYES\npaymentStatus\tenum\tNO\ndepositorName\tvarchar\tYES\ndepositDate\tvarchar\tYES\npaymentConfirmedAt\ttimestamp\tYES\ncreatedAt\ttimestamp\tNO\nupdatedAt\ttimestamp\tNO\nsubmittedAt\ttimestamp\tYES\nreviewedAt\ttimestamp\tYES\nisDraft\tint\tNO\nisOtherTest\tint\tNO\notherTestName\tvarchar\tYES\nreviewRequestCount\tint\tNO\naiVerificationResult\ttext\tYES\naiVerificationStatus\tenum\tYES\naiVerifiedAt\ttimestamp\tYES\nidentityDocumentUrl\ttext\tYES\ntestResultUrl\ttext\tYES\n",
+  "stderr": "",
+  "execution_time_ms": 2521
+}
