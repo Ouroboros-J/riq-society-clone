@@ -645,7 +645,9 @@ export const appRouter = router({
           testType: z.string(),
           testScore: z.string(),
           testDate: z.string().optional(),
-          documentUrls: z.string(),
+          documentUrls: z.string(), // 호환성 유지
+          identityDocumentUrl: z.string().optional(), // 신원 증명 서류
+          testResultUrl: z.string().optional(), // 시험 결과지
           isOtherTest: z.number().optional(),
           otherTestName: z.string().optional(),
         })

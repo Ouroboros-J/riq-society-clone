@@ -965,3 +965,29 @@
   - [ ] 신원 증명 1개 + 시험 결과지 1개 업로드
   - [ ] AI 검증 실행 후 두 이미지 모두 분석되는지 확인
 
+
+
+
+### Phase 9-8: PDF 파일 처리 (AI 검증 시 이미지 변환)
+- [x] PDF → 이미지 변환 함수 구현
+  - [x] pdf2image 라이브러리 설치 확인
+  - [x] S3에서 PDF 다운로드
+  - [x] 모든 페이지를 개별 JPG 이미지로 변환
+  - [x] Base64 배열로 반환
+- [x] s3-helper.ts에 getDocumentAsBase64Array 함수 추가
+  - [x] PDF: 모든 페이지를 이미지 배열로 변환
+  - [x] 이미지: 단일 이미지를 배열로 반환
+  - [x] 파일 형식 자동 감지 (확장자)
+- [x] verifyApplicationWithAI 함수 시그니처 변경
+  - [x] identityDocumentImages 배열 파라미터 추가
+  - [x] testResultImages 배열 파라미터 추가
+- [ ] AI 검증 함수 내부 로직 수정
+  - [ ] OpenAI 검증 함수: 여러 이미지 content 배열로 추가
+  - [ ] Claude 검증 함수: 여러 이미지 content 배열로 추가
+  - [ ] Gemini 검증 함수: 여러 이미지 parts 배열로 추가
+  - [ ] Perplexity 검증 함수: 여러 이미지 content 배열로 추가
+  - [ ] 프롬프트에 이미지 순서 명시
+- [ ] routers.ts에서 verifyApplicationWithAI 호출 부분 수정
+  - [ ] identityDocumentUrl과 testResultUrl을 각각 getDocumentAsBase64Array로 변환
+  - [ ] 변환된 이미지 배열을 verifyApplicationWithAI에 전달
+
