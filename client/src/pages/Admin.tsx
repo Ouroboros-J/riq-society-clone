@@ -519,6 +519,11 @@ export default function Admin() {
       setOpenaiKeyValidation({validating: false, valid: null, error: null});
       return;
     }
+    // 형식 검증
+    if (!apiKey.startsWith('sk-') && !apiKey.startsWith('sk-proj-')) {
+      setOpenaiKeyValidation({validating: false, valid: false, error: 'API 키는 sk- 또는 sk-proj-로 시작해야 합니다.'});
+      return;
+    }
     setOpenaiKeyValidation({validating: true, valid: null, error: null});
     try {
       const result = await utils.client.aiSettings.validateKey.query({
@@ -538,6 +543,11 @@ export default function Admin() {
   const validateAnthropicKey = async (apiKey: string) => {
     if (!apiKey || apiKey.trim() === '') {
       setAnthropicKeyValidation({validating: false, valid: null, error: null});
+      return;
+    }
+    // 형식 검증
+    if (!apiKey.startsWith('sk-ant-')) {
+      setAnthropicKeyValidation({validating: false, valid: false, error: 'API 키는 sk-ant-로 시작해야 합니다.'});
       return;
     }
     setAnthropicKeyValidation({validating: true, valid: null, error: null});
@@ -561,6 +571,11 @@ export default function Admin() {
       setGoogleKeyValidation({validating: false, valid: null, error: null});
       return;
     }
+    // 형식 검증
+    if (!apiKey.startsWith('AIza')) {
+      setGoogleKeyValidation({validating: false, valid: false, error: 'API 키는 AIza로 시작해야 합니다.'});
+      return;
+    }
     setGoogleKeyValidation({validating: true, valid: null, error: null});
     try {
       const result = await utils.client.aiSettings.validateKey.query({
@@ -580,6 +595,11 @@ export default function Admin() {
   const validatePerplexityKey = async (apiKey: string) => {
     if (!apiKey || apiKey.trim() === '') {
       setPerplexityKeyValidation({validating: false, valid: null, error: null});
+      return;
+    }
+    // 형식 검증
+    if (!apiKey.startsWith('pplx-')) {
+      setPerplexityKeyValidation({validating: false, valid: false, error: 'API 키는 pplx-로 시작해야 합니다.'});
       return;
     }
     setPerplexityKeyValidation({validating: true, valid: null, error: null});

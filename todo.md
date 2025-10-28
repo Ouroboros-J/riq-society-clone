@@ -922,3 +922,15 @@
   - [x] 모든 플랫폼에 적용 (OpenAI, Anthropic, Google, Perplexity)
 
 
+
+
+### Phase 9-6: API 키 형식 검증 (클라이언트 측)
+- [x] 클라이언트에서 API 키 형식 먼저 검증
+  - [x] OpenAI: `sk-` 또는 `sk-proj-`로 시작하는지 확인
+  - [x] Anthropic: `sk-ant-`로 시작하는지 확인
+  - [x] Google: `AIza`로 시작하는지 확인
+  - [x] Perplexity: `pplx-`로 시작하는지 확인
+- [x] 형식이 올바른 경우에만 서버 API 호출
+- [x] 형식 오류 시 즉시 에러 표시 (서버 호출 없이)
+- [x] 불필요한 네트워크 요청 방지
+
