@@ -117,8 +117,13 @@ export default function Application() {
   }
 
   // Redirect if not authenticated (only after auth loading is complete)
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      setLocation("/auth");
+    }
+  }, [authLoading, isAuthenticated, setLocation]);
+
   if (!isAuthenticated) {
-    setLocation("/auth");
     return null;
   }
 

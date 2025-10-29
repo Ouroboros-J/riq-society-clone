@@ -1687,6 +1687,7 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Create a unified LoadingSpinner component
 - [x] Replace all inconsistent loading implementations with the unified component
 - [x] Ensure consistent size, color, and animation
+- [x] Fix Blog.tsx and FAQ.tsx missing LoadingSpinner
 
 
 
@@ -1720,5 +1721,30 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
   - Pending: Show application status ("under review")
   - Rejected: Show rejection reason + re-apply button
   - Approved: Redirect to My RIQ (shouldn't see this page)
+
+
+
+
+## Add Journal Management to Admin Page
+- [ ] Add "저널 관리" tab to Admin page
+- [ ] Display journal list with title, category, author, date
+- [ ] Add "새 저널 추가" button and form
+- [ ] Implement edit journal functionality
+- [ ] Implement delete journal functionality
+- [ ] Add category filter for journals
+
+
+
+
+## Fix React Rendering Error in Application Component
+- [x] Fix "Cannot update a component while rendering a different component" error in Application.tsx
+- [x] Move setState calls out of render phase (use useEffect)
+
+
+
+
+## Fix /privacy Route 404 Error
+- [x] Create Privacy page component
+- [x] Add /privacy route to router
 
 

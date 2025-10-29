@@ -245,3 +245,23 @@ export const systemSettings = mysqlTable("systemSettings", {
 export type SystemSetting = typeof systemSettings.$inferSelect;
 export type InsertSystemSetting = typeof systemSettings.$inferInsert;
 
+
+// Journals table
+export const journals = mysqlTable("journals", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt"),
+  thumbnailUrl: text("thumbnailUrl"),
+  category: varchar("category", { length: 100 }),
+  authorId: int("authorId").notNull(),
+  isPublished: int("isPublished").default(0).notNull(),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Journal = typeof journals.$inferSelect;
+export type InsertJournal = typeof journals.$inferInsert;
+

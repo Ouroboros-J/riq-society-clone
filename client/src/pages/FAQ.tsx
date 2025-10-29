@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import SEO from '../components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function FAQ() {
   const { data: faqs, isLoading } = trpc.faq.list.useQuery();
@@ -63,7 +64,7 @@ export default function FAQ() {
 
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <LoadingSpinner size="lg" />
                 <p className="mt-4 text-muted-foreground">로딩 중...</p>
               </div>
             ) : faqsByCategory && Object.keys(faqsByCategory).length > 0 ? (
