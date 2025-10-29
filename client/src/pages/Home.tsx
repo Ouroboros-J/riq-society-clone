@@ -86,47 +86,14 @@ export default function Home() {
                 </Button>
               </Link>
             ) : (
-              <>
-                <div className="text-center mb-4">
-                  <p className="text-sm text-muted-foreground">
-                    환영합니다, <span className="font-semibold text-foreground">{user?.name || '회원'}님</span>
-                  </p>
-                  {user?.role === 'admin' && (
-                    <p className="text-xs text-primary mt-1">관리자</p>
-                  )}
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
-                  <Link href="/mypage">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="border-white text-white hover:bg-white hover:text-black min-w-[200px] transition-all duration-300 hover:scale-105"
-                      aria-label="마이페이지"
-                    >
-                      마이페이지
-                    </Button>
-                  </Link>
-                  {user?.role === 'admin' && (
-                    <Link href="/admin">
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        className="border-white text-white hover:bg-white hover:text-black min-w-[200px] transition-all duration-300 hover:scale-105"
-                      >
-                        관리자 페이지
-                      </Button>
-                    </Link>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="border-white text-white hover:bg-white hover:text-black min-w-[200px] transition-all duration-300 hover:scale-105"
-                    onClick={() => logout()}
-                  >
-                    로그아웃
-                  </Button>
-                </div>
-              </>
+              <div className="text-center">
+                <p className="text-lg text-foreground">
+                  환영합니다, <span className="font-semibold">{user?.name || '회원'}님</span>
+                </p>
+                {user?.role === 'admin' && (
+                  <p className="text-sm text-blue-400 mt-2">관리자</p>
+                )}
+              </div>
             )}
           </div>
         </div>

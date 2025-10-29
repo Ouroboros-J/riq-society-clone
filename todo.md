@@ -1671,3 +1671,12 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Keep only "AI 설정 (OpenRouter)" tab
 
 
+
+
+## Fix Hero Section and Navigation Naming
+- [x] Remove duplicate buttons from hero section after login (마이페이지, 관리자 페이지, 로그아웃)
+- [x] Show only welcome message in hero section after login
+- [x] Unify naming: Change "회원" to "My RIQ" in Header (desktop and mobile)
+- [x] Keep navigation in Header only for consistency
+
+

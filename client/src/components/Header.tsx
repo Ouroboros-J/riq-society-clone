@@ -42,7 +42,7 @@ export default function Header() {
             <>
               <Link href="/mypage">
                 <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
-                  회원
+                  My RIQ
                 </Button>
               </Link>
 
@@ -141,7 +141,7 @@ export default function Header() {
                   <Link href="/mypage">
                     <Button variant="ghost" className="w-full justify-start" size="lg">
                       <User className="mr-2 h-5 w-5" />
-                      회원
+                      My RIQ
                     </Button>
                   </Link>
 
