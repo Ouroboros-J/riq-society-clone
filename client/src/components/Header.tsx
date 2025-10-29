@@ -32,11 +32,14 @@ export default function Header() {
             </Button>
           </Link>
 
-          <Link href="/application">
-            <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
-              입회
-            </Button>
-          </Link>
+          {/* Show application menu if not logged in OR if logged in but no application OR if application rejected */}
+          {(!isAuthenticated || !user?.approvalStatus || user?.approvalStatus === 'rejected') && (
+            <Link href="/application">
+              <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
+                입회
+              </Button>
+            </Link>
+          )}
 
           {isAuthenticated && (
             <>
@@ -135,6 +138,16 @@ export default function Header() {
                   홈
                 </Button>
               </Link>
+
+              {/* Show application menu if not logged in OR if logged in but no application OR if application rejected */}
+              {(!isAuthenticated || !user?.approvalStatus || user?.approvalStatus === 'rejected') && (
+                <Link href="/application">
+                  <Button variant="ghost" className="w-full justify-start" size="lg">
+                    <FileText className="mr-2 h-5 w-5" />
+                    입회
+                  </Button>
+                </Link>
+              )}
 
               {isAuthenticated && (
                 <>
@@ -239,13 +252,13 @@ export default function Header() {
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     {isAdmin() && (
-                      <span className="inline-flex items-center text-xs bg-blue-500/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
+                      <span className="inline-flex items-center text-xs bg-gray-500/20 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">
                         <Shield className="w-3 h-3 mr-1" />
                         관리자
                       </span>
                     )}
                     {isMember() && !isAdmin() && (
-                      <span className="inline-flex items-center text-xs bg-blue-500/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
+                      <span className="inline-flex items-center text-xs bg-gray-500/20 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">
                         <Crown className="w-3 h-3 mr-1" />
                         정회원
                       </span>

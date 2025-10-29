@@ -1689,3 +1689,24 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Ensure consistent size, color, and animation
 
 
+
+
+## Change Admin Badge Color to Gray
+- [x] Change admin badge from blue to neutral gray color in Header mobile menu
+- [x] Change member badge from blue to neutral gray color as well
+
+
+
+
+## Change Admin Badge Color to Gray
+- [x] Change admin badge from blue to neutral gray color in Header mobile menu
+- [x] Change member badge from blue to neutral gray color as well
+
+## Improve Application Menu Logic
+- [x] Hide "입회" menu when user has already submitted application (pending or approved)
+- [x] Show "입회" menu when user has not submitted application or application was rejected
+- [x] Ensure non-logged-in users can see "입회" menu
+- [x] Add "입회" menu to mobile navigation (was missing)
+- [ ] Test application menu visibility logic
+
+
