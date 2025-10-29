@@ -574,6 +574,63 @@ export const appRouter = router({
       }),
   }),
 
+  journal: router({
+    list: memberProcedure.query(async () => {
+      return await getAllJournals();
+    }),
+
+    listAdmin: adminProcedure.query(async () => {
+      return await getAllJournalsAdmin();
+    }),
+
+    getBySlug: memberProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        return await getJournalBySlug(input.slug);
+      }),
+
+    getById: memberProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await getJournalById(input.id);
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        title: z.string(),
+        slug: z.string(),
+        content: z.string(),
+        excerpt: z.string().optional(),
+        thumbnailUrl: z.string().optional(),
+        category: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await createJournal(input);
+      }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        slug: z.string().optional(),
+        content: z.string().optional(),
+        excerpt: z.string().optional(),
+        thumbnailUrl: z.string().optional(),
+        category: z.string().optional(),
+        isPublished: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await updateJournal(id, data);
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await deleteJournal(input.id);
+      }),
+  }),
+
   resource: router({
     list: memberProcedure.query(async () => {
       return await getAllResources();

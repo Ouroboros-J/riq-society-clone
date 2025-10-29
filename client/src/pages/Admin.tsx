@@ -74,6 +74,16 @@ export default function Admin() {
   const [blogThumbnailUrl, setBlogThumbnailUrl] = useState('');
   const [blogCategory, setBlogCategory] = useState('');
   
+  // 저널 관리
+  const [journalDialogOpen, setJournalDialogOpen] = useState(false);
+  const [editingJournal, setEditingJournal] = useState<any>(null);
+  const [journalTitle, setJournalTitle] = useState('');
+  const [journalSlug, setJournalSlug] = useState('');
+  const [journalContent, setJournalContent] = useState('');
+  const [journalExcerpt, setJournalExcerpt] = useState('');
+  const [journalThumbnailUrl, setJournalThumbnailUrl] = useState('');
+  const [journalCategory, setJournalCategory] = useState('');
+  
   // 리소스 관리
   const [resourceDialogOpen, setResourceDialogOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<any>(null);
@@ -237,6 +247,40 @@ export default function Admin() {
     onSuccess: () => {
       refetchBlogs();
       toast.success('블로그가 삭제되었습니다.');
+    },
+  });
+  
+  const { data: journals, isLoading: journalsLoading, refetch: refetchJournals } = trpc.journal.listAdmin.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+  
+  const createJournalMutation = trpc.journal.create.useMutation({
+    onSuccess: () => {
+      refetchJournals();
+      setJournalDialogOpen(false);
+      setJournalTitle('');
+      setJournalSlug('');
+      setJournalContent('');
+      setJournalExcerpt('');
+      setJournalThumbnailUrl('');
+      setJournalCategory('');
+      toast.success('저널이 생성되었습니다.');
+    },
+  });
+  
+  const updateJournalMutation = trpc.journal.update.useMutation({
+    onSuccess: () => {
+      refetchJournals();
+      setJournalDialogOpen(false);
+      setEditingJournal(null);
+      toast.success('저널이 수정되었습니다.');
+    },
+  });
+  
+  const deleteJournalMutation = trpc.journal.delete.useMutation({
+    onSuccess: () => {
+      refetchJournals();
+      toast.success('저널이 삭제되었습니다.');
     },
   });
   
@@ -682,6 +726,7 @@ export default function Admin() {
             <TabsTrigger value="email-templates">이메일 템플릿</TabsTrigger>
             <TabsTrigger value="faq">FAQ 관리</TabsTrigger>
             <TabsTrigger value="blog">블로그 관리</TabsTrigger>
+            <TabsTrigger value="journal">저널 관리</TabsTrigger>
             <TabsTrigger value="resources">리소스 관리</TabsTrigger>
             <TabsTrigger value="ai-settings-openrouter">AI 설정 (OpenRouter)</TabsTrigger>
             <TabsTrigger value="review-requests">재검토 요청</TabsTrigger>
@@ -2103,6 +2148,240 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+
+          {/* 저널 관리 탭 */}
+          <TabsContent value="journal">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>저널 관리</CardTitle>
+                    <CardDescription>저널 글을 관리합니다</CardDescription>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      setEditingJournal(null);
+                      setJournalTitle('');
+                      setJournalSlug('');
+                      setJournalContent('');
+                      setJournalExcerpt('');
+                      setJournalThumbnailUrl('');
+                      setJournalCategory('');
+                      setJournalDialogOpen(true);
+                    }}
+                  >
+                    저널 추가
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {journalsLoading ? (
+                  <div className="text-center py-8">
+                    <LoadingSpinner />
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>제목</TableHead>
+                        <TableHead>카테고리</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead>발행일</TableHead>
+                        <TableHead className="text-right">관리</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {journals && journals.length > 0 ? (
+                        journals.map((journal: any) => (
+                          <TableRow key={journal.id}>
+                            <TableCell className="max-w-md truncate">{journal.title}</TableCell>
+                            <TableCell>{journal.category || '-'}</TableCell>
+                            <TableCell>
+                              <Badge variant={journal.isPublished ? 'default' : 'secondary'}>
+                                {journal.isPublished ? '공개' : '비공개'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {journal.publishedAt 
+                                ? new Date(journal.publishedAt).toLocaleDateString('ko-KR')
+                                : '-'
+                              }
+                            </TableCell>
+                            <TableCell className="text-right space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setEditingJournal(journal);
+                                  setJournalTitle(journal.title);
+                                  setJournalSlug(journal.slug);
+                                  setJournalContent(journal.content);
+                                  setJournalExcerpt(journal.excerpt || '');
+                                  setJournalThumbnailUrl(journal.thumbnailUrl || '');
+                                  setJournalCategory(journal.category || '');
+                                  setJournalDialogOpen(true);
+                                }}
+                              >
+                                수정
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm('저널을 삭제하시겠습니까?')) {
+                                    deleteJournalMutation.mutate({ id: journal.id });
+                                  }
+                                }}
+                              >
+                                삭제
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  updateJournalMutation.mutate({
+                                    id: journal.id,
+                                    isPublished: journal.isPublished ? 0 : 1,
+                                    publishedAt: journal.isPublished ? undefined : new Date()
+                                  });
+                                }}
+                              >
+                                {journal.isPublished ? '비공개' : '공개'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            등록된 저널이 없습니다.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 저널 추가/수정 다이얼로그 */}
+          <Dialog open={journalDialogOpen} onOpenChange={setJournalDialogOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingJournal ? '저널 수정' : '저널 추가'}</DialogTitle>
+                <DialogDescription>
+                  저널 글을 작성해주세요. 마크다운 문법을 사용할 수 있습니다.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="journalTitle">제목</Label>
+                  <Input
+                    id="journalTitle"
+                    placeholder="저널 제목"
+                    value={journalTitle}
+                    onChange={(e) => {
+                      setJournalTitle(e.target.value);
+                      // 제목에서 자동으로 slug 생성 (수정 시에는 제외)
+                      if (!editingJournal) {
+                        const slug = e.target.value
+                          .toLowerCase()
+                          .replace(/[^a-z0-9가-힣\s-]/g, '')
+                          .replace(/\s+/g, '-');
+                        setJournalSlug(slug);
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="journalSlug">Slug (URL)</Label>
+                  <Input
+                    id="journalSlug"
+                    placeholder="journal-url-slug"
+                    value={journalSlug}
+                    onChange={(e) => setJournalSlug(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="journalCategory">카테고리</Label>
+                    <Input
+                      id="journalCategory"
+                      placeholder="예: 연구"
+                      value={journalCategory}
+                      onChange={(e) => setJournalCategory(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="journalThumbnailUrl">썸네일 URL</Label>
+                    <Input
+                      id="journalThumbnailUrl"
+                      placeholder="https://..."
+                      value={journalThumbnailUrl}
+                      onChange={(e) => setJournalThumbnailUrl(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="journalExcerpt">요약</Label>
+                  <Textarea
+                    id="journalExcerpt"
+                    placeholder="저널 글의 간략한 요약"
+                    value={journalExcerpt}
+                    onChange={(e) => setJournalExcerpt(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="journalContent">내용 (마크다운)</Label>
+                  <Textarea
+                    id="journalContent"
+                    placeholder="# 제목\n\n내용을 입력해주세요..."
+                    value={journalContent}
+                    onChange={(e) => setJournalContent(e.target.value)}
+                    rows={15}
+                    className="font-mono text-sm"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setJournalDialogOpen(false)}>
+                  취소
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (editingJournal) {
+                      updateJournalMutation.mutate({
+                        id: editingJournal.id,
+                        title: journalTitle,
+                        slug: journalSlug,
+                        content: journalContent,
+                        excerpt: journalExcerpt || undefined,
+                        thumbnailUrl: journalThumbnailUrl || undefined,
+                        category: journalCategory || undefined,
+                      });
+                    } else {
+                      createJournalMutation.mutate({
+                        title: journalTitle,
+                        slug: journalSlug,
+                        content: journalContent,
+                        excerpt: journalExcerpt || undefined,
+                        thumbnailUrl: journalThumbnailUrl || undefined,
+                        category: journalCategory || undefined,
+                      });
+                    }
+                  }}
+                  disabled={!journalTitle || !journalSlug || !journalContent}
+                >
+                  {editingJournal ? '수정' : '추가'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {/* 리소스 관리 탭 */}
           <TabsContent value="resources">
