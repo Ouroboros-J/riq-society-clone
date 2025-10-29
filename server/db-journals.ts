@@ -38,6 +38,7 @@ export async function createJournal(data: {
   content: string;
   excerpt?: string;
   thumbnailUrl?: string;
+  pdfUrl?: string;
   category?: string;
   authorId: number;
 }) {
@@ -54,6 +55,7 @@ export async function updateJournal(id: number, data: {
   content?: string;
   excerpt?: string;
   thumbnailUrl?: string;
+  pdfUrl?: string;
   category?: string;
   isPublished?: number;
   publishedAt?: Date;
@@ -70,6 +72,17 @@ export async function deleteJournal(id: number) {
   if (!db) throw new Error("Database connection failed");
   
   await db.delete(journals).where(eq(journals.id, id));
+  return { success: true };
+}
+
+export async function incrementJournalViewCount(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database connection failed");
+  
+  const journal = await getJournalById(id);
+  if (!journal) throw new Error("Journal not found");
+  
+  await db.update(journals).set({ viewCount: (journal.viewCount || 0) + 1 }).where(eq(journals.id, id));
   return { success: true };
 }
 

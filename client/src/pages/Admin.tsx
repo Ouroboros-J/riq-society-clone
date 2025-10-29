@@ -82,6 +82,7 @@ export default function Admin() {
   const [journalContent, setJournalContent] = useState('');
   const [journalExcerpt, setJournalExcerpt] = useState('');
   const [journalThumbnailUrl, setJournalThumbnailUrl] = useState('');
+  const [journalPdfUrl, setJournalPdfUrl] = useState('');
   const [journalCategory, setJournalCategory] = useState('');
   
   // 리소스 관리
@@ -2167,6 +2168,7 @@ export default function Admin() {
                       setJournalContent('');
                       setJournalExcerpt('');
                       setJournalThumbnailUrl('');
+                      setJournalPdfUrl('');
                       setJournalCategory('');
                       setJournalDialogOpen(true);
                     }}
@@ -2220,6 +2222,7 @@ export default function Admin() {
                                   setJournalContent(journal.content);
                                   setJournalExcerpt(journal.excerpt || '');
                                   setJournalThumbnailUrl(journal.thumbnailUrl || '');
+                                  setJournalPdfUrl(journal.pdfUrl || '');
                                   setJournalCategory(journal.category || '');
                                   setJournalDialogOpen(true);
                                 }}
@@ -2327,6 +2330,18 @@ export default function Admin() {
                   </div>
                 </div>
                 <div>
+                  <Label htmlFor="journalPdfUrl">PDF URL (선택사항)</Label>
+                  <Input
+                    id="journalPdfUrl"
+                    placeholder="https://... (다운로드 가능한 PDF 파일 URL)"
+                    value={journalPdfUrl}
+                    onChange={(e) => setJournalPdfUrl(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PDF 파일을 S3에 업로드하고 URL을 입력하세요. 사용자는 저널 상세 페이지에서 다운로드할 수 있습니다.
+                  </p>
+                </div>
+                <div>
                   <Label htmlFor="journalExcerpt">요약</Label>
                   <Textarea
                     id="journalExcerpt"
@@ -2362,6 +2377,7 @@ export default function Admin() {
                         content: journalContent,
                         excerpt: journalExcerpt || undefined,
                         thumbnailUrl: journalThumbnailUrl || undefined,
+                        pdfUrl: journalPdfUrl || undefined,
                         category: journalCategory || undefined,
                       });
                     } else {
@@ -2371,6 +2387,7 @@ export default function Admin() {
                         content: journalContent,
                         excerpt: journalExcerpt || undefined,
                         thumbnailUrl: journalThumbnailUrl || undefined,
+                        pdfUrl: journalPdfUrl || undefined,
                         category: journalCategory || undefined,
                       });
                     }

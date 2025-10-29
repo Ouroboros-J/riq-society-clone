@@ -6,7 +6,7 @@ import { confirmPayment, getAllUsers, getPendingPayments, getUserByOpenId, updat
 import { getAllEmailTemplates, getEmailTemplate, updateEmailTemplate, createEmailTemplate } from "./db-email-templates";
 import { getAllFaqs, getAllFaqsAdmin, getFaqById, createFaq, updateFaq, deleteFaq } from "./db-faqs";
 import { getAllBlogs, getAllBlogsAdmin, getBlogBySlug, getBlogById, createBlog, updateBlog, deleteBlog } from "./db-blogs";
-import { getAllJournals, getAllJournalsAdmin, getJournalBySlug, getJournalById, createJournal, updateJournal, deleteJournal } from "./db-journals";
+import { getAllJournals, getAllJournalsAdmin, getJournalBySlug, getJournalById, createJournal, updateJournal, deleteJournal, incrementJournalViewCount } from "./db-journals";
 import { getAllResources, getAllResourcesAdmin, getResourceById, createResource, updateResource, deleteResource, incrementDownloadCount } from "./db-resources";
 import { createApplication, updateApplication, getUserApplication, getAllApplications, updateApplicationStatus } from "./db-applications";
 import { getAllRecognizedTests, getRecognizedTestById, createRecognizedTest, updateRecognizedTest, deleteRecognizedTest } from "./db-recognized-tests";
@@ -602,10 +602,11 @@ export const appRouter = router({
         content: z.string(),
         excerpt: z.string().optional(),
         thumbnailUrl: z.string().optional(),
+        pdfUrl: z.string().optional(),
         category: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
-        return await createJournal(input);
+      .mutation(async ({ input, ctx }) => {
+        return await createJournal({ ...input, authorId: ctx.user.id });
       }),
 
     update: adminProcedure
@@ -616,6 +617,7 @@ export const appRouter = router({
         content: z.string().optional(),
         excerpt: z.string().optional(),
         thumbnailUrl: z.string().optional(),
+        pdfUrl: z.string().optional(),
         category: z.string().optional(),
         isPublished: z.number().optional(),
       }))
@@ -628,6 +630,12 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         return await deleteJournal(input.id);
+      }),
+
+    incrementViewCount: memberProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await incrementJournalViewCount(input.id);
       }),
   }),
 

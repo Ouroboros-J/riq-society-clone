@@ -254,10 +254,12 @@ export const journals = mysqlTable("journals", {
   content: text("content").notNull(),
   excerpt: text("excerpt"),
   thumbnailUrl: text("thumbnailUrl"),
+  pdfUrl: text("pdfUrl"),
   category: varchar("category", { length: 100 }),
   authorId: int("authorId").notNull(),
   isPublished: int("isPublished").default(0).notNull(),
   publishedAt: timestamp("publishedAt"),
+  viewCount: int("viewCount").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

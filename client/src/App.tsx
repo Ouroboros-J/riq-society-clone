@@ -16,7 +16,8 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Resources = lazy(() => import("./pages/Resources"));
-const Journal = lazy(() => import("./pages/Journal"));
+const Journals = lazy(() => import("./pages/Journals"));
+const JournalDetail = lazy(() => import("./pages/JournalDetail"));
 const Shop = lazy(() => import("./pages/Shop"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -45,7 +46,8 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/resources" component={Resources} />
-      <Route path="/journal" component={Journal} />
+      <Route path="/journals" component={Journals} />
+      <Route path="/journals/:slug" component={JournalDetail} />
       <Route path="/shop" component={Shop} />
       <Route path="/privacy" component={Privacy} />
 
