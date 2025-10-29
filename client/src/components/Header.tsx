@@ -32,8 +32,8 @@ export default function Header() {
             </Button>
           </Link>
 
-          {/* Show application menu if not logged in OR if logged in but no application OR if application rejected */}
-          {(!isAuthenticated || !user?.approvalStatus || user?.approvalStatus === 'rejected') && (
+          {/* Hide application menu only for approved users */}
+          {user?.approvalStatus !== 'approved' && (
             <Link href="/application">
               <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
                 입회
@@ -139,8 +139,8 @@ export default function Header() {
                 </Button>
               </Link>
 
-              {/* Show application menu if not logged in OR if logged in but no application OR if application rejected */}
-              {(!isAuthenticated || !user?.approvalStatus || user?.approvalStatus === 'rejected') && (
+              {/* Hide application menu only for approved users */}
+              {user?.approvalStatus !== 'approved' && (
                 <Link href="/application">
                   <Button variant="ghost" className="w-full justify-start" size="lg">
                     <FileText className="mr-2 h-5 w-5" />

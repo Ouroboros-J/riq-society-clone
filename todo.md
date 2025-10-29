@@ -1710,3 +1710,15 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [ ] Test application menu visibility logic
 
 
+
+
+## Final Application Menu Logic
+- [x] Hide "입회" menu only when user is approved (approvalStatus === 'approved')
+- [x] Show "입회" menu for: non-logged-in, no application, pending, rejected
+- [ ] Update /application page to show different content based on application state:
+  - No application: Show application form
+  - Pending: Show application status ("under review")
+  - Rejected: Show rejection reason + re-apply button
+  - Approved: Redirect to My RIQ (shouldn't see this page)
+
+
