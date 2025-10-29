@@ -6,6 +6,7 @@ import { getLoginUrl } from "@/const";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function Auth() {
   const { isAuthenticated, loading } = useAuth();
@@ -21,7 +22,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <LoadingSpinner size="lg" />
           <p className="mt-4 text-muted-foreground">로딩 중...</p>
         </div>
       </div>

@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -651,7 +652,7 @@ export default function Admin() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <LoadingSpinner size="lg" />
           <p className="mt-4 text-muted-foreground">로딩 중...</p>
         </div>
       </div>
@@ -732,7 +733,7 @@ export default function Admin() {
 
             {false ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <LoadingSpinner size="lg" />
                 <p className="mt-4 text-muted-foreground">로딩 중...</p>
               </div>
             ) : (
@@ -904,7 +905,7 @@ export default function Admin() {
                   <CardContent>
                     {posthogStatsLoading ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        <LoadingSpinner />
                       </div>
                     ) : posthogStats ? (
                       <div className="space-y-6">
@@ -1015,7 +1016,7 @@ export default function Admin() {
                   <CardContent>
                     {aiAccuracyLoading || overallAccuracyLoading ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        <LoadingSpinner />
                       </div>
                     ) : (
                       <div className="space-y-6">
@@ -1269,7 +1270,7 @@ export default function Admin() {
                 )}
 
                 {applicationsLoading ? (
-                  <p>로딩 중...</p>
+                  <div className="text-center py-4"><LoadingSpinner /></div>
                 ) : (
                   <div className="overflow-x-auto">
                     <Table>
@@ -1519,7 +1520,7 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 {paymentsLoading ? (
-                  <div className="text-center py-4">로딩 중...</div>
+                  <div className="text-center py-4"><LoadingSpinner /></div>
                 ) : pendingPayments && pendingPayments.length > 0 ? (
                   <div className="overflow-x-auto">
                   <Table>
@@ -1574,7 +1575,7 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 {templatesLoading ? (
-                  <p>로딩 중...</p>
+                  <div className="text-center py-4"><LoadingSpinner /></div>
                 ) : emailTemplates && emailTemplates.length > 0 ? (
                   <div className="space-y-4">
                     {emailTemplates.map((template: any) => (
@@ -1903,7 +1904,7 @@ export default function Admin() {
               <CardContent>
                 {faqsLoading ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <LoadingSpinner />
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -2013,7 +2014,7 @@ export default function Admin() {
               <CardContent>
                 {blogsLoading ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <LoadingSpinner />
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -2132,7 +2133,7 @@ export default function Admin() {
               <CardContent>
                 {resourcesLoading ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <LoadingSpinner />
                   </div>
                 ) : (
                   <div className="overflow-x-auto">

@@ -10,6 +10,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Download, FileText, File, Image, Video, Music } from 'lucide-react';
 import { toast } from 'sonner';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function Resources() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -37,7 +38,7 @@ export default function Resources() {
         <div className="min-h-screen bg-background pt-16">
           <div className="container py-16">
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <LoadingSpinner size="lg" />
               <p className="mt-4 text-muted-foreground">로딩 중...</p>
             </div>
           </div>
@@ -169,7 +170,7 @@ export default function Resources() {
 
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <LoadingSpinner size="lg" />
                 <p className="mt-4 text-muted-foreground">로딩 중...</p>
               </div>
             ) : filteredResources.length === 0 ? (

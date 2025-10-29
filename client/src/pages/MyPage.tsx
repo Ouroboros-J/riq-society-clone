@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { posthog } from "@/lib/posthog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function MyPage() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -141,7 +142,7 @@ export default function MyPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <LoadingSpinner size="lg" />
           <p className="mt-4 text-muted-foreground">로딩 중...</p>
         </div>
       </div>

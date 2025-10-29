@@ -11,6 +11,7 @@ import { trpc } from '../lib/trpc';
 import { useLocation } from 'wouter';
 import { Download, BookOpen, Calendar, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function Journal() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -31,7 +32,7 @@ export default function Journal() {
         <div className="min-h-screen bg-background pt-16">
           <div className="container py-16">
             <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <LoadingSpinner size="lg" />
             </div>
           </div>
         </div>
@@ -168,7 +169,7 @@ export default function Journal() {
             {/* 콘텐츠 */}
             {resourcesLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <LoadingSpinner size="lg" />
                 <p className="mt-4 text-muted-foreground">로딩 중...</p>
               </div>
             ) : filteredJournals.length === 0 ? (

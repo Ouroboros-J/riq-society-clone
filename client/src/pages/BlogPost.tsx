@@ -11,6 +11,7 @@ import { Link } from 'wouter';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function BlogPost() {
   const [, params] = useRoute('/blog/:slug');
@@ -28,7 +29,7 @@ export default function BlogPost() {
         <div className="min-h-screen bg-background pt-16">
           <div className="container py-16">
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <LoadingSpinner size="lg" />
               <p className="mt-4 text-muted-foreground">로딩 중...</p>
             </div>
           </div>

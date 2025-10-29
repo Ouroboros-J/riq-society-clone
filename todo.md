@@ -1680,3 +1680,12 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] Keep navigation in Header only for consistency
 
 
+
+
+## Unify Loading Spinner
+- [x] Check loading spinner implementation in all pages (FAQ, Blog, Resources, MyPage, Admin, etc.)
+- [x] Create a unified LoadingSpinner component
+- [x] Replace all inconsistent loading implementations with the unified component
+- [x] Ensure consistent size, color, and animation
+
+
