@@ -1664,3 +1664,10 @@ AI 검증 시 신청자가 입력한 개인정보(이름, 생년월일)와 신�
 - [x] NotFound.tsx - Add responsive text sizes for headings and body text
 
 
+
+
+## Remove AI Legacy Tab
+- [x] Remove "AI 설정 (Legacy)" tab from Admin page
+- [x] Keep only "AI 설정 (OpenRouter)" tab
+
+
